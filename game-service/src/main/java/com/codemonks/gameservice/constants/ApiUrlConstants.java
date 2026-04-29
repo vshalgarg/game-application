@@ -1,0 +1,14 @@
+package com.codemonks.gameservice.constants;
+
+public class ApiUrlConstants {
+
+    private ApiUrlConstants() {}
+
+    public static final String BASE_API = "/api/v1";
+    public static class Room{
+        public static final String BASE = BASE_API + "/rooms";
+        public static final String CREATE_ROOM = "/create";
+        public static final String JOIN_ROOM = "/{roomCode}/join";
+        public static final String START_GAME = "/{roomCode}/start";
+    }
+}
