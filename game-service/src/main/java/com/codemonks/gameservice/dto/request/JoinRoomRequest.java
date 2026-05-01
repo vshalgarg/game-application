@@ -6,5 +6,5 @@ import lombok.Data;
 public class JoinRoomRequest {
 
     private String tenantId;
-    private String userId;
+    private Long userId;
 }
