@@ -7,6 +7,6 @@ import lombok.Data;
 public class CreateRoomRequest {
 
     private String tenantId;
-    private String userId;
+    private Long userId;
     private GameTypeEnum gameType;
 }

@@ -34,7 +34,7 @@ public class RoomController {
     @PostMapping(START_GAME)
     public ResponseEntity<Void> startGame(
             @PathVariable String roomCode,
-            @RequestParam String userId) {
+            @RequestParam Long userId) {
 
         roomService.startGame(roomCode, userId);
         return ResponseEntity.ok().build();

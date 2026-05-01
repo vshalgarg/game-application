@@ -41,7 +41,7 @@ public class RoomPlayerEntity extends BaseEntity{
     private Long roomId;
 
     @Column(name = "user_id", length = 50, nullable = false)
-    private String userId;
+    private Long userId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", length = 50, nullable = false)

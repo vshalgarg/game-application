@@ -8,6 +8,7 @@ import com.codemonks.gameservice.entity.RoomEntity;
 import com.codemonks.gameservice.entity.RoomPlayerEntity;
 import com.codemonks.gameservice.enums.RoomPlayerRole;
 import com.codemonks.gameservice.enums.RoomStatusEnum;
+import com.codemonks.gameservice.exceptions.GameException;
 import com.codemonks.gameservice.mapper.RoomMapper;
 import com.codemonks.gameservice.repository.GameConfigEntityRepository;
 import com.codemonks.gameservice.repository.RoomEntityRepository;
@@ -19,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+import static com.codemonks.gameservice.constants.ResponseErrorCodes.ROOM_NOT_FOUND;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -27,6 +30,7 @@ public class RoomService {
     private final RoomEntityRepository roomRepository;
     private final RoomPlayerEntityRepository roomPlayerRepository;
     private final GameConfigEntityRepository gameConfigRepository;
+    private final GameService gameService;
 
     @Transactional
     public RoomResponse createRoom(CreateRoomRequest request) {
@@ -56,7 +60,7 @@ public class RoomService {
         RoomEntity room = roomRepository.findByRoomCode(roomCode)
                 .orElseThrow(() -> {
                     log.error("Room not found for code={}", roomCode);
-                    return new RuntimeException("Room not found");
+                    return new GameException(ROOM_NOT_FOUND);
                 });
 
         if (room.getStatus() == RoomStatusEnum.STARTED) {
@@ -101,7 +105,7 @@ public class RoomService {
     }
 
     @Transactional
-    public void startGame(String roomCode, String userId) {
+    public void startGame(String roomCode, Long userId) {
 
         log.info("Start game request. roomCode={}, userId={}", roomCode, userId);
 
@@ -123,10 +127,8 @@ public class RoomService {
 
         room.setStatus(RoomStatusEnum.STARTED);
         roomRepository.save(room);
-
         log.info("Game started. roomId={}", room.getId());
-
-        // call Game Engine here
+        gameService.startGame(room.getId());
     }
 
     private String generateRoomCode() {

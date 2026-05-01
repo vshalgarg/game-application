@@ -3,34 +3,29 @@ package com.codemonks.gameservice.common.dto;
 import lombok.Builder;
 import lombok.Data;
 
-import java.time.LocalDateTime;
-
 @Builder
 @Data
 public class ApiResponse<T> {
 
     private boolean success;
-    private int code;
-    private String message;
     private T data;
-    private LocalDateTime timestamp;
+    private ApiError error;
+    private Meta meta;
 
-    public static <T> ApiResponse<T> success(String message, T data) {
+
+    public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.<T>builder()
                 .success(true)
-                .code(200)
-                .message(message)
                 .data(data)
-                .timestamp(LocalDateTime.now())
+                .meta(Meta.now())
                 .build();
     }
 
     public static <T> ApiResponse<T> failure(int code, String message) {
         return ApiResponse.<T>builder()
                 .success(false)
-                .code(code)
-                .message(message)
-                .timestamp(LocalDateTime.now())
+                .error(new ApiError(code, message))
+                .meta(Meta.now())
                 .build();
     }
 }
