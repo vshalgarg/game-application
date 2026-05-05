@@ -1,4 +1,4 @@
-package com.codemonks.gameengine.contract;
+package com.codemonks.gameengine.engine;
 
 import com.codemonks.gameengine.core.model.Board;
 import com.codemonks.gameengine.core.model.Cell;

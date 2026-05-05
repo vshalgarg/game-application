@@ -1,4 +1,4 @@
-package com.codemonks.gameservice.controller;
+package com.codemonks.apigateway.controller;
 
 import com.codemonks.gameengine.dto.responseDto.GameStateResponse;
 import com.codemonks.gameservice.dto.request.MakeMoveRequestDTO;

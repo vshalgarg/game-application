@@ -1,4 +1,4 @@
-package com.codemonks.gameengine.contract;
+package com.codemonks.gameengine.engine;
 
 import com.codemonks.gameengine.dto.requestDto.MoveRequest;
 import com.codemonks.gameengine.dto.requestDto.StartGameRequest;
