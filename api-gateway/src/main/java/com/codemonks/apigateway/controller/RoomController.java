@@ -1,4 +1,4 @@
-package com.codemonks.gameservice.controller;
+package com.codemonks.apigateway.controller;
 
 import com.codemonks.gameservice.constants.ApiUrlConstants;
 import com.codemonks.gameservice.dto.request.CreateRoomRequest;
