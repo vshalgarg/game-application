@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: game-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/game_db
+    username: root
+    password: Dhami@123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
