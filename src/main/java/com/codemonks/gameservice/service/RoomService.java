@@ -1,13 +1,13 @@
 package com.codemonks.gameservice.service;
 
 
-import com.codemonks.gameservice.dto.request.CreateRoomRequest;
-import com.codemonks.gameservice.dto.request.JoinRoomRequest;
-import com.codemonks.gameservice.dto.response.RoomResponse;
+import com.codemonks.gameservice.dto.request.CreateRoomRequestDTO;
+import com.codemonks.gameservice.dto.request.JoinRoomRequestDTO;
+import com.codemonks.gameservice.dto.response.RoomResponseDTO;
 
 public interface RoomService {
 
-    RoomResponse createRoom(CreateRoomRequest request);
-    RoomResponse joinRoom(String roomCode, JoinRoomRequest request);
+    RoomResponseDTO createRoom(CreateRoomRequestDTO request);
+    RoomResponseDTO joinRoom(String roomCode, JoinRoomRequestDTO request);
     void startGame(String roomCode, Long userId);
 }

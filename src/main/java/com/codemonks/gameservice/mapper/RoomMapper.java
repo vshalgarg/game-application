@@ -1,9 +1,9 @@
 package com.codemonks.gameservice.mapper;
 
 
-import com.codemonks.gameservice.dto.request.CreateRoomRequest;
-import com.codemonks.gameservice.dto.request.JoinRoomRequest;
-import com.codemonks.gameservice.dto.response.RoomResponse;
+import com.codemonks.gameservice.dto.request.CreateRoomRequestDTO;
+import com.codemonks.gameservice.dto.request.JoinRoomRequestDTO;
+import com.codemonks.gameservice.dto.response.RoomResponseDTO;
 import com.codemonks.gameservice.entity.RoomEntity;
 import com.codemonks.gameservice.entity.RoomPlayerEntity;
 import com.codemonks.gameservice.enums.RoomPlayerRole;
@@ -14,7 +14,7 @@ public class RoomMapper {
 
     private RoomMapper() {}
 
-    public static RoomEntity toRoomEntity(CreateRoomRequest request, String roomCode) {
+    public static RoomEntity toRoomEntity(CreateRoomRequestDTO request, String roomCode) {
         RoomEntity room = new RoomEntity();
         room.setTenantId(request.getTenantId());
         room.setGameType(request.getGameType());
@@ -23,28 +23,28 @@ public class RoomMapper {
         return room;
     }
 
-    public static RoomPlayerEntity toHostPlayer(CreateRoomRequest request, Long roomId) {
+    public static RoomPlayerEntity toHostPlayer(CreateRoomRequestDTO request, String roomCode) {
         RoomPlayerEntity player = new RoomPlayerEntity();
         player.setTenantId(request.getTenantId());
-        player.setRoomId(roomId);
+        player.setRoomCode(roomCode);
         player.setUserId(request.getUserId());
         player.setRole(RoomPlayerRole.HOST);
         player.setStatus(RoomPlayerStatus.ACTIVE);
         return player;
     }
 
-    public static RoomPlayerEntity toJoinPlayer(JoinRoomRequest request, Long roomId) {
+    public static RoomPlayerEntity toJoinPlayer(JoinRoomRequestDTO request, String roomCode) {
         RoomPlayerEntity player = new RoomPlayerEntity();
         player.setTenantId(request.getTenantId());
-        player.setRoomId(roomId);
+        player.setRoomCode(roomCode);
         player.setUserId(request.getUserId());
         player.setRole(RoomPlayerRole.PLAYER);
         player.setStatus(RoomPlayerStatus.ACTIVE);
         return player;
     }
 
-    public static RoomResponse toRoomResponse(RoomEntity room) {
-        return RoomResponse.builder()
+    public static RoomResponseDTO toRoomResponse(RoomEntity room) {
+        return RoomResponseDTO.builder()
                 .roomId(room.getId())
                 .roomCode(room.getRoomCode())
                 .gameType(room.getGameType())
