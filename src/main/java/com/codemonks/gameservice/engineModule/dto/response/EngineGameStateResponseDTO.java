@@ -1,21 +1,21 @@
-package com.codemonks.gameservice.engineModule.dto.request;
+package com.codemonks.gameservice.engineModule.dto.response;
 
 import com.codemonks.gameservice.engineModule.dto.common.PlayerDto;
+import com.codemonks.gameservice.enums.GameStatusEnum;
 import lombok.*;
 
 import java.util.List;
-import java.util.Map;
 
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class EngineMoveRequestDTO {
-    private Long gameId;
+public class EngineGameStateResponseDTO {
+
     private List<List<String>> boardState;
     private Long currentTurnUserId;
-    private Long userId;
-    private Map<String, Object> moveData;
+    private GameStatusEnum status;
+    private Long winnerUserId;
     private List<PlayerDto> players;
 }

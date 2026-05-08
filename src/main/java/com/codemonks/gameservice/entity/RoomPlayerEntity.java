@@ -11,13 +11,16 @@ import java.time.LocalDateTime;
 @Table(
         name = "room_players",
         indexes = {
-                @Index(name = "idx_room_player_room", columnList = "room_id"),
+                @Index(name = "idx_room_player_room", columnList = "room_code"),
                 @Index(name = "idx_room_player_user", columnList = "user_id"),
                 @Index(name = "idx_room_player_status", columnList = "status"),
                 @Index(name = "idx_room_player_tenant", columnList = "tenant_id")
         },
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_room_user", columnNames = {"room_id", "user_id"})
+                @UniqueConstraint(
+                        name = "uk_room_user",
+                        columnNames = {"room_code", "user_id"}
+                )
         }
 )
 @Getter
@@ -37,8 +40,8 @@ public class RoomPlayerEntity extends BaseEntity{
     @Column(name = "tenant_id", length = 50, nullable = false)
     private String tenantId;
 
-    @Column(name = "room_id", nullable = false)
-    private Long roomId;
+    @Column(name = "room_code", nullable = false)
+    private String roomCode;
 
     @Column(name = "user_id", length = 50, nullable = false)
     private Long userId;

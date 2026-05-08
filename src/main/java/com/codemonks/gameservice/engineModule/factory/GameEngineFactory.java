@@ -1,37 +1,41 @@
 package com.codemonks.gameservice.engineModule.factory;
 
-import com.codemonks.gameservice.engineModule.strategy.GameEngineStrategy;
+import com.codemonks.gameservice.constants.ResponseErrorCodes;
+import com.codemonks.gameservice.engineModule.strategy.GameEngine;
 import com.codemonks.gameservice.enums.GameTypeEnum;
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
+import com.codemonks.gameservice.exceptions.GameException;
 import org.springframework.stereotype.Component;
 
-import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
-@RequiredArgsConstructor
 public class GameEngineFactory {
 
-    private final Map<GameTypeEnum, GameEngineStrategy> strategyMap =
-            new EnumMap<>(GameTypeEnum.class);
+    private final Map<GameTypeEnum, GameEngine> strategyMap;
 
-    private final GameEngineStrategy ticTacToeEngineStrategy;
-    private final GameEngineStrategy chessEngineStrategy;
-
-    @PostConstruct
-    void init() {
-        strategyMap.put(GameTypeEnum.TIC_TAC_TOE, ticTacToeEngineStrategy);
-        strategyMap.put(GameTypeEnum.CHESS, chessEngineStrategy);
+    public GameEngineFactory(
+            List<GameEngine> strategies
+    ) {
+        this.strategyMap = strategies.stream()
+                .collect(Collectors.toMap(
+                        GameEngine::supports,
+                        Function.identity()
+                ));
     }
 
-    public GameEngineStrategy getStrategy(GameTypeEnum gameType) {
-        GameEngineStrategy strategy = strategyMap.get(gameType);
-
-        if (strategy == null) {
-            throw new RuntimeException("No engine for: " + gameType);
+    public GameEngine getStrategy(
+            GameTypeEnum gameType
+    ) {
+        GameEngine strategy =
+                strategyMap.get(gameType);
+        if(strategy == null) {
+            throw new GameException(
+                    ResponseErrorCodes.GAME_ENGINE_NOT_FOUND
+            );
         }
-
         return strategy;
     }
 }

@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class RoomResponse {
+public class RoomResponseDTO {
 
     private Long roomId;
     private String userId;

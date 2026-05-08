@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Table(
         name = "games",
         indexes = {
-                @Index(name = "idx_game_room", columnList = "room_id"),
+                @Index(name = "idx_game_room", columnList = "room_Code"),
                 @Index(name = "idx_game_tenant", columnList = "tenant_id"),
                 @Index(name = "idx_game_status", columnList = "status"),
                 @Index(name = "idx_game_turn", columnList = "current_turn"),
@@ -35,8 +35,8 @@ public class GameEntity extends BaseEntity {
     private String tenantId;
 
     // Link to Room
-    @Column(name = "room_id", nullable = false)
-    private Long roomId;
+    @Column(name = "room_Code", nullable = false)
+    private String roomCode;
 
     // IN_PROGRESS, COMPLETED
     @Enumerated(EnumType.STRING)

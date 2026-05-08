@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class MakeMoveRequestDTO {
 
-    private Long playerId;
+    private Long userId;
     private int row;
     private int col;
     //private Integer version;

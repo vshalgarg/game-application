@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface RoomPlayerEntityRepository extends JpaRepository<RoomPlayerEntity, Long> {
-    boolean existsByRoomIdAndUserId(Long id, Long userId);
-    int countByRoomId(Long id);
-    Optional<RoomPlayerEntity> findByRoomIdAndUserId(Long id, Long userId);
-    List<RoomPlayerEntity> findByRoomId(Long roomId);
+    boolean existsByRoomCodeAndUserId(String roomCode, Long userId);
+    int countByRoomCode(String roomCode);
+    Optional<RoomPlayerEntity> findByRoomCodeAndUserId(String roomCode, Long userId);
+    List<RoomPlayerEntity> findByRoomCode(String roomCode);
 }

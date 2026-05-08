@@ -2,9 +2,9 @@ package com.codemonks.gameservice.controller;
 
 import com.codemonks.gameservice.constants.ApiUrlConstants;
 import com.codemonks.gameservice.dto.ApiResponse;
-import com.codemonks.gameservice.dto.request.CreateRoomRequest;
-import com.codemonks.gameservice.dto.request.JoinRoomRequest;
-import com.codemonks.gameservice.dto.response.RoomResponse;
+import com.codemonks.gameservice.dto.request.CreateRoomRequestDTO;
+import com.codemonks.gameservice.dto.request.JoinRoomRequestDTO;
+import com.codemonks.gameservice.dto.response.RoomResponseDTO;
 import com.codemonks.gameservice.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,19 +20,19 @@ public class RoomController {
     private final RoomService roomService;
 
     @PostMapping(CREATE_ROOM)
-    public ResponseEntity<ApiResponse<RoomResponse>> createRoom(
-            @RequestBody CreateRoomRequest request) {
+    public ResponseEntity<ApiResponse<RoomResponseDTO>> createRoom(
+            @RequestBody CreateRoomRequestDTO request) {
 
-        RoomResponse response = roomService.createRoom(request);
+        RoomResponseDTO response = roomService.createRoom(request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PostMapping(JOIN_ROOM)
-    public ResponseEntity<ApiResponse<RoomResponse>> joinRoom(
+    public ResponseEntity<ApiResponse<RoomResponseDTO>> joinRoom(
             @PathVariable String roomCode,
-            @RequestBody JoinRoomRequest request
+            @RequestBody JoinRoomRequestDTO request
     ) {
-        RoomResponse response = roomService.joinRoom(roomCode, request);
+        RoomResponseDTO response = roomService.joinRoom(roomCode, request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
