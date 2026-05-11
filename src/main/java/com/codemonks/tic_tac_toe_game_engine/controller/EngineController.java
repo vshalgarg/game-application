@@ -8,23 +8,24 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import static com.codemonks.tic_tac_toe_game_engine.constant.EngineApiUrlConstants.*;
 
 @RestController
-@RequestMapping("/api/v1/engine")
+@RequestMapping(BASE_API)
 @RequiredArgsConstructor
 @Slf4j
 public class EngineController {
 
     private final TicTacToeEngine ticTacToeEngine; // Variable name is ticTacToeEngine
 
-    @PostMapping("/start-game")
+    @PostMapping(START_GAME)
     public ResponseEntity<EngineGameStateResponseDTO> startGame(@RequestBody EngineStartGameRequestDto request) {
         log.info("Request received to start game for room: {}", request.getRoomCode());
         // fixed: using ticTacToeEngine instead of engine
         return ResponseEntity.ok(ticTacToeEngine.startGame(request));
     }
 
-    @PostMapping("/make-move")
+    @PostMapping(MAKE_MOVE)
     public ResponseEntity<EngineGameStateResponseDTO> makeMove(@RequestBody EngineMoveRequestDTO request) {
         log.info("Request received to process move for player: {} in game: {}", request.getUserId(), request.getGameId());
         // fixed: using ticTacToeEngine instead of engine
