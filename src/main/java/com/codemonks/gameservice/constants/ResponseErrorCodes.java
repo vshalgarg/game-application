@@ -6,7 +6,8 @@ import lombok.Getter;
 @Getter
 public enum ResponseErrorCodes {
 
-    INTERNAL_SERVER_ERROR(5000, "Something went wrong"),
+    INTERNAL_SERVER_ERROR(500, "Something went wrong"),
+    EXTERNAL_SERVICE_ERROR(500, "External service error"),
     INVALID_REQUEST(4000, "Invalid request"),
 
     // Game/Room specific

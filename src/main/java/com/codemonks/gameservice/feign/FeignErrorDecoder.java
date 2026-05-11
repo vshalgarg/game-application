@@ -9,6 +9,8 @@ import feign.codec.ErrorDecoder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import static com.codemonks.gameservice.constants.ResponseErrorCodes.EXTERNAL_SERVICE_ERROR;
+
 @Component
 @RequiredArgsConstructor
 public class FeignErrorDecoder implements ErrorDecoder {
@@ -40,7 +42,7 @@ public class FeignErrorDecoder implements ErrorDecoder {
             String errorMessage =
                     error.getErrorMessage() != null
                             ? error.getErrorMessage()
-                            : "External service error";
+                            : String.valueOf(EXTERNAL_SERVICE_ERROR);
 
             return new ExternalServiceException(
                     errorCode,
@@ -50,7 +52,7 @@ public class FeignErrorDecoder implements ErrorDecoder {
         } catch (Exception e) {
             return new ExternalServiceException(
                     response.status(),
-                    "External service error"
+                    String.valueOf(EXTERNAL_SERVICE_ERROR)
             );
         }
     }

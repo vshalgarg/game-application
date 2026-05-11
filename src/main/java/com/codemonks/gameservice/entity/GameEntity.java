@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
                 @Index(name = "idx_game_tenant", columnList = "tenant_id"),
                 @Index(name = "idx_game_status", columnList = "status"),
                 @Index(name = "idx_game_turn", columnList = "current_turn"),
-                @Index(name = "idx_tenant_room", columnList = "tenant_id,room_id")
+                @Index(name = "idx_tenant_room", columnList = "tenant_id,room_Code")
         }
 )
 @Getter
