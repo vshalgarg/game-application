@@ -53,14 +53,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(
             ExternalServiceException.class
     )
-    public ResponseEntity<ApiResponse<Void>>
-    handleExternalServiceException(ExternalServiceException ex
+    public ResponseEntity<ApiResponse<Void>> handleExternalServiceException(ExternalServiceException ex
     ) {
 
-        return ResponseEntity.badRequest()
+        log.error(
+                "External service exception occurred",
+                ex
+        );
+        return ResponseEntity
+                .status(HttpStatus.BAD_GATEWAY)
                 .body(
                         ApiResponse.failure(
-                                ex.getErrorCode(),
+                                ex.getExternalStatusCode(),
                                 ex.getMessage()
                         )
                 );

@@ -48,8 +48,10 @@ public class GameServiceImpl implements GameService {
     public void startGame(String roomCode) {
 
         RoomEntity room = roomRepository.findByRoomCode(roomCode)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(ROOM_NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.error("Room not found. roomCode={}", roomCode);
+                    return new ResourceNotFoundException(ROOM_NOT_FOUND);
+                        });
         List<RoomPlayerEntity> players =
                 roomPlayerRepository.findByRoomCode(roomCode);
 
@@ -61,6 +63,11 @@ public class GameServiceImpl implements GameService {
                 gameEngineFactory.getStrategy(room.getGameType());
 
         EngineGameStateResponseDTO engineResponse = strategy.startGame(request);
+        log.info(
+                "Game engine processed successfully. roomCode={}",
+                roomCode
+        );
+
         // Persist game data
         GameEntity game =
                 saveGameState(room, engineResponse);
@@ -75,8 +82,11 @@ public class GameServiceImpl implements GameService {
 
         // Publish realtime event
         publishGameStartedEvent(realtimeState);
-        log.info("Game engine triggered successfully. roomCode={}",
-                roomCode);
+        log.info(
+                "Realtime game state published successfully. roomCode={}, gameId={}",
+                roomCode,
+                game.getId()
+        );
     }
 
     @Override
@@ -84,30 +94,37 @@ public class GameServiceImpl implements GameService {
             String roomCode,
             MakeMoveRequestDTO makeMoveRequestDTO
     ) {
-        log.info("Move request received. roomCode={}, userId={}",
-                roomCode,
-                makeMoveRequestDTO.getUserId());
 
         // Validate room exists
         RoomEntity room = roomRepository.findByRoomCode(roomCode)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(ROOM_NOT_FOUND));
+                {
+                    log.error("room not found. roomCode={}", roomCode);
+                   return new ResourceNotFoundException(ROOM_NOT_FOUND);
+                });
+
 
         List<RoomPlayerEntity> roomPlayers =
                 roomPlayerRepository.findByRoomCode(roomCode);
 
         // Fetch active game
         GameEntity game = gameRepository.findByRoomCode(roomCode)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                GAME_NOT_FOUND
-                        ));
+                .orElseThrow(() ->{
+                    log.error("Game not found. roomCode={}", roomCode);
+                       return new ResourceNotFoundException(
+                                GAME_NOT_FOUND);
+                });
 
         // Fetch realtime game state from Supabase
         RealtimeGameStateDTO currentState =
                 supabaseService.getGameState(
                         game.getId().toString()
                 );
+
+        log.info(
+                "Realtime game state fetched successfully. gameId={}",
+                game.getId()
+        );
 
         // Resolve engine
         GameEngine strategy =
@@ -138,6 +155,11 @@ public class GameServiceImpl implements GameService {
         // Engine validates move + computes next state
         EngineGameStateResponseDTO updatedState =
                 strategy.processMove(engineRequest);
+        log.info(
+                "Game engine processed move successfully. gameId={}, userId={}",
+                game.getId(),
+                makeMoveRequestDTO.getUserId()
+        );
 
         // Build move dto
         RealtimeMoveDTO moveDTO =
@@ -156,6 +178,11 @@ public class GameServiceImpl implements GameService {
 
         // Save move history
         supabaseService.saveMove(moveDTO);
+        log.info(
+                "Realtime move saved successfully. gameId={}, userId={}",
+                game.getId(),
+                makeMoveRequestDTO.getUserId()
+        );
 
         RealtimeGameStateDTO realtimeState =
                 GameMapper.toRealtimeState(
@@ -166,6 +193,10 @@ public class GameServiceImpl implements GameService {
 
         // Build updated realtime state
         supabaseService.updateGameState(realtimeState);
+        log.info(
+                "Realtime game state updated successfully. gameId={}",
+                game.getId()
+        );
 
 
         // If game completed save result
@@ -173,12 +204,10 @@ public class GameServiceImpl implements GameService {
                 GameStatusEnum.FINISHED) {
             game.setStatus(GameStatusEnum.FINISHED);
             gameRepository.save(game);
-            // save winner/result here
         }
         log.info("Move processed successfully. gameId={}",
                 game.getId());
 
-        // Return updated state
         return updatedState;
     }
 

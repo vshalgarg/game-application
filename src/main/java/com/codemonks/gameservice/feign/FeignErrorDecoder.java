@@ -7,12 +7,14 @@ import feign.Response;
 import feign.Util;
 import feign.codec.ErrorDecoder;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import static com.codemonks.gameservice.constants.ResponseErrorCodes.EXTERNAL_SERVICE_ERROR;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class FeignErrorDecoder implements ErrorDecoder {
 
     private final ObjectMapper objectMapper;
@@ -27,6 +29,14 @@ public class FeignErrorDecoder implements ErrorDecoder {
                     Util.toString(
                             response.body().asReader()
                     );
+
+            log.error("External service call failed");
+            log.error(
+                    "Feign error occurred. MethodKey: {}, Status: {}, ResponseBody: {}",
+                    methodKey,
+                    response.status(),
+                    body
+            );
 
             ExternalServiceErrorResponse error =
                     objectMapper.readValue(
@@ -50,6 +60,12 @@ public class FeignErrorDecoder implements ErrorDecoder {
             );
 
         } catch (Exception e) {
+            log.error(
+                    "Failed to decode feign error response. MethodKey: {}, Status: {}",
+                    methodKey,
+                    response.status(),
+                    e
+            );
             return new ExternalServiceException(
                     response.status(),
                     String.valueOf(EXTERNAL_SERVICE_ERROR)

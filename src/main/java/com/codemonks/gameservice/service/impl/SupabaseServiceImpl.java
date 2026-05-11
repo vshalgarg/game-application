@@ -4,7 +4,6 @@ import com.codemonks.gameservice.config.SupabaseProperties;
 import com.codemonks.gameservice.engineModule.dto.common.RealtimeGameStateDTO;
 import com.codemonks.gameservice.engineModule.dto.common.RealtimeMoveDTO;
 import com.codemonks.gameservice.service.SupabaseService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,7 +16,6 @@ public class SupabaseServiceImpl implements SupabaseService {
 
     private final WebClient supabaseWebClient;
     private final SupabaseProperties properties;
-    private final ObjectMapper objectMapper;
 
     @Override
     public void createInitialState(
@@ -25,9 +23,6 @@ public class SupabaseServiceImpl implements SupabaseService {
     ) {
 
         try{
-            String jsonPayload = objectMapper.writeValueAsString(state);
-            log.info("Supabase JSON payload: {}", jsonPayload);
-
             supabaseWebClient.post()
                     .uri("/rest/v1/" +
                             properties
@@ -40,14 +35,22 @@ public class SupabaseServiceImpl implements SupabaseService {
                             status -> status.isError(),
                             response -> response.bodyToMono(String.class)
                                     .map(errorBody -> {
-                                        log.error("Supabase error response: {}", errorBody);
+                                        log.error(
+                                                "Supabase create state request failed. gameId={}, error={}",
+                                                state.getGameId(),
+                                                errorBody
+                                        );
                                         return new RuntimeException(errorBody);
                                     })
                     )
                     .bodyToMono(Void.class)
                     .block();
         } catch (Exception e) {
-            log.error("Supabase create state failed", e);
+            log.error(
+                    "Failed to create realtime game state. gameId={}",
+                    state.getGameId(),
+                    e
+            );
             throw new RuntimeException("Failed to create realtime game state");
         }
     }
@@ -55,26 +58,41 @@ public class SupabaseServiceImpl implements SupabaseService {
     @Override
     public RealtimeGameStateDTO getGameState(String gameId) {
 
-        return supabaseWebClient.get()
-                .uri(uriBuilder ->
-                        uriBuilder
-                                .path("/rest/v1/" +
-                                        properties
-                                                .getTables()
-                                                .getRealtimeGameState())
-                                .queryParam("game_id", "eq." + gameId)
-                                .queryParam("select", "*")
-                                .build()
-                )
-                .retrieve()
-                .bodyToFlux(RealtimeGameStateDTO.class)
-                .blockFirst();
+        try {
+            return supabaseWebClient.get()
+                    .uri(uriBuilder ->
+                            uriBuilder
+                                    .path("/rest/v1/" +
+                                            properties
+                                                    .getTables()
+                                                    .getRealtimeGameState())
+                                    .queryParam("game_id", "eq." + gameId)
+                                    .queryParam("select", "*")
+                                    .build()
+                    )
+                    .retrieve()
+                    .bodyToFlux(RealtimeGameStateDTO.class)
+                    .blockFirst();
+
+        } catch (Exception e) {
+
+            log.error(
+                    "Failed to fetch realtime game state. gameId={}",
+                    gameId,
+                    e
+            );
+
+            throw new RuntimeException(
+                    "Failed to fetch realtime game state"
+            );
+        }
     }
 
     @Override
     public void updateGameState(
             RealtimeGameStateDTO state
     ) {
+        try {
         supabaseWebClient.patch()
                 .uri(uriBuilder ->
                         uriBuilder
@@ -91,8 +109,34 @@ public class SupabaseServiceImpl implements SupabaseService {
                 .header("Prefer", "return=minimal")
                 .bodyValue(state)
                 .retrieve()
+                .onStatus(
+                        status -> status.isError(),
+                        response -> response.bodyToMono(String.class)
+                                .map(errorBody -> {
+
+                                    log.error(
+                                            "Supabase update game state failed. gameId={}, error={}",
+                                            state.getGameId(),
+                                            errorBody
+                                    );
+
+                                    return new RuntimeException(errorBody);
+                                })
+                )
                 .bodyToMono(Void.class)
                 .block();
+        } catch (Exception e) {
+
+            log.error(
+                    "Failed to update realtime game state. gameId={}",
+                    state.getGameId(),
+                    e
+            );
+
+            throw new RuntimeException(
+                    "Failed to update realtime game state"
+            );
+        }
     }
 
     @Override
@@ -100,10 +144,6 @@ public class SupabaseServiceImpl implements SupabaseService {
             RealtimeMoveDTO moveDTO
     ) {
         try {
-            String jsonPayload =
-                    objectMapper.writeValueAsString(moveDTO);
-            log.info("Supabase move payload: {}",
-                    jsonPayload);
 
             supabaseWebClient.post()
                     .uri("/rest/v1/" +
@@ -118,7 +158,9 @@ public class SupabaseServiceImpl implements SupabaseService {
                             response -> response.bodyToMono(String.class)
                                     .map(errorBody -> {
                                         log.error(
-                                                "Supabase move insert error: {}",
+                                                "Supabase save move failed. gameId={}, playerId={}, error={}",
+                                                moveDTO.getGameId(),
+                                                moveDTO.getPlayerId(),
                                                 errorBody
                                         );
                                         return new RuntimeException(errorBody);
@@ -128,7 +170,12 @@ public class SupabaseServiceImpl implements SupabaseService {
                     .block();
 
         } catch (Exception e) {
-            log.error("Failed to save move", e);
+            log.error(
+                    "Failed to save realtime move. gameId={}, playerId={}",
+                    moveDTO.getGameId(),
+                    moveDTO.getPlayerId(),
+                    e
+            );
             throw new RuntimeException(
                     "Failed to save realtime move"
             );
