@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 import static com.codemonks.tic_tac_toe_game_engine.constant.EngineErrorCodesEnum.INVALID_MOVE;
+import static com.codemonks.tic_tac_toe_game_engine.constant.EngineErrorCodesEnum.INVALID_TURN;
 
 @Service
 @Slf4j
@@ -25,25 +26,27 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
         List<List<String>> board = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             board.add(new ArrayList<>(Collections.nCopies(3, null)));
-        }
+        }log.debug("[START_GAME] 3x3 empty board created successfully");
+
 
         // 2. Assign Players (Player 1 = X, Player 2 = O)
         List<PlayerDto> players = new ArrayList<>();
         players.add(new PlayerDto(request.getPlayerIds().get(0), 1, "X"));
         players.add(new PlayerDto(request.getPlayerIds().get(1), 2, "O"));
+        log.info("[START_GAME] Players assigned - P1: {}, P2: {}", request.getPlayerIds().get(0), request.getPlayerIds().get(1));
 
-        return buildResponse(board, players.get(0).getUserId(), GameStatusEnum.RUNNING, null, players);
+        return buildResponse(board, players.get(0).getUserId(), GameStatusEnum.INITIALIZED, null, players);
     }
 
     @Override
     public EngineGameStateResponseDTO makeMove(EngineMoveRequestDTO request) {
-        log.info("Processing move for user: {} in game: {}", request.getUserId(), request.getGameId());
+        log.info("[MAKE_MOVE] Processing move for user: {} in game: {}", request.getUserId(), request.getGameId());
 
         List<List<String>> board = request.getBoardState();
         List<PlayerDto> players = request.getPlayers();
 
         if (!request.getUserId().equals(request.getCurrentTurnUserId())) {
-            throw new RuntimeException("Wait for your turn! It's not your move.");
+            throw new TicTacToeEngineException(INVALID_TURN);
         }
         // 1. Find Current Player side (X or O)
         PlayerDto currentPlayer = players.stream()
@@ -63,16 +66,17 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
 
         // 3. Apply Move
         board.get(row).set(col, playerSign);
+        log.info("[MAKE_MOVE] Move applied: [{}] at [{}, {}]", playerSign, row, col);
 
         // 4. Check for Win
         if (checkWin(board, playerSign)) {
-            log.info("Player {} won the game!", request.getUserId());
+            log.info("[GAME_OVER] Player {} (Side: {}) won the game!", request.getUserId());
             return buildResponse(board, null, GameStatusEnum.WIN, request.getUserId(), players);
         }
 
         // 5. Check for Draw
         if (isBoardFull(board)) {
-            log.info("Game ended in a DRAW");
+            log.info("[GAME_OVER] Game ended in a DRAW - Board is full");
             return buildResponse(board, null, GameStatusEnum.DRAW, null, players);
         }
 
@@ -82,7 +86,7 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                 .map(PlayerDto::getUserId)
                 .findFirst()
                 .orElse(null);
-
+        log.info("[MAKE_MOVE] Move successful. Next turn: {}", nextTurnUserId);
         return buildResponse(board, nextTurnUserId, GameStatusEnum.RUNNING, null, players);
     }
 
@@ -98,10 +102,22 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
     }
 
     private boolean isBoardFull(List<List<String>> board) {
-        return board.stream().flatMap(List::stream).noneMatch(Objects::isNull);
+
+        boolean full = board.stream()
+                .flatMap(List::stream)
+                .noneMatch(Objects::isNull);
+
+        if (full) {
+            log.info("[CHECK_BOARD] Board is completely full. No more moves possible.");
+        } else {
+            log.debug("[CHECK_BOARD] Board still has empty cells.");
+        }
+        return full;
     }
 
     private EngineGameStateResponseDTO buildResponse(List<List<String>> board, Long turnId, GameStatusEnum status, Long winnerId, List<PlayerDto> players) {
+        log.info("[BUILD_RESPONSE] Finalizing state - Status: {}, Next Turn: {}, Winner: {}",
+                status, turnId, winnerId);
         return EngineGameStateResponseDTO.builder()
                 .boardState(board)
                 .currentTurnUserId(turnId)

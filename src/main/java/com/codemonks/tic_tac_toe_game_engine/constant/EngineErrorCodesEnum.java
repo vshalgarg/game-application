@@ -5,8 +5,8 @@ import lombok.Getter;
 @Getter
 public enum EngineErrorCodesEnum {
 
-   INVALID_MOVE(4001,"Invalid move: Cell is occupied or out of bounds."),
-   GAME_ALREADY_OVER(4002,"Game is already finished.");
+    INVALID_MOVE(4001,"Invalid move: Cell is occupied or out of bounds."),
+    INVALID_TURN(4002, "Wait for your turn! It's not your move.");
 
    private final int code;
    private final String message;
