@@ -54,8 +54,12 @@ public class RoomServiceImpl implements RoomService {
         RoomPlayerEntity player = RoomMapper.toHostPlayer(request, roomCode);
         roomPlayerRepository.save(player);
 
-        log.info("Host added to room. roomId={}, userId={}", room.getId(), request.getUserId());
-
+        log.info(
+                "Room created successfully. roomId={}, roomCode={}, hostUserId={}",
+                room.getId(),
+                room.getRoomCode(),
+                request.getUserId()
+        );
         return RoomMapper.toRoomResponse(room);
     }
 
@@ -118,8 +122,18 @@ public class RoomServiceImpl implements RoomService {
         if (currentPlayers + 1 == config.getMaxPlayers()) {
             room.setStatus(RoomStatusEnum.FULL);
             roomRepository.save(room);
-            log.info("Room is now FULL. roomId={}", room.getId());
+            log.info(
+                    "Room reached maximum capacity. roomId={}",
+                    room.getId()
+            );
         }
+
+        log.info(
+                "User joined room successfully. roomId={}, roomCode={}, userId={}",
+                room.getId(),
+                roomCode,
+                request.getUserId()
+        );
         return RoomMapper.toRoomResponse(room);
     }
 

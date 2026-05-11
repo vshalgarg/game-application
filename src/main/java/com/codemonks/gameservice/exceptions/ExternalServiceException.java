@@ -5,13 +5,13 @@ import lombok.Getter;
 @Getter
 public class ExternalServiceException extends RuntimeException {
 
-    private final Integer errorCode;
+    private final Integer externalStatusCode;
 
     public ExternalServiceException(
             Integer errorCode,
             String message
     ) {
         super(message);
-        this.errorCode = errorCode != null ? errorCode : 500;
+        this.externalStatusCode = errorCode != null ? errorCode : 502;
     }
 }
