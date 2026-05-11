@@ -4,5 +4,7 @@ public enum GameStatusEnum {
 
     INITIALIZED,
     RUNNING,
+    WIN,
+    DRAW,
     FINISHED
 }
