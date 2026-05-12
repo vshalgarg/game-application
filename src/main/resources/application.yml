@@ -1,3 +1,6 @@
 spring:
   application:
     name: tic-tac-toe-game-engine
+
+server:
+  port: 8081
