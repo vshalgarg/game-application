@@ -8,6 +8,6 @@ import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateRespon
 
 public interface GameService {
 
-    void startGame(String roomCode);
+    EngineGameStateResponseDTO startGame(String roomCode);
     EngineGameStateResponseDTO makeMove(String roomCode, MakeMoveRequestDTO request);
 }

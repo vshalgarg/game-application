@@ -45,7 +45,7 @@ public class GameServiceImpl implements GameService {
     private final SupabaseService supabaseService;
 
     @Override
-    public void startGame(String roomCode) {
+    public EngineGameStateResponseDTO startGame(String roomCode) {
 
         RoomEntity room = roomRepository.findByRoomCode(roomCode)
                 .orElseThrow(() -> {
@@ -87,6 +87,8 @@ public class GameServiceImpl implements GameService {
                 roomCode,
                 game.getId()
         );
+
+        return engineResponse;
     }
 
     @Override
