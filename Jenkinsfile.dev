@@ -1,0 +1,111 @@
+pipeline {
+
+    agent any
+
+    environment {
+
+        IMAGE_NAME = "vshalgargnpl/game-service"
+        TAG = "latest"
+        CONTAINER_NAME = "game-service"
+        PORT_MAPPING = "8089:8089"
+        REGISTRY = "index.docker.io/v1/"
+    }
+
+    parameters {
+
+        string(
+                name: 'BRANCH_NAME',
+                defaultValue: 'game-service-dev',
+                description: 'Branch to build'
+        )
+    }
+
+    stages {
+
+        stage('Checkout') {
+
+            steps {
+
+                echo 'Checking out game-service source code'
+                git branch: "${params.BRANCH_NAME}",
+                        url: 'git@github.com:vshalgarg/game-application.git'
+            }
+        }
+
+        stage('Build Jar') {
+            steps {
+                echo 'Building game-service jar'
+                sh '''
+                    chmod +x mvnw
+                    ./mvnw clean package -DskipTests
+                '''
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building Docker image'
+                sh '''
+                    docker build -t "$IMAGE_NAME:$TAG" .
+                '''
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+
+                    docker.withRegistry(
+                            "https://${REGISTRY}",
+                            'docker-credentials-id'
+                    ) {
+                        def appImage = docker.build("${IMAGE_NAME}:${TAG}")
+                        appImage.push()
+                    }
+                }
+            }
+        }
+
+        stage('Stop Existing Container') {
+            steps {
+                sh '''
+                    docker stop "$CONTAINER_NAME" || true
+                    docker rm "$CONTAINER_NAME" || true
+                '''
+            }
+        }
+
+        stage('Run Container') {
+            steps {
+                withCredentials([
+                    string(
+                            credentialsId: 'GAME_SERVICE_DB_PASSWORD',
+                            variable: 'MYSQL_PASSWORD'
+                    )
+                ]) {
+
+                    sh '''
+                        docker run -d \
+                          --name "$CONTAINER_NAME" \
+                          -p "$PORT_MAPPING" \
+                          --restart unless-stopped \
+                          --network game-network \
+                          --add-host=host.docker.internal:host-gateway \
+                          -e SPRING_PROFILES_ACTIVE=dev \
+                          -e spring.datasource.password="$MYSQL_PASSWORD" \
+                          -v /var/log/game-service:/logs \
+                          "$IMAGE_NAME:$TAG"
+                    '''
+                }
+            }
+        }
+
+        stage('Clean Old Images') {
+            steps {
+                sh '''
+                    docker image prune -f
+                '''
+            }
+        }
+    }
+}

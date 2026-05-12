@@ -3,7 +3,9 @@ package com.codemonks.gameservice.service.impl;
 import com.codemonks.gameservice.constants.ResponseErrorCodes;
 import com.codemonks.gameservice.dto.request.CreateRoomRequestDTO;
 import com.codemonks.gameservice.dto.request.JoinRoomRequestDTO;
+import com.codemonks.gameservice.dto.response.RoomDetailsResponseDTO;
 import com.codemonks.gameservice.dto.response.RoomResponseDTO;
+import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.gameservice.entity.GameConfigEntity;
 import com.codemonks.gameservice.entity.RoomEntity;
 import com.codemonks.gameservice.entity.RoomPlayerEntity;
@@ -22,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 import static com.codemonks.gameservice.constants.ResponseErrorCodes.*;
@@ -139,7 +142,7 @@ public class RoomServiceImpl implements RoomService {
 
     @Transactional
     @Override
-    public void startGame(String roomCode, Long userId) {
+    public EngineGameStateResponseDTO startGame(String roomCode, Long userId) {
 
         log.info("Start game request. roomCode={}, userId={}", roomCode, userId);
 
@@ -162,7 +165,29 @@ public class RoomServiceImpl implements RoomService {
         room.setStatus(IN_GAME);
         roomRepository.save(room);
         log.info("Game started. roomId={}", room.getId());
-        gameService.startGame(roomCode);
+       return gameService.startGame(roomCode);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public RoomDetailsResponseDTO getRoomDetails(String roomCode) {
+
+        log.info("Fetching room details for roomCode={}", roomCode);
+
+        RoomEntity room = roomRepository
+                .findByRoomCode(roomCode)
+                .orElseThrow(() -> new ResourceNotFoundException(ROOM_NOT_FOUND));
+
+        List<RoomPlayerEntity> players =
+                roomPlayerRepository.findByRoomCode(roomCode);
+
+        log.info(
+                "Room details fetched successfully for roomCode={}, totalPlayers={}",
+                roomCode,
+                players.size()
+        );
+
+        return RoomMapper.toRoomDetailsResponseDTO(room, players);
     }
 
     private String generateRoomCode() {

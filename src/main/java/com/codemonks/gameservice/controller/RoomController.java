@@ -4,7 +4,9 @@ import com.codemonks.gameservice.constants.ApiUrlConstants;
 import com.codemonks.gameservice.dto.ApiResponse;
 import com.codemonks.gameservice.dto.request.CreateRoomRequestDTO;
 import com.codemonks.gameservice.dto.request.JoinRoomRequestDTO;
+import com.codemonks.gameservice.dto.response.RoomDetailsResponseDTO;
 import com.codemonks.gameservice.dto.response.RoomResponseDTO;
+import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.gameservice.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +50,7 @@ public class RoomController {
     }
 
     @PostMapping(START_GAME)
-    public ResponseEntity<ApiResponse<Void>> startGame(
+    public ResponseEntity<ApiResponse<EngineGameStateResponseDTO>> startGame(
             @PathVariable String roomCode,
             @RequestParam Long userId) {
 
@@ -58,7 +60,20 @@ public class RoomController {
                 userId
         );
 
-        roomService.startGame(roomCode, userId);
-        return ResponseEntity.ok(ApiResponse.success(null));
+        EngineGameStateResponseDTO response = roomService.startGame(roomCode, userId);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping(GET_ROOM_DETAILS)
+    public ResponseEntity<ApiResponse<RoomDetailsResponseDTO>> getRoomDetails(
+            @PathVariable String roomCode
+    ) {
+
+        RoomDetailsResponseDTO response =
+                roomService.getRoomDetails(roomCode);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(response)
+        );
     }
 }
