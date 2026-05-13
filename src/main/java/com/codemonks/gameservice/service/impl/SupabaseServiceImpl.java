@@ -36,8 +36,8 @@ public class SupabaseServiceImpl implements SupabaseService {
                             response -> response.bodyToMono(String.class)
                                     .map(errorBody -> {
                                         log.error(
-                                                "Supabase create state request failed. gameId={}, error={}",
-                                                state.getGameId(),
+                                                "Supabase create state request failed. roomId={}, error={}",
+                                                state.getRoomId(),
                                                 errorBody
                                         );
                                         return new RuntimeException(errorBody);
@@ -47,8 +47,8 @@ public class SupabaseServiceImpl implements SupabaseService {
                     .block();
         } catch (Exception e) {
             log.error(
-                    "Failed to create realtime game state. gameId={}",
-                    state.getGameId(),
+                    "Failed to create realtime game state. roomId={}",
+                    state.getRoomId(),
                     e
             );
             throw new RuntimeException("Failed to create realtime game state");
@@ -66,7 +66,7 @@ public class SupabaseServiceImpl implements SupabaseService {
                                             properties
                                                     .getTables()
                                                     .getRealtimeGameState())
-                                    .queryParam("game_id", "eq." + gameId)
+                                    .queryParam("room_id", "eq." + gameId)
                                     .queryParam("select", "*")
                                     .build()
                     )
@@ -101,8 +101,8 @@ public class SupabaseServiceImpl implements SupabaseService {
                                                 .getTables()
                                                 .getRealtimeGameState())
                                 .queryParam(
-                                        "game_id",
-                                        "eq." + state.getGameId()
+                                        "room_id",
+                                        "eq." + state.getRoomId()
                                 )
                                 .build()
                 )
@@ -115,8 +115,8 @@ public class SupabaseServiceImpl implements SupabaseService {
                                 .map(errorBody -> {
 
                                     log.error(
-                                            "Supabase update game state failed. gameId={}, error={}",
-                                            state.getGameId(),
+                                            "Supabase update game state failed. roomId={}, error={}",
+                                            state.getRoomId(),
                                             errorBody
                                     );
 
@@ -128,8 +128,8 @@ public class SupabaseServiceImpl implements SupabaseService {
         } catch (Exception e) {
 
             log.error(
-                    "Failed to update realtime game state. gameId={}",
-                    state.getGameId(),
+                    "Failed to update realtime game state. roomId={}",
+                    state.getRoomId(),
                     e
             );
 
@@ -158,8 +158,8 @@ public class SupabaseServiceImpl implements SupabaseService {
                             response -> response.bodyToMono(String.class)
                                     .map(errorBody -> {
                                         log.error(
-                                                "Supabase save move failed. gameId={}, playerId={}, error={}",
-                                                moveDTO.getGameId(),
+                                                "Supabase save move failed. roomId={}, playerId={}, error={}",
+                                                moveDTO.getRoomId(),
                                                 moveDTO.getPlayerId(),
                                                 errorBody
                                         );
@@ -171,8 +171,8 @@ public class SupabaseServiceImpl implements SupabaseService {
 
         } catch (Exception e) {
             log.error(
-                    "Failed to save realtime move. gameId={}, playerId={}",
-                    moveDTO.getGameId(),
+                    "Failed to save realtime move. roomId={}, playerId={}",
+                    moveDTO.getRoomId(),
                     moveDTO.getPlayerId(),
                     e
             );

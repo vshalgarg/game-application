@@ -7,7 +7,7 @@ import com.codemonks.gameservice.dto.response.PlayerResponseDTO;
 import com.codemonks.gameservice.dto.response.RoomDetailsResponseDTO;
 import com.codemonks.gameservice.dto.response.RoomResponseDTO;
 import com.codemonks.gameservice.entity.RoomEntity;
-import com.codemonks.gameservice.entity.RoomPlayerEntity;
+import com.codemonks.gameservice.entity.PlayerEntity;
 import com.codemonks.gameservice.enums.RoomPlayerRole;
 import com.codemonks.gameservice.enums.RoomPlayerStatus;
 import com.codemonks.gameservice.enums.RoomStatusEnum;
@@ -27,20 +27,20 @@ public class RoomMapper {
         return room;
     }
 
-    public static RoomPlayerEntity toHostPlayer(CreateRoomRequestDTO request, String roomCode) {
-        RoomPlayerEntity player = new RoomPlayerEntity();
+    public static PlayerEntity toHostPlayer(CreateRoomRequestDTO request, RoomEntity room) {
+        PlayerEntity player = new PlayerEntity();
         player.setTenantId(request.getTenantId());
-        player.setRoomCode(roomCode);
+        player.setRoom(room);
         player.setUserId(request.getUserId());
         player.setRole(RoomPlayerRole.HOST);
         player.setStatus(RoomPlayerStatus.ACTIVE);
         return player;
     }
 
-    public static RoomPlayerEntity toJoinPlayer(JoinRoomRequestDTO request, String roomCode) {
-        RoomPlayerEntity player = new RoomPlayerEntity();
+    public static PlayerEntity toJoinPlayer(JoinRoomRequestDTO request, RoomEntity room) {
+        PlayerEntity player = new PlayerEntity();
         player.setTenantId(request.getTenantId());
-        player.setRoomCode(roomCode);
+        player.setRoom(room);
         player.setUserId(request.getUserId());
         player.setRole(RoomPlayerRole.PLAYER);
         player.setStatus(RoomPlayerStatus.ACTIVE);
@@ -57,7 +57,7 @@ public class RoomMapper {
     }
 
     public static PlayerResponseDTO toPlayerResponseDTO(
-            RoomPlayerEntity entity
+            PlayerEntity entity
     ) {
 
         return PlayerResponseDTO.builder()
@@ -69,7 +69,7 @@ public class RoomMapper {
 
     public static RoomDetailsResponseDTO toRoomDetailsResponseDTO(
             RoomEntity room,
-            List<RoomPlayerEntity> players
+            List<PlayerEntity> players
     ) {
 
         return RoomDetailsResponseDTO.builder()

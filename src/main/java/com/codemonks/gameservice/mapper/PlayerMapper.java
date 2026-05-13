@@ -1,7 +1,7 @@
 package com.codemonks.gameservice.mapper;
 
 import com.codemonks.gameservice.engineModule.dto.common.PlayerDto;
-import com.codemonks.gameservice.entity.RoomPlayerEntity;
+import com.codemonks.gameservice.entity.PlayerEntity;
 import com.codemonks.gameservice.enums.RoomPlayerRole;
 
 import java.util.List;
@@ -9,7 +9,7 @@ import java.util.List;
 public class PlayerMapper {
 
     public static List<PlayerDto> toPlayerDtos(
-            List<RoomPlayerEntity> roomPlayers
+            List<PlayerEntity> roomPlayers
     ) {
 
         return roomPlayers.stream()
@@ -18,7 +18,7 @@ public class PlayerMapper {
     }
 
     private static PlayerDto toPlayerDto(
-            RoomPlayerEntity player
+            PlayerEntity player
     ) {
 
         boolean isHost =

@@ -12,7 +12,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EngineMoveRequestDTO {
-    private Long gameId;
+    private Long roomId;
     private List<List<String>> boardState;
     private Long currentTurnUserId;
     private Long userId;

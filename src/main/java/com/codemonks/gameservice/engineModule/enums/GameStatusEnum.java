@@ -1,4 +1,4 @@
-package com.codemonks.gameservice.enums;
+package com.codemonks.gameservice.engineModule.enums;
 
 public enum GameStatusEnum {
 

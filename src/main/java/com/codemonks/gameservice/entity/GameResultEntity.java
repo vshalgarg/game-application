@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Table(
         name = "game_results",
         indexes = {
-                @Index(name = "idx_result_game", columnList = "game_id"),
+                @Index(name = "idx_result_game", columnList = "room_id"),
                 @Index(name = "idx_result_tenant", columnList = "tenant_id"),
                 @Index(name = "idx_result_winner", columnList = "winner_id")
         }
@@ -31,12 +31,13 @@ public class GameResultEntity extends BaseEntity {
     @Column(name = "tenant_id", nullable = false)
     private String tenantId;
 
-    @Column(name = "game_id", nullable = false)
-    private Long gameId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id", nullable = false)
+    private RoomEntity room;
 
     // winner (userId)
     @Column(name = "winner_id")
-    private String winnerId;
+    private Long winnerId;
 
     @Column(name = "completed_at", nullable = false)
     private LocalDateTime completedAt;

@@ -6,6 +6,7 @@ import com.codemonks.gameservice.enums.converter.GameTypeConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 
 @Entity
 @Table(
@@ -25,26 +26,31 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(callSuper = false, onlyExplicitlyIncluded = true)
-public class RoomEntity extends BaseEntity{
+public class RoomEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
-    @Column(name = "id", updatable = false, nullable = false)
     private Long id;
 
-    @Column(name = "tenant_id", length = 50, nullable = false)
+    @Column(name = "tenant_id", nullable = false, length = 50)
     private String tenantId;
 
-    @Column(name = "room_code", length = 10, nullable = false, unique = true)
+    @Column(name = "room_code", nullable = false, unique = true, length = 10)
     private String roomCode;
 
     @Convert(converter = GameTypeConverter.class)
-    @Column(name = "game_type", columnDefinition = "TINYINT")
+    @Column(name = "game_type", nullable = false)
     private GameTypeEnum gameType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 20, nullable = false)
+    @Column(name = "status", nullable = false, length = 20)
     private RoomStatusEnum status;
+
+    @Column(name = "started_at")
+    private LocalDateTime startedAt;
+
+    @Column(name = "ended_at")
+    private LocalDateTime endedAt;
 
 }
