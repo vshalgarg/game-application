@@ -8,15 +8,14 @@ import com.codemonks.gameservice.dto.response.RoomResponseDTO;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.gameservice.entity.GameConfigEntity;
 import com.codemonks.gameservice.entity.RoomEntity;
-import com.codemonks.gameservice.entity.RoomPlayerEntity;
+import com.codemonks.gameservice.entity.PlayerEntity;
 import com.codemonks.gameservice.enums.RoomPlayerRole;
-import com.codemonks.gameservice.enums.RoomStatusEnum;
 import com.codemonks.gameservice.exceptions.GameException;
 import com.codemonks.gameservice.exceptions.ResourceNotFoundException;
 import com.codemonks.gameservice.mapper.RoomMapper;
 import com.codemonks.gameservice.repository.GameConfigEntityRepository;
 import com.codemonks.gameservice.repository.RoomEntityRepository;
-import com.codemonks.gameservice.repository.RoomPlayerEntityRepository;
+import com.codemonks.gameservice.repository.PlayerEntityRepository;
 import com.codemonks.gameservice.service.GameService;
 import com.codemonks.gameservice.service.RoomService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +27,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.codemonks.gameservice.constants.ResponseErrorCodes.*;
-import static com.codemonks.gameservice.enums.RoomStatusEnum.IN_GAME;
+import static com.codemonks.gameservice.enums.RoomStatusEnum.*;
 
 
 @Service
@@ -37,7 +36,7 @@ import static com.codemonks.gameservice.enums.RoomStatusEnum.IN_GAME;
 public class RoomServiceImpl implements RoomService {
 
     private final RoomEntityRepository roomRepository;
-    private final RoomPlayerEntityRepository roomPlayerRepository;
+    private final PlayerEntityRepository PlayerEntityRepository;
     private final GameConfigEntityRepository gameConfigRepository;
     private final GameService gameService;
 
@@ -54,8 +53,8 @@ public class RoomServiceImpl implements RoomService {
 
         log.debug("Room created with id={} and code={}", room.getId(), room.getRoomCode());
 
-        RoomPlayerEntity player = RoomMapper.toHostPlayer(request, roomCode);
-        roomPlayerRepository.save(player);
+        PlayerEntity player = RoomMapper.toHostPlayer(request, room);
+        PlayerEntityRepository.save(player);
 
         log.info(
                 "Room created successfully. roomId={}, roomCode={}, hostUserId={}",
@@ -71,19 +70,19 @@ public class RoomServiceImpl implements RoomService {
     public RoomResponseDTO joinRoom(String roomCode, JoinRoomRequestDTO request) {
 
         log.info("User joining room. roomCode={}, userId={}", roomCode, request.getUserId());
-        RoomEntity room = roomRepository.findByRoomCode(roomCode)
+        RoomEntity room = roomRepository.findByRoomCodeAndTenantId(roomCode, request.getTenantId())
                 .orElseThrow(() -> {
                     log.error("Room not found for code={}", roomCode);
                     return new ResourceNotFoundException(ROOM_NOT_FOUND);
                 });
 
-        boolean existingPlayer = roomPlayerRepository
-                .existsByRoomCodeAndUserId(
-                        roomCode,
+        boolean existingPlayer = PlayerEntityRepository
+                .existsByRoom_IdAndUserId(
+                        room.getId(),
                         request.getUserId()
                 );
 
-        if (room.getStatus() == IN_GAME) {
+        if (room.getStatus() == ACTIVE) {
             if (!existingPlayer) {
                 log.warn("Join rejected. Game already started. roomId={}, userId={}",
                         room.getId(),
@@ -110,26 +109,26 @@ public class RoomServiceImpl implements RoomService {
                     return new GameException(GAME_CONFIG_NOT_FOUND);
                 });
 
-        int currentPlayers = roomPlayerRepository.countByRoomCode(roomCode);
+        int currentPlayers = PlayerEntityRepository.countByRoom_Id(room.getId());
 
         if (currentPlayers >= config.getMaxPlayers()) {
             log.warn("Room full. roomId={}, maxPlayers={}", room.getId(), config.getMaxPlayers());
             throw new GameException(ROOM_FULL);
         }
 
-        RoomPlayerEntity player = RoomMapper.toJoinPlayer(request, roomCode);
-        roomPlayerRepository.save(player);
+        PlayerEntity player = RoomMapper.toJoinPlayer(request, room);
+        PlayerEntityRepository.save(player);
 
         log.info("User joined room. roomId={}, userId={}", room.getId(), request.getUserId());
 
-        if (currentPlayers + 1 == config.getMaxPlayers()) {
-            room.setStatus(RoomStatusEnum.FULL);
-            roomRepository.save(room);
-            log.info(
-                    "Room reached maximum capacity. roomId={}",
-                    room.getId()
-            );
-        }
+//        if (currentPlayers + 1 == config.getMaxPlayers()) {
+//            room.setStatus(RoomStatusEnum.FULL);
+//            roomRepository.save(room);
+//            log.info(
+//                    "Room reached maximum capacity. roomId={}",
+//                    room.getId()
+//            );
+//        }
 
         log.info(
                 "User joined room successfully. roomId={}, roomCode={}, userId={}",
@@ -150,19 +149,15 @@ public class RoomServiceImpl implements RoomService {
                 .orElseThrow(() -> new ResourceNotFoundException(ROOM_NOT_FOUND));
 
         // Check if user is host
-        RoomPlayerEntity player = roomPlayerRepository
-                .findByRoomCodeAndUserId(roomCode, userId)
+        PlayerEntity player = PlayerEntityRepository
+                .findByRoom_IdAndUserId(room.getId(), userId)
                 .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
 
         if (player.getRole() != RoomPlayerRole.HOST) {
             throw new GameException(ResponseErrorCodes.ONLY_HOST_CAN_START_GAME);
         }
 
-//        if (room.getStatus() != RoomStatusEnum.FULL) {
-//            throw new GameException(ROOM_NOT_FULL);
-//        }
-
-        room.setStatus(IN_GAME);
+        room.setStatus(ACTIVE);
         roomRepository.save(room);
         log.info("Game started. roomId={}", room.getId());
        return gameService.startGame(roomCode);
@@ -178,8 +173,8 @@ public class RoomServiceImpl implements RoomService {
                 .findByRoomCode(roomCode)
                 .orElseThrow(() -> new ResourceNotFoundException(ROOM_NOT_FOUND));
 
-        List<RoomPlayerEntity> players =
-                roomPlayerRepository.findByRoomCode(roomCode);
+        List<PlayerEntity> players =
+                PlayerEntityRepository.findByRoom_Id(room.getId());
 
         log.info(
                 "Room details fetched successfully for roomCode={}, totalPlayers={}",

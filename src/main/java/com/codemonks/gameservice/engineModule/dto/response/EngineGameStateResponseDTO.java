@@ -1,7 +1,7 @@
 package com.codemonks.gameservice.engineModule.dto.response;
 
 import com.codemonks.gameservice.engineModule.dto.common.PlayerDto;
-import com.codemonks.gameservice.enums.GameStatusEnum;
+import com.codemonks.gameservice.engineModule.enums.GameStatusEnum;
 import lombok.*;
 
 import java.util.List;

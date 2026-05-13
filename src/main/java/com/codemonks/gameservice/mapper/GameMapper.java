@@ -3,9 +3,8 @@ package com.codemonks.gameservice.mapper;
 import com.codemonks.gameservice.engineModule.dto.common.RealtimeGameStateDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequestDto;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
-import com.codemonks.gameservice.entity.GameEntity;
+import com.codemonks.gameservice.entity.PlayerEntity;
 import com.codemonks.gameservice.entity.RoomEntity;
-import com.codemonks.gameservice.entity.RoomPlayerEntity;
 
 import java.util.List;
 
@@ -13,10 +12,10 @@ public class GameMapper {
 
     public static EngineStartGameRequestDto toStartGameRequest(
             RoomEntity room,
-            List<RoomPlayerEntity> players
+            List<PlayerEntity> players
     ) {
         List<Long> playerIds = players.stream()
-                .map(RoomPlayerEntity::getUserId)
+                .map(PlayerEntity::getUserId)
                 .toList();
 
         return EngineStartGameRequestDto.builder()
@@ -28,19 +27,18 @@ public class GameMapper {
     }
 
         public static RealtimeGameStateDTO toRealtimeState(
-                GameEntity game,
-                String roomCode,
+                RoomEntity room,
                 EngineGameStateResponseDTO response
         ) {
 
             return RealtimeGameStateDTO.builder()
-                    .gameId(game.getId())
-                    .roomCode(roomCode)
+                    .roomId(room.getId())
+                    .roomCode(room.getRoomCode())
                     .boardState(response.getBoardState())
                     .currentTurnUserId(
                             response.getCurrentTurnUserId()
                     )
-                    .status(response.getStatus())
+                    .gameState(String.valueOf(response.getStatus()))
                     .winnerUserId(
                             response.getWinnerUserId()
                     )

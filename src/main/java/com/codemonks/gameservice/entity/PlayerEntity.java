@@ -9,9 +9,9 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(
-        name = "room_players",
+        name = "players",
         indexes = {
-                @Index(name = "idx_room_player_room", columnList = "room_code"),
+                @Index(name = "idx_room_player_room", columnList = "room_id"),
                 @Index(name = "idx_room_player_user", columnList = "user_id"),
                 @Index(name = "idx_room_player_status", columnList = "status"),
                 @Index(name = "idx_room_player_tenant", columnList = "tenant_id")
@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_room_user",
-                        columnNames = {"room_code", "user_id"}
+                        columnNames = {"room_Id", "user_id"}
                 )
         }
 )
@@ -29,7 +29,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(callSuper = false, onlyExplicitlyIncluded = true)
-public class RoomPlayerEntity extends BaseEntity{
+public class PlayerEntity extends BaseEntity{
 
     @Id
     @EqualsAndHashCode.Include
@@ -40,10 +40,7 @@ public class RoomPlayerEntity extends BaseEntity{
     @Column(name = "tenant_id", length = 50, nullable = false)
     private String tenantId;
 
-    @Column(name = "room_code", nullable = false)
-    private String roomCode;
-
-    @Column(name = "user_id", length = 50, nullable = false)
+    @Column(name = "user_id",nullable = false)
     private Long userId;
 
     @Enumerated(EnumType.STRING)
@@ -56,6 +53,10 @@ public class RoomPlayerEntity extends BaseEntity{
 
     @Column(name = "joined_at", nullable = false, updatable = false)
     private LocalDateTime joinedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id", nullable = false)
+    private RoomEntity room;
 
     @PrePersist
     public void prePersist() {

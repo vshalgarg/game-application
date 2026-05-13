@@ -10,8 +10,8 @@ import java.util.Map;
 @Builder
 public class RealtimeMoveDTO {
 
-    @JsonProperty("game_id")
-    private Long gameId;
+    @JsonProperty("room_id")
+    private Long roomId;
 
     @JsonProperty("move_number")
     private Integer moveNumber;

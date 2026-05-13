@@ -7,30 +7,31 @@ import com.codemonks.gameservice.engineModule.dto.common.RealtimeMoveDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineMoveRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequestDto;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
+import com.codemonks.gameservice.engineModule.enums.GameStatusEnum;
 import com.codemonks.gameservice.engineModule.factory.GameEngineFactory;
 import com.codemonks.gameservice.engineModule.strategy.GameEngine;
-import com.codemonks.gameservice.entity.GameEntity;
+import com.codemonks.gameservice.entity.GameResultEntity;
 import com.codemonks.gameservice.entity.RoomEntity;
-import com.codemonks.gameservice.entity.RoomPlayerEntity;
-import com.codemonks.gameservice.enums.GameStatusEnum;
-import com.codemonks.gameservice.enums.RoomPlayerRole;
+import com.codemonks.gameservice.entity.PlayerEntity;
+import com.codemonks.gameservice.enums.RoomStatusEnum;
 import com.codemonks.gameservice.exceptions.ResourceNotFoundException;
 import com.codemonks.gameservice.mapper.GameMapper;
 import com.codemonks.gameservice.mapper.PlayerMapper;
-import com.codemonks.gameservice.repository.GameEntityRepository;
+import com.codemonks.gameservice.repository.GameResultEntityRepository;
 import com.codemonks.gameservice.repository.RoomEntityRepository;
-import com.codemonks.gameservice.repository.RoomPlayerEntityRepository;
+import com.codemonks.gameservice.repository.PlayerEntityRepository;
 import com.codemonks.gameservice.service.GameService;
 import com.codemonks.gameservice.service.SupabaseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.codemonks.gameservice.constants.ResponseErrorCodes.GAME_NOT_FOUND;
 import static com.codemonks.gameservice.constants.ResponseErrorCodes.ROOM_NOT_FOUND;
 
 @Service
@@ -39,10 +40,10 @@ import static com.codemonks.gameservice.constants.ResponseErrorCodes.ROOM_NOT_FO
 public class GameServiceImpl implements GameService {
 
     private final RoomEntityRepository roomRepository;
-    private final RoomPlayerEntityRepository roomPlayerRepository;
+    private final PlayerEntityRepository PlayerEntityRepository;
     private final GameEngineFactory gameEngineFactory;
-    private final GameEntityRepository gameRepository;
     private final SupabaseService supabaseService;
+    private final GameResultEntityRepository gameResultEntityRepository;
 
     @Override
     public EngineGameStateResponseDTO startGame(String roomCode) {
@@ -52,8 +53,8 @@ public class GameServiceImpl implements GameService {
                     log.error("Room not found. roomCode={}", roomCode);
                     return new ResourceNotFoundException(ROOM_NOT_FOUND);
                         });
-        List<RoomPlayerEntity> players =
-                roomPlayerRepository.findByRoomCode(roomCode);
+        List<PlayerEntity> players =
+                PlayerEntityRepository.findByRoom_Id(room.getId());
 
         // build engine req
         EngineStartGameRequestDto request =
@@ -68,29 +69,24 @@ public class GameServiceImpl implements GameService {
                 roomCode
         );
 
-        // Persist game data
-        GameEntity game =
-                saveGameState(room, engineResponse);
-
         // build realtime dto
         RealtimeGameStateDTO realtimeState =
                 GameMapper.toRealtimeState(
-                        game,
-                        roomCode,
+                        room,
                         engineResponse
                 );
 
         // Publish realtime event
         publishGameStartedEvent(realtimeState);
         log.info(
-                "Realtime game state published successfully. roomCode={}, gameId={}",
-                roomCode,
-                game.getId()
+                "Realtime game state published successfully. roomCode={}, roomId={}",
+                room.getRoomCode(),
+                room.getId()
         );
-
         return engineResponse;
     }
 
+    @Transactional
     @Override
     public EngineGameStateResponseDTO makeMove(
             String roomCode,
@@ -106,26 +102,18 @@ public class GameServiceImpl implements GameService {
                 });
 
 
-        List<RoomPlayerEntity> roomPlayers =
-                roomPlayerRepository.findByRoomCode(roomCode);
-
-        // Fetch active game
-        GameEntity game = gameRepository.findByRoomCode(roomCode)
-                .orElseThrow(() ->{
-                    log.error("Game not found. roomCode={}", roomCode);
-                       return new ResourceNotFoundException(
-                                GAME_NOT_FOUND);
-                });
+        List<PlayerEntity> roomPlayers =
+                PlayerEntityRepository.findByRoom_Id(room.getId());
 
         // Fetch realtime game state from Supabase
         RealtimeGameStateDTO currentState =
                 supabaseService.getGameState(
-                        game.getId().toString()
+                        room.getId().toString()
                 );
 
         log.info(
-                "Realtime game state fetched successfully. gameId={}",
-                game.getId()
+                "Realtime game state fetched successfully. roomId={}",
+                room.getId()
         );
 
         // Resolve engine
@@ -144,7 +132,7 @@ public class GameServiceImpl implements GameService {
 
         EngineMoveRequestDTO engineRequest =
                 EngineMoveRequestDTO.builder()
-                        .gameId(game.getId())
+                        .roomId(room.getId())
                         .boardState(currentState.getBoardState())
                         .currentTurnUserId(
                                 currentState.getCurrentTurnUserId()
@@ -158,15 +146,15 @@ public class GameServiceImpl implements GameService {
         EngineGameStateResponseDTO updatedState =
                 strategy.processMove(engineRequest);
         log.info(
-                "Game engine processed move successfully. gameId={}, userId={}",
-                game.getId(),
+                "Game engine processed move successfully. roomId={}, userId={}",
+                room.getId(),
                 makeMoveRequestDTO.getUserId()
         );
 
         // Build move dto
         RealtimeMoveDTO moveDTO =
                 RealtimeMoveDTO.builder()
-                        .gameId(game.getId())
+                        .roomId(room.getId())
                         .moveNumber(
                                 calculateMoveNumber(
                                         currentState.getBoardState()
@@ -181,51 +169,45 @@ public class GameServiceImpl implements GameService {
         // Save move history
         supabaseService.saveMove(moveDTO);
         log.info(
-                "Realtime move saved successfully. gameId={}, userId={}",
-                game.getId(),
+                "Realtime move saved successfully. roomId={}, userId={}",
+                room.getId(),
                 makeMoveRequestDTO.getUserId()
         );
 
         RealtimeGameStateDTO realtimeState =
                 GameMapper.toRealtimeState(
-                        game,
-                        roomCode,
+                        room,
                         updatedState
                 );
 
         // Build updated realtime state
         supabaseService.updateGameState(realtimeState);
         log.info(
-                "Realtime game state updated successfully. gameId={}",
-                game.getId()
+                "Realtime game state updated successfully. roomId={}",
+                room.getId()
         );
 
 
         // If game completed save result
-        if(updatedState.getStatus() ==
-                GameStatusEnum.FINISHED) {
-            game.setStatus(GameStatusEnum.FINISHED);
-            gameRepository.save(game);
+        if (GameStatusEnum.WIN.equals(updatedState.getStatus())
+                || GameStatusEnum.DRAW.equals(updatedState.getStatus())) {
+
+            room.setStatus(RoomStatusEnum.COMPLETED);
+            roomRepository.save(room);
+            saveGameResult(room, updatedState);
+            log.info(
+                    "Game completed successfully. roomId={}, winnerUserId={}",
+                    room.getId(),
+                    updatedState.getWinnerUserId()
+            );
         }
-        log.info("Move processed successfully. gameId={}",
-                game.getId());
+
+        log.info(
+                "Move processed successfully. roomId={}",
+                room.getId()
+        );
 
         return updatedState;
-    }
-
-    private GameEntity saveGameState(
-            RoomEntity room,
-            EngineGameStateResponseDTO response
-    ) {
-
-        GameEntity game = GameEntity.builder()
-                .roomCode(room.getRoomCode())
-                .tenantId(room.getTenantId())
-                .status(response.getStatus())
-                .currentTurn(response.getCurrentTurnUserId())
-                .build();
-
-        return gameRepository.save(game);
     }
 
     private void publishGameStartedEvent(
@@ -246,5 +228,26 @@ public class GameServiceImpl implements GameService {
                                 !cell.isBlank()
                 )
                 .count() + 1;
+    }
+
+    private void saveGameResult(
+            RoomEntity room,
+            EngineGameStateResponseDTO updatedState
+    ) {
+
+        GameResultEntity result = GameResultEntity.builder()
+                .tenantId(room.getTenantId())
+                .room(room)
+                .winnerId(updatedState.getWinnerUserId())
+                .completedAt(LocalDateTime.now())
+                .build();
+
+        gameResultEntityRepository.save(result);
+
+        log.info(
+                "Game result saved successfully. roomId={}, winnerUserId={}",
+                room.getId(),
+                updatedState.getWinnerUserId()
+        );
     }
 }
