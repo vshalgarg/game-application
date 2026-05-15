@@ -18,7 +18,7 @@ spring:
 
 services:
   tictactoe-engine:
-    base-url:  http://localhost:8081/api/v1/engine
+    base-url:  http://192.168.1.100/api/v1/engine
     endpoints:
       start-game: /start-game
       move: /make-move
