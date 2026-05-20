@@ -1,6 +1,7 @@
 package com.codemonks.gameservice.dto.request;
 
 import com.codemonks.gameservice.enums.GameTypeEnum;
+import com.codemonks.gameservice.enums.RoomPlayerRole;
 import lombok.Data;
 
 @Data
