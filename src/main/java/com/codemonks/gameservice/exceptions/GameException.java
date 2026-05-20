@@ -11,4 +11,10 @@ public class GameException extends RuntimeException{
         super(errorCode.getMessage());
         this.errorCode = errorCode;
     }
+
+    public GameException(ResponseErrorCodes errorCode, String message) {
+        super(message);
+        this.errorCode = errorCode;
+    }
+
 }

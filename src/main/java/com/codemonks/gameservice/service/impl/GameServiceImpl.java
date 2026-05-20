@@ -1,6 +1,7 @@
 package com.codemonks.gameservice.service.impl;
 
 import com.codemonks.gameservice.dto.request.MakeMoveRequestDTO;
+import com.codemonks.gameservice.engineModule.dto.common.MoveDataDTO;
 import com.codemonks.gameservice.engineModule.dto.common.PlayerDto;
 import com.codemonks.gameservice.engineModule.dto.common.RealtimeGameStateDTO;
 import com.codemonks.gameservice.engineModule.dto.common.RealtimeMoveDTO;
@@ -14,6 +15,7 @@ import com.codemonks.gameservice.entity.GameResultEntity;
 import com.codemonks.gameservice.entity.RoomEntity;
 import com.codemonks.gameservice.entity.PlayerEntity;
 import com.codemonks.gameservice.enums.RoomStatusEnum;
+import com.codemonks.gameservice.exceptions.GameException;
 import com.codemonks.gameservice.exceptions.ResourceNotFoundException;
 import com.codemonks.gameservice.mapper.GameMapper;
 import com.codemonks.gameservice.mapper.PlayerMapper;
@@ -32,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.codemonks.gameservice.constants.ResponseErrorCodes.GAME_ALREADY_FINISHED;
 import static com.codemonks.gameservice.constants.ResponseErrorCodes.ROOM_NOT_FOUND;
 
 @Service
@@ -116,6 +119,18 @@ public class GameServiceImpl implements GameService {
                 room.getId()
         );
 
+        GameStatusEnum gameStatus =
+                GameStatusEnum.valueOf(currentState.getGameState());
+        if (gameStatus == GameStatusEnum.WIN ||
+                gameStatus == GameStatusEnum.DRAW) {
+            log.error("Move attempted on completed game. roomId={}", room.getId());
+            throw new GameException(
+                    GAME_ALREADY_FINISHED,
+                    "Game already ended. Winner is user "
+                            + currentState.getWinnerUserId()
+            );
+        }
+
         // Resolve engine
         GameEngine strategy =
                 gameEngineFactory.getStrategy(
@@ -123,10 +138,11 @@ public class GameServiceImpl implements GameService {
                 );
 
         // Build engine request
-        Map<String, Object> moveData = new HashMap<>();
-
-        moveData.put("row", makeMoveRequestDTO.getRow());
-        moveData.put("col", makeMoveRequestDTO.getCol());
+        MoveDataDTO moveData =
+                MoveDataDTO.builder()
+                        .row(makeMoveRequestDTO.getRow())
+                        .col(makeMoveRequestDTO.getCol())
+                        .build();
 
        List<PlayerDto> players = PlayerMapper.toPlayerDtos(roomPlayers);
 

@@ -19,9 +19,8 @@ public enum ResponseErrorCodes {
     ONLY_HOST_CAN_START_GAME(1006, "Only host can start the game"),
     GAME_ALREADY_STARTED(1007, "Game already started"),
     USER_ALREADY_IN_ROOM(1008, "User_Already_In_Room"),
-    ROOM_NOT_FULL(1009, "Room is not full"),
-    GAME_NOT_FOUND(1010, "Room not found"),
-    GAME_ENGINE_NOT_FOUND(1011, "Game engine not found");
+    GAME_ENGINE_NOT_FOUND(1009, "Game engine not found"),
+    GAME_ALREADY_FINISHED(1010, "Game already finished ");
 
     private final int code;
     private final String message;
