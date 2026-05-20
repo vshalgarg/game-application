@@ -47,12 +47,13 @@ public class RoomMapper {
         return player;
     }
 
-    public static RoomResponseDTO toRoomResponse(RoomEntity room) {
+    public static RoomResponseDTO toRoomResponse(RoomEntity room, RoomPlayerRole role) {
         return RoomResponseDTO.builder()
                 .roomId(room.getId())
                 .roomCode(room.getRoomCode())
                 .gameType(room.getGameType())
                 .status(room.getStatus().name())
+                .role(role)
                 .build();
     }
 

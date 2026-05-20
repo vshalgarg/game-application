@@ -62,7 +62,7 @@ public class RoomServiceImpl implements RoomService {
                 room.getRoomCode(),
                 request.getUserId()
         );
-        return RoomMapper.toRoomResponse(room);
+        return RoomMapper.toRoomResponse(room, player.getRole());
     }
 
     @Transactional
@@ -92,7 +92,7 @@ public class RoomServiceImpl implements RoomService {
             log.info("Player reconnected to in-game room. roomId={}, userId={}",
                     room.getId(),
                     request.getUserId());
-            return RoomMapper.toRoomResponse(room);
+            return RoomMapper.toRoomResponse(room, RoomPlayerRole.PLAYER);
         }
 
         if (existingPlayer) {
@@ -136,7 +136,7 @@ public class RoomServiceImpl implements RoomService {
                 roomCode,
                 request.getUserId()
         );
-        return RoomMapper.toRoomResponse(room);
+        return RoomMapper.toRoomResponse(room, RoomPlayerRole.PLAYER);
     }
 
     @Transactional
