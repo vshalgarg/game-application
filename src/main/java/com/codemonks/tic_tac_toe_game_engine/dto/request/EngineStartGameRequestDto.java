@@ -14,5 +14,4 @@ public class EngineStartGameRequestDto {
     private String roomCode;
     private GameTypeEnum gameType;
     private List<Long> playerIds;
-
 }

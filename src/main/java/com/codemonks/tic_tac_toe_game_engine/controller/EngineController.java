@@ -16,7 +16,7 @@ import static com.codemonks.tic_tac_toe_game_engine.constant.EngineApiUrlConstan
 @Slf4j
 public class EngineController {
 
-    private final TicTacToeEngine ticTacToeEngine; // Variable name is ticTacToeEngine
+    private final TicTacToeEngine ticTacToeEngine;
 
     @PostMapping(START_GAME)
     public ResponseEntity<EngineGameStateResponseDTO> startGame(@RequestBody EngineStartGameRequestDto request) {
@@ -27,7 +27,7 @@ public class EngineController {
 
     @PostMapping(MAKE_MOVE)
     public ResponseEntity<EngineGameStateResponseDTO> makeMove(@RequestBody EngineMoveRequestDTO request) {
-        log.info("Request received to process move for player: {} in game: {}", request.getUserId(), request.getGameId());
+        log.info("Request received to process move for player: {} in game: {}", request.getUserId(), request.getRoomId());
         // fixed: using ticTacToeEngine instead of engine
         return ResponseEntity.ok(ticTacToeEngine.makeMove(request));
     }
