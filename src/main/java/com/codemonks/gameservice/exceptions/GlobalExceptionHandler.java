@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
                 .ok()
                 .body(ApiResponse.failure(
                         error.getCode(),
-                        error.getMessage()
+                        ex.getMessage()
                 ));
     }
 

@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.Map;
-
 @Data
 @Builder
 public class RealtimeMoveDTO {
@@ -20,5 +18,5 @@ public class RealtimeMoveDTO {
     private Long playerId;
 
     @JsonProperty("move_data")
-    private Map<String, Object> moveData;
+    private MoveDataDTO moveData;
 }
