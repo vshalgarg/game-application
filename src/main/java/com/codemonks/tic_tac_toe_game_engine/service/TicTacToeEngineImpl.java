@@ -72,9 +72,9 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
     public EngineGameStateResponseDTO makeMove(EngineMoveRequestDTO request) {
 
         log.info(
-                "[MAKE_MOVE] Processing move for user: {} in game: {}",
+                "[MAKE_MOVE] Processing move for user: {} in room: {}",
                 request.getUserId(),
-                request.getGameId()
+                request.getRoomId()
         );
 
         // DTO → Domain Mapping
