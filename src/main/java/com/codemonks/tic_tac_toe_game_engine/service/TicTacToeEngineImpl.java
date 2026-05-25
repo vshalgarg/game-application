@@ -16,7 +16,6 @@ import com.codemonks.tic_tac_toe_game_engine.enums.GameStatusEnum;
 import com.codemonks.tic_tac_toe_game_engine.exception.TicTacToeEngineException;
 import com.codemonks.tic_tac_toe_game_engine.mapper.BoardMapper;
 import com.codemonks.tic_tac_toe_game_engine.mapper.MoveMapper;
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -59,11 +58,6 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                 players,
                 request.getBotDifficulty()
         );
-        log.info(
-                "ENGINE RESPONSE: {}",
-                response.getGameState()
-        );
-
         return response;
     }
 
@@ -120,18 +114,9 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
         );
 
         if (Boolean.TRUE.equals(nextPlayer.getIsBot())) {
-
-            processBotMove(
-                    board,
-                    nextPlayer,
-                    request.getBotDifficulty()
-            );
-
-            CellValue botSymbol =
-                    CellValue.valueOf(nextPlayer.getSide());
-
-            EngineGameStateResponseDTO botGameOverResponse =
-                    checkGameOver(
+            processBotMove(board, nextPlayer, request.getBotDifficulty());
+            CellValue botSymbol = CellValue.valueOf(nextPlayer.getSide());
+            EngineGameStateResponseDTO botGameOverResponse = checkGameOver(
                             board,
                             botSymbol,
                             nextPlayer.getUserId(),
@@ -139,12 +124,9 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                             request.getBotDifficulty()
                     );
 
-            if (botGameOverResponse != null) {
-                return botGameOverResponse;
-            }
+            if (botGameOverResponse != null) return botGameOverResponse;
 
-            Long humanUserId = getHumanPlayer(players)
-                    .getUserId();
+            Long humanUserId = getHumanPlayer(players).getUserId();
 
             return buildResponse(
                     board,
@@ -171,11 +153,9 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
     ) {
         List<PlayerDto> players = new ArrayList<>();
 
-        // ---------------- PVP ----------------
-
+        // pvp
         if (request.getMatchType() == MatchTypeEnum.PVP) {
-            players.add(
-                    buildPlayer(
+            players.add(buildPlayer(
                             request.getPlayerIds().get(0),
                             1,
                             "X",
@@ -183,8 +163,7 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                     )
             );
 
-            players.add(
-                    buildPlayer(
+            players.add(buildPlayer(
                             request.getPlayerIds().get(1),
                             2,
                             "O",
@@ -193,11 +172,9 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
             );
         }
 
-        // ---------------- BOT ----------------
-
+        // bot
         else {
-            players.add(
-                    buildPlayer(
+            players.add(buildPlayer(
                             request.getPlayerIds().get(0),
                             1,
                             "X",
@@ -205,8 +182,7 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                     )
             );
 
-            players.add(
-                    buildPlayer(
+            players.add(buildPlayer(
                             BotConstants.BOT_USER_ID,
                             2,
                             "O",
@@ -214,17 +190,10 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                     )
             );
         }
-
         return players;
     }
 
-    private PlayerDto buildPlayer(
-            Long userId,
-            Integer turnOrder,
-            String side,
-            Boolean isBot
-    ) {
-
+    private PlayerDto buildPlayer(Long userId, Integer turnOrder, String side, Boolean isBot) {
         return PlayerDto.builder()
                 .userId(userId)
                 .turnOrder(turnOrder)
@@ -236,34 +205,19 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
     private void validateTurn(
             EngineMoveRequestDTO request
     ) {
-        if (!request.getUserId()
-                .equals(request.getCurrentTurnUserId())) {
+        if (!request.getUserId().equals(request.getCurrentTurnUserId())) {
             throw new TicTacToeEngineException(INVALID_TURN);
         }
     }
 
-    private void validateMove(
-            Board board,
-            Move move
-    ) {
-        if (move.getRow() < 0 || move.getRow() > 2 ||
-                move.getCol() < 0 || move.getCol() > 2 ||
-                !board.isCellEmpty(move.getRow(), move.getCol())) {
+    private void validateMove(Board board, Move move) {
+        if (move.getRow() < 0 || move.getRow() > 2 || move.getCol() < 0 || move.getCol() > 2 || !board.isCellEmpty(move.getRow(), move.getCol())) {
             throw new TicTacToeEngineException(INVALID_MOVE);
         }
     }
 
-    private void applyMove(
-            Board board,
-            Move move,
-            CellValue symbol
-    ) {
-
-        board.setCell(
-                move.getRow(),
-                move.getCol(),
-                symbol
-        );
+    private void applyMove(Board board, Move move, CellValue symbol) {
+        board.setCell(move.getRow(), move.getCol(), symbol);
     }
 
     private void processBotMove(
@@ -272,13 +226,9 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
             BotDifficultyEnum difficulty
     ) {
 
-        BotStrategy strategy =
-                botFactory.getStrategy(difficulty);
-        CellValue botSymbol =
-                CellValue.valueOf(botPlayer.getSide());
-        Move botMove =
-                strategy.chooseMove(board, botSymbol);
-
+        BotStrategy strategy = botFactory.getStrategy(difficulty);
+        CellValue botSymbol = CellValue.valueOf(botPlayer.getSide());
+        Move botMove = strategy.chooseMove(board, botSymbol);
         applyMove(board, botMove, botSymbol);
         log.info(
                 "[BOT_MOVE] {} bot played at [{},{}]",
@@ -296,15 +246,9 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
             BotDifficultyEnum difficulty
     ) {
 
-        // ---------------- WIN ----------------
-
+        // win
         if (board.checkWin(symbol)) {
-
-            log.info(
-                    "[GAME_OVER] Winner: {}",
-                    winnerUserId
-            );
-
+            log.info("[GAME_OVER] Winner: {}", winnerUserId);
             return buildResponse(
                     board,
                     null,
@@ -315,12 +259,9 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
             );
         }
 
-        // ---------------- DRAW ----------------
-
+        // draw
         if (board.isBoardFull()) {
-
             log.info("[GAME_OVER] Match DRAW");
-
             return buildResponse(
                     board,
                     null,
@@ -330,48 +271,24 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                     difficulty
             );
         }
-
         return null;
     }
 
-    private PlayerDto getPlayerByUserId(
-            List<PlayerDto> players,
-            Long userId
-    ) {
-
+    private PlayerDto getPlayerByUserId(List<PlayerDto> players, Long userId) {
         return players.stream()
-                .filter(player ->
-                        player.getUserId().equals(userId)
-                )
+                .filter(player -> player.getUserId().equals(userId))
                 .findFirst()
-                .orElseThrow(() ->
-                        new TicTacToeEngineException(
-                                PLAYER_NOT_FOUND
-                        )
-                );
+                .orElseThrow(() -> new TicTacToeEngineException(PLAYER_NOT_FOUND));
     }
 
-    private PlayerDto getNextPlayer(
-            List<PlayerDto> players,
-            Long currentUserId
-    ) {
-
+    private PlayerDto getNextPlayer(List<PlayerDto> players, Long currentUserId) {
         return players.stream()
-                .filter(player ->
-                        !player.getUserId().equals(currentUserId)
-                )
+                .filter(player -> !player.getUserId().equals(currentUserId))
                 .findFirst()
-                .orElseThrow(() ->
-                        new TicTacToeEngineException(
-                                PLAYER_NOT_FOUND
-                        )
-                );
+                .orElseThrow(() -> new TicTacToeEngineException(PLAYER_NOT_FOUND));
     }
 
-    private PlayerDto getHumanPlayer(
-            List<PlayerDto> players
-    ) {
-
+    private PlayerDto getHumanPlayer(List<PlayerDto> players) {
         return players.stream()
                 .filter(player ->
                         !Boolean.TRUE.equals(player.getIsBot())
@@ -414,21 +331,9 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
             EngineMoveRequestDTO request
     ){
         List<PlayerDto> players = new ArrayList<>(request.getPlayers());
-
-        if (
-                request.getBotDifficulty() != null &&
-                        players.size() == 1
-        ) {
-            players.add(
-                    buildPlayer(
-                            BotConstants.BOT_USER_ID,
-                            2,
-                            "O",
-                            true
-                    )
-            );
+        if (request.getBotDifficulty() != null && players.size() == 1) {
+            players.add(buildPlayer(BotConstants.BOT_USER_ID, 2, "O", true));
         }
-
         return players;
     }
 }

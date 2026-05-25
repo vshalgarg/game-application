@@ -12,21 +12,18 @@ public class BoardMapper {
 
     private BoardMapper() {}
 
-    @SuppressWarnings("unchecked")
     public static Board toDomain(Map<String, Object> gameState) {
 
         Board board = new Board();
+
+        @SuppressWarnings("unchecked")
         List<List<String>> boardData = (List<List<String>>) gameState.get("board");
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
                 String value = boardData.get(row).get(col);
                 if (value != null && !value.isBlank() && !"EMPTY".equals(value)) {
-                    board.setCell(
-                            row,
-                            col,
-                            CellValue.valueOf(value)
-                    );
+                    board.setCell(row, col, CellValue.valueOf(value));
                 }
             }
         }
