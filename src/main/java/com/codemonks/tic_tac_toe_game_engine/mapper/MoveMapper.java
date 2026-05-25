@@ -7,10 +7,7 @@ import java.util.Map;
 public class MoveMapper {
     private MoveMapper() {}
 
-    public static Move toDomain(
-            Map<String, Object> moveData
-    ) {
-
+    public static Move toDomain(Map<String, Object> moveData) {
         return new Move(
                 (Integer) moveData.get("row"),
                 (Integer) moveData.get("col")
