@@ -1,5 +1,7 @@
 package com.codemonks.gameservice.engineModule.dto.request;
 
+import com.codemonks.gameservice.engineModule.enums.BotDifficultyEnum;
+import com.codemonks.gameservice.engineModule.enums.MatchTypeEnum;
 import com.codemonks.gameservice.enums.GameTypeEnum;
 import lombok.*;
 
@@ -15,4 +17,6 @@ public class EngineStartGameRequestDto {
     private String roomCode;
     private GameTypeEnum gameType;
     private List<Long> playerIds;
+    private BotDifficultyEnum botDifficulty;
+    private MatchTypeEnum matchType;
 }

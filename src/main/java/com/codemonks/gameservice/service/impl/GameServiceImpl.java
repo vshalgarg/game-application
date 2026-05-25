@@ -1,7 +1,6 @@
 package com.codemonks.gameservice.service.impl;
 
 import com.codemonks.gameservice.dto.request.MakeMoveRequestDTO;
-import com.codemonks.gameservice.engineModule.dto.common.MoveDataDTO;
 import com.codemonks.gameservice.engineModule.dto.common.PlayerDto;
 import com.codemonks.gameservice.engineModule.dto.common.RealtimeGameStateDTO;
 import com.codemonks.gameservice.engineModule.dto.common.RealtimeMoveDTO;
@@ -30,9 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static com.codemonks.gameservice.constants.ResponseErrorCodes.GAME_ALREADY_FINISHED;
 import static com.codemonks.gameservice.constants.ResponseErrorCodes.ROOM_NOT_FOUND;
@@ -49,13 +46,13 @@ public class GameServiceImpl implements GameService {
     private final GameResultEntityRepository gameResultEntityRepository;
 
     @Override
-    public EngineGameStateResponseDTO startGame(String roomCode) {
+    public EngineGameStateResponseDTO startGame(RoomEntity room) {
 
-        RoomEntity room = roomRepository.findByRoomCode(roomCode)
-                .orElseThrow(() -> {
-                    log.error("Room not found. roomCode={}", roomCode);
-                    return new ResourceNotFoundException(ROOM_NOT_FOUND);
-                        });
+//        RoomEntity room = roomRepository.findByRoomCode(r)
+//                .orElseThrow(() -> {
+//                    log.error("Room not found. roomCode={}", roomCode);
+//                    return new ResourceNotFoundException(ROOM_NOT_FOUND);
+//                        });
         List<PlayerEntity> players =
                 PlayerEntityRepository.findByRoom_Id(room.getId());
 
@@ -69,7 +66,7 @@ public class GameServiceImpl implements GameService {
         EngineGameStateResponseDTO engineResponse = strategy.startGame(request);
         log.info(
                 "Game engine processed successfully. roomCode={}",
-                roomCode
+                room.getRoomCode()
         );
 
         // build realtime dto
@@ -104,7 +101,6 @@ public class GameServiceImpl implements GameService {
                    return new ResourceNotFoundException(ROOM_NOT_FOUND);
                 });
 
-
         List<PlayerEntity> roomPlayers =
                 PlayerEntityRepository.findByRoom_Id(room.getId());
 
@@ -120,7 +116,7 @@ public class GameServiceImpl implements GameService {
         );
 
         GameStatusEnum gameStatus =
-                GameStatusEnum.valueOf(currentState.getGameState());
+                GameStatusEnum.valueOf(currentState.getGameStatus());
         if (gameStatus == GameStatusEnum.WIN ||
                 gameStatus == GameStatusEnum.DRAW) {
             log.error("Move attempted on completed game. roomId={}", room.getId());
@@ -138,24 +134,23 @@ public class GameServiceImpl implements GameService {
                 );
 
         // Build engine request
-        MoveDataDTO moveData =
-                MoveDataDTO.builder()
-                        .row(makeMoveRequestDTO.getRow())
-                        .col(makeMoveRequestDTO.getCol())
-                        .build();
 
        List<PlayerDto> players = PlayerMapper.toPlayerDtos(roomPlayers);
-
         EngineMoveRequestDTO engineRequest =
                 EngineMoveRequestDTO.builder()
                         .roomId(room.getId())
-                        .boardState(currentState.getBoardState())
+                        .gameState(currentState.getGameState())
                         .currentTurnUserId(
                                 currentState.getCurrentTurnUserId()
                         )
                         .userId(makeMoveRequestDTO.getUserId())
-                        .moveData(moveData)
+                        .moveData(
+                                makeMoveRequestDTO.getMoveData()
+                        )
                         .players(players)
+                        .botDifficulty(
+                                room.getBotDifficulty()
+                        )
                         .build();
 
         // Engine validates move + computes next state
@@ -171,15 +166,13 @@ public class GameServiceImpl implements GameService {
         RealtimeMoveDTO moveDTO =
                 RealtimeMoveDTO.builder()
                         .roomId(room.getId())
-                        .moveNumber(
-                                calculateMoveNumber(
-                                        currentState.getBoardState()
-                                )
-                        )
+                        .moveNumber(1)
                         .playerId(
                                 makeMoveRequestDTO.getUserId()
                         )
-                        .moveData(moveData)
+                        .moveData(
+                                makeMoveRequestDTO.getMoveData()
+                        )
                         .build();
 
         // Save move history
@@ -231,19 +224,6 @@ public class GameServiceImpl implements GameService {
     ) {
         // supabase realtime
         supabaseService.createInitialState(realtimeGameStateDTO);
-    }
-
-    private int calculateMoveNumber(
-            List<List<String>> board
-    ) {
-
-        return (int) board.stream()
-                .flatMap(List::stream)
-                .filter(cell ->
-                        cell != null &&
-                                !cell.isBlank()
-                )
-                .count() + 1;
     }
 
     private void saveGameResult(

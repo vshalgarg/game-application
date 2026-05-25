@@ -160,7 +160,7 @@ public class RoomServiceImpl implements RoomService {
         room.setStatus(ACTIVE);
         roomRepository.save(room);
         log.info("Game started. roomId={}", room.getId());
-       return gameService.startGame(roomCode);
+       return gameService.startGame(room);
     }
 
     @Transactional(readOnly = true)

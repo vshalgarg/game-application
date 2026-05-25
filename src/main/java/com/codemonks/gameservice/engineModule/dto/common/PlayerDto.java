@@ -11,4 +11,5 @@ public class PlayerDto {
     private Long userId;
     private Integer turnOrder;
     private String side;
+    private Boolean isBot;
 }
