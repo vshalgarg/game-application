@@ -1,5 +1,7 @@
 package com.codemonks.tic_tac_toe_game_engine.dto.request;
 
+import com.codemonks.tic_tac_toe_game_engine.bot.enums.BotDifficultyEnum;
+import com.codemonks.tic_tac_toe_game_engine.bot.enums.MatchTypeEnum;
 import com.codemonks.tic_tac_toe_game_engine.enums.GameTypeEnum;
 import lombok.Data;
 import lombok.Getter;
@@ -14,4 +16,6 @@ public class EngineStartGameRequestDto {
     private String roomCode;
     private GameTypeEnum gameType;
     private List<Long> playerIds;
+    private BotDifficultyEnum botDifficulty;
+    private MatchTypeEnum matchType;
 }
