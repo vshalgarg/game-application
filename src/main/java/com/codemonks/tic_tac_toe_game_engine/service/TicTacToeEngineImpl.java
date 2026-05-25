@@ -1,6 +1,10 @@
 package com.codemonks.tic_tac_toe_game_engine.service;
 
-import com.codemonks.tic_tac_toe_game_engine.bot.factory.BotFactory;
+import com.codemonks.tic_tac_toe_game_engine.bot.constants.BotConstants;
+import com.codemonks.tic_tac_toe_game_engine.bot.enums.BotDifficultyEnum;
+import com.codemonks.tic_tac_toe_game_engine.bot.enums.MatchTypeEnum;
+import com.codemonks.tic_tac_toe_game_engine.bot.factory.BotStrategyFactory;
+import com.codemonks.tic_tac_toe_game_engine.bot.strategy.BotStrategy;
 import com.codemonks.tic_tac_toe_game_engine.domain.board.Board;
 import com.codemonks.tic_tac_toe_game_engine.domain.board.CellValue;
 import com.codemonks.tic_tac_toe_game_engine.domain.move.Move;
@@ -12,6 +16,7 @@ import com.codemonks.tic_tac_toe_game_engine.enums.GameStatusEnum;
 import com.codemonks.tic_tac_toe_game_engine.exception.TicTacToeEngineException;
 import com.codemonks.tic_tac_toe_game_engine.mapper.BoardMapper;
 import com.codemonks.tic_tac_toe_game_engine.mapper.MoveMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,7 +31,7 @@ import static com.codemonks.tic_tac_toe_game_engine.constant.EngineErrorCodesEnu
 @RequiredArgsConstructor
 public class TicTacToeEngineImpl implements TicTacToeEngine {
 
-    private final BotFactory botFactory;
+    private final BotStrategyFactory botFactory;
 
     @Override
     public EngineGameStateResponseDTO startGame(EngineStartGameRequestDto request) {
@@ -36,36 +41,30 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
         log.debug("[START_GAME] 3x3 board initialized successfully");
 
         // Assign Players
-        List<PlayerDto> players = new ArrayList<>();
-        players.add(
-                new PlayerDto(
-                        request.getPlayerIds().get(0),
-                        1,
-                        "X"
-                )
-        );
-
-        players.add(
-                new PlayerDto(
-                        request.getPlayerIds().get(1),
-                        2,
-                        "O"
-                )
-        );
+        List<PlayerDto> players = buildPlayers(request);
 
         log.info(
-                "[START_GAME] Players assigned - P1: {}, P2: {}",
-                request.getPlayerIds().get(0),
-                request.getPlayerIds().get(1)
+                "[START_GAME] Match initialized | Room: {} | MatchType: {} | Players: {} vs {}",
+                request.getRoomCode(),
+                request.getMatchType(),
+                players.get(0).getUserId(),
+                players.get(1).getUserId()
         );
 
-        return buildResponse(
+        EngineGameStateResponseDTO response = buildResponse(
                 board,
                 players.get(0).getUserId(),
                 GameStatusEnum.INITIALIZED,
                 null,
-                players
+                players,
+                request.getBotDifficulty()
         );
+        log.info(
+                "ENGINE RESPONSE: {}",
+                response.getGameState()
+        );
+
+        return response;
     }
 
     @Override
@@ -78,39 +77,22 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
         );
 
         // DTO → Domain Mapping
-        Board board = BoardMapper.toDomain(request.getBoardState());
+        Board board = BoardMapper.toDomain(request.getGameState());
         Move move = MoveMapper.toDomain(request.getMoveData());
-        List<PlayerDto> players = request.getPlayers();
+        List<PlayerDto> players = normalizePlayers(request);
+        request.setPlayers(players);
+        validateTurn(request);
 
-        // Validate Turn
-        if (!request.getUserId().equals(request.getCurrentTurnUserId())) {
-            throw new TicTacToeEngineException(INVALID_TURN);
-        }
-
-        // Find Current Player
-        PlayerDto currentPlayer = players.stream()
-                .filter(player -> player.getUserId().equals(request.getUserId()))
-                .findFirst()
-                .orElseThrow(() ->
-                        new TicTacToeEngineException(PLAYER_NOT_FOUND)
-                );
+        PlayerDto currentPlayer = getPlayerByUserId(
+                players,
+                request.getUserId()
+        );
 
         String playerSide = currentPlayer.getSide();
-        CellValue symbol = CellValue.valueOf(playerSide);
+        CellValue currentPlayerSymbol = CellValue.valueOf(playerSide);
 
-        // Validate Move
-        if (move.getRow() < 0 || move.getRow() > 2 ||
-                move.getCol() < 0 || move.getCol() > 2 ||
-                !board.isCellEmpty(move.getRow(), move.getCol())) {
-            throw new TicTacToeEngineException(INVALID_MOVE);
-        }
-
-        // Apply Move
-        board.setCell(
-                move.getRow(),
-                move.getCol(),
-                symbol
-        );
+        validateMove(board, move);
+        applyMove(board, move, currentPlayerSymbol);
 
         log.info(
                 "[MAKE_MOVE] Move applied: [{}] at [{}, {}]",
@@ -119,58 +101,287 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                 move.getCol()
         );
 
-        // Check Winner
+        EngineGameStateResponseDTO gameOverResponse =
+                checkGameOver(
+                        board,
+                        currentPlayerSymbol,
+                        request.getUserId(),
+                        players,
+                        request.getBotDifficulty()
+                );
+
+        if (gameOverResponse != null) {
+            return gameOverResponse;
+        }
+
+        PlayerDto nextPlayer = getNextPlayer(
+                players,
+                request.getUserId()
+        );
+
+        if (Boolean.TRUE.equals(nextPlayer.getIsBot())) {
+
+            processBotMove(
+                    board,
+                    nextPlayer,
+                    request.getBotDifficulty()
+            );
+
+            CellValue botSymbol =
+                    CellValue.valueOf(nextPlayer.getSide());
+
+            EngineGameStateResponseDTO botGameOverResponse =
+                    checkGameOver(
+                            board,
+                            botSymbol,
+                            nextPlayer.getUserId(),
+                            players,
+                            request.getBotDifficulty()
+                    );
+
+            if (botGameOverResponse != null) {
+                return botGameOverResponse;
+            }
+
+            Long humanUserId = getHumanPlayer(players)
+                    .getUserId();
+
+            return buildResponse(
+                    board,
+                    humanUserId,
+                    GameStatusEnum.RUNNING,
+                    null,
+                    players,
+                    request.getBotDifficulty()
+            );
+        }
+
+        return buildResponse(
+                board,
+                nextPlayer.getUserId(),
+                GameStatusEnum.RUNNING,
+                null,
+                players,
+                request.getBotDifficulty()
+        );
+    }
+
+    private List<PlayerDto> buildPlayers(
+            EngineStartGameRequestDto request
+    ) {
+        List<PlayerDto> players = new ArrayList<>();
+
+        // ---------------- PVP ----------------
+
+        if (request.getMatchType() == MatchTypeEnum.PVP) {
+            players.add(
+                    buildPlayer(
+                            request.getPlayerIds().get(0),
+                            1,
+                            "X",
+                            false
+                    )
+            );
+
+            players.add(
+                    buildPlayer(
+                            request.getPlayerIds().get(1),
+                            2,
+                            "O",
+                            false
+                    )
+            );
+        }
+
+        // ---------------- BOT ----------------
+
+        else {
+            players.add(
+                    buildPlayer(
+                            request.getPlayerIds().get(0),
+                            1,
+                            "X",
+                            false
+                    )
+            );
+
+            players.add(
+                    buildPlayer(
+                            BotConstants.BOT_USER_ID,
+                            2,
+                            "O",
+                            true
+                    )
+            );
+        }
+
+        return players;
+    }
+
+    private PlayerDto buildPlayer(
+            Long userId,
+            Integer turnOrder,
+            String side,
+            Boolean isBot
+    ) {
+
+        return PlayerDto.builder()
+                .userId(userId)
+                .turnOrder(turnOrder)
+                .side(side)
+                .isBot(isBot)
+                .build();
+    }
+
+    private void validateTurn(
+            EngineMoveRequestDTO request
+    ) {
+        if (!request.getUserId()
+                .equals(request.getCurrentTurnUserId())) {
+            throw new TicTacToeEngineException(INVALID_TURN);
+        }
+    }
+
+    private void validateMove(
+            Board board,
+            Move move
+    ) {
+        if (move.getRow() < 0 || move.getRow() > 2 ||
+                move.getCol() < 0 || move.getCol() > 2 ||
+                !board.isCellEmpty(move.getRow(), move.getCol())) {
+            throw new TicTacToeEngineException(INVALID_MOVE);
+        }
+    }
+
+    private void applyMove(
+            Board board,
+            Move move,
+            CellValue symbol
+    ) {
+
+        board.setCell(
+                move.getRow(),
+                move.getCol(),
+                symbol
+        );
+    }
+
+    private void processBotMove(
+            Board board,
+            PlayerDto botPlayer,
+            BotDifficultyEnum difficulty
+    ) {
+
+        BotStrategy strategy =
+                botFactory.getStrategy(difficulty);
+        CellValue botSymbol =
+                CellValue.valueOf(botPlayer.getSide());
+        Move botMove =
+                strategy.chooseMove(board, botSymbol);
+
+        applyMove(board, botMove, botSymbol);
+        log.info(
+                "[BOT_MOVE] {} bot played at [{},{}]",
+                difficulty,
+                botMove.getRow(),
+                botMove.getCol()
+        );
+    }
+
+    private EngineGameStateResponseDTO checkGameOver(
+            Board board,
+            CellValue symbol,
+            Long winnerUserId,
+            List<PlayerDto> players,
+            BotDifficultyEnum difficulty
+    ) {
+
+        // ---------------- WIN ----------------
+
         if (board.checkWin(symbol)) {
 
             log.info(
-                    "[GAME_OVER] Player {} won the game!",
-                    request.getUserId()
+                    "[GAME_OVER] Winner: {}",
+                    winnerUserId
             );
 
             return buildResponse(
                     board,
                     null,
                     GameStatusEnum.WIN,
-                    request.getUserId(),
-                    players
+                    winnerUserId,
+                    players,
+                    difficulty
             );
         }
 
-        // Check Draw
+        // ---------------- DRAW ----------------
+
         if (board.isBoardFull()) {
 
-            log.info("[GAME_OVER] Match ended in DRAW");
+            log.info("[GAME_OVER] Match DRAW");
 
             return buildResponse(
                     board,
                     null,
                     GameStatusEnum.DRAW,
                     null,
-                    players
+                    players,
+                    difficulty
             );
         }
 
-        // Switch Turn
-        Long nextTurnUserId = players.stream()
+        return null;
+    }
+
+    private PlayerDto getPlayerByUserId(
+            List<PlayerDto> players,
+            Long userId
+    ) {
+
+        return players.stream()
                 .filter(player ->
-                        !player.getUserId().equals(request.getUserId())
+                        player.getUserId().equals(userId)
                 )
-                .map(PlayerDto::getUserId)
                 .findFirst()
-                .orElse(null);
+                .orElseThrow(() ->
+                        new TicTacToeEngineException(
+                                PLAYER_NOT_FOUND
+                        )
+                );
+    }
 
-        log.info(
-                "[MAKE_MOVE] Move successful. Next turn: {}",
-                nextTurnUserId
-        );
+    private PlayerDto getNextPlayer(
+            List<PlayerDto> players,
+            Long currentUserId
+    ) {
 
-        return buildResponse(
-                board,
-                nextTurnUserId,
-                GameStatusEnum.RUNNING,
-                null,
-                players
-        );
+        return players.stream()
+                .filter(player ->
+                        !player.getUserId().equals(currentUserId)
+                )
+                .findFirst()
+                .orElseThrow(() ->
+                        new TicTacToeEngineException(
+                                PLAYER_NOT_FOUND
+                        )
+                );
+    }
+
+    private PlayerDto getHumanPlayer(
+            List<PlayerDto> players
+    ) {
+
+        return players.stream()
+                .filter(player ->
+                        !Boolean.TRUE.equals(player.getIsBot())
+                )
+                .findFirst()
+                .orElseThrow(() ->
+                        new TicTacToeEngineException(
+                                PLAYER_NOT_FOUND
+                        )
+                );
     }
 
     private EngineGameStateResponseDTO buildResponse(
@@ -178,7 +389,8 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
             Long currentTurnUserId,
             GameStatusEnum status,
             Long winnerUserId,
-            List<PlayerDto> players
+            List<PlayerDto> players,
+            BotDifficultyEnum botDifficulty
     ) {
 
         log.info(
@@ -189,11 +401,34 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
         );
 
         return EngineGameStateResponseDTO.builder()
-                .boardState(BoardMapper.toDto(board))
+                .gameState(BoardMapper.toMap(board))
                 .currentTurnUserId(currentTurnUserId)
                 .status(status)
                 .winnerUserId(winnerUserId)
                 .players(players)
+                .botDifficulty(botDifficulty)
                 .build();
+    }
+
+    private List<PlayerDto> normalizePlayers(
+            EngineMoveRequestDTO request
+    ){
+        List<PlayerDto> players = new ArrayList<>(request.getPlayers());
+
+        if (
+                request.getBotDifficulty() != null &&
+                        players.size() == 1
+        ) {
+            players.add(
+                    buildPlayer(
+                            BotConstants.BOT_USER_ID,
+                            2,
+                            "O",
+                            true
+                    )
+            );
+        }
+
+        return players;
     }
 }

@@ -1,15 +1,19 @@
 package com.codemonks.tic_tac_toe_game_engine.mapper;
 
 import com.codemonks.tic_tac_toe_game_engine.domain.move.Move;
-import com.codemonks.tic_tac_toe_game_engine.dto.MoveDataDTO;
+
+import java.util.Map;
 
 public class MoveMapper {
+    private MoveMapper() {}
 
-    public static Move toDomain(MoveDataDTO dto) {
+    public static Move toDomain(
+            Map<String, Object> moveData
+    ) {
 
         return new Move(
-                dto.getRow(),
-                dto.getCol()
+                (Integer) moveData.get("row"),
+                (Integer) moveData.get("col")
         );
     }
 }
