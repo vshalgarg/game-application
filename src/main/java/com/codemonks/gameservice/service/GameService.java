@@ -5,9 +5,10 @@ import com.codemonks.gameservice.dto.request.MakeMoveRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.common.RealtimeGameStateDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineMoveRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
+import com.codemonks.gameservice.entity.RoomEntity;
 
 public interface GameService {
 
-    EngineGameStateResponseDTO startGame(String roomCode);
+    EngineGameStateResponseDTO startGame(RoomEntity room);
     EngineGameStateResponseDTO makeMove(String roomCode, MakeMoveRequestDTO request);
 }

@@ -24,6 +24,8 @@ public class RoomMapper {
         room.setGameType(request.getGameType());
         room.setStatus(RoomStatusEnum.WAITING);
         room.setRoomCode(roomCode);
+        room.setMatchType(request.getMatchType());
+        room.setBotDifficulty(request.getBotDifficulty());
         return room;
     }
 

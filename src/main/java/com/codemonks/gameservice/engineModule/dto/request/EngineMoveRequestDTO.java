@@ -1,10 +1,11 @@
 package com.codemonks.gameservice.engineModule.dto.request;
 
-import com.codemonks.gameservice.engineModule.dto.common.MoveDataDTO;
 import com.codemonks.gameservice.engineModule.dto.common.PlayerDto;
+import com.codemonks.gameservice.engineModule.enums.BotDifficultyEnum;
 import lombok.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -13,9 +14,10 @@ import java.util.List;
 @AllArgsConstructor
 public class EngineMoveRequestDTO {
     private Long roomId;
-    private List<List<String>> boardState;
+    private Map<String, Object> gameState;
     private Long currentTurnUserId;
     private Long userId;
-    private MoveDataDTO moveData;
+    private Map<String, Object> moveData;
     private List<PlayerDto> players;
+    private BotDifficultyEnum botDifficulty;
 }

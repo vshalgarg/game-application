@@ -1,5 +1,7 @@
 package com.codemonks.gameservice.entity;
 
+import com.codemonks.gameservice.engineModule.enums.BotDifficultyEnum;
+import com.codemonks.gameservice.engineModule.enums.MatchTypeEnum;
 import com.codemonks.gameservice.enums.GameTypeEnum;
 import com.codemonks.gameservice.enums.RoomStatusEnum;
 import com.codemonks.gameservice.enums.converter.GameTypeConverter;
@@ -42,6 +44,14 @@ public class RoomEntity extends BaseEntity {
     @Convert(converter = GameTypeConverter.class)
     @Column(name = "game_type", nullable = false)
     private GameTypeEnum gameType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "match_type", nullable = false, length = 20)
+    private MatchTypeEnum matchType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "bot_difficulty", length = 20)
+    private BotDifficultyEnum botDifficulty;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)

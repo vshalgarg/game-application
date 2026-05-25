@@ -28,6 +28,7 @@ public class PlayerMapper {
                 .userId(player.getUserId())
                 .turnOrder(isHost ? 1 : 2)
                 .side(isHost ? "X" : "O")
+                .isBot(false)
                 .build();
     }
 }
