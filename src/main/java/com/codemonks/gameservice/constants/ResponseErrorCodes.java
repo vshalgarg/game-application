@@ -20,7 +20,10 @@ public enum ResponseErrorCodes {
     GAME_ALREADY_STARTED(1007, "Game already started"),
     USER_ALREADY_IN_ROOM(1008, "User_Already_In_Room"),
     GAME_ENGINE_NOT_FOUND(1009, "Game engine not found"),
-    GAME_ALREADY_FINISHED(1010, "Game already finished ");
+    GAME_ALREADY_FINISHED(1010, "Game already finished "),
+    REALTIME_STATE_UPDATE_FAILED(1011, "REALTIME_STATE_UPDATE_FAILED"),
+    REALTIME_MOVE_SAVE_FAILED(1012, "REALTIME_MOVE_SAVE_FAILED"),
+    REALTIME_STATE_FETCH_FAILED(1013, "REALTIME_STATE_FETCH_FAILED");
 
     private final int code;
     private final String message;

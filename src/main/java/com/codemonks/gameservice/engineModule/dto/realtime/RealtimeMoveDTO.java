@@ -1,4 +1,4 @@
-package com.codemonks.gameservice.engineModule.dto.common;
+package com.codemonks.gameservice.engineModule.dto.realtime;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
@@ -13,12 +13,10 @@ public class RealtimeMoveDTO {
     @JsonProperty("room_id")
     private Long roomId;
 
-    @JsonProperty("move_number")
-    private Integer moveNumber;
-
     @JsonProperty("player_id")
     private Long playerId;
 
     @JsonProperty("move_data")
     private Map<String, Object> moveData;
+
 }
