@@ -1,6 +1,5 @@
 package com.codemonks.gameservice.engineModule.dto.realtime;
 
-import com.codemonks.gameservice.engineModule.dto.common.PlayerDto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
@@ -21,5 +20,5 @@ public class RealtimeLobbyDTO {
     private String roomStatus;
 
     @JsonProperty("players")
-    private List<PlayerDto> players;
+    private List<LobbyPlayerDTO> players;
 }

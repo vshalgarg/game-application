@@ -21,7 +21,7 @@ public final class LobbyMapper {
                 .roomId(room.getId())
                 .roomCode(room.getRoomCode())
                 .roomStatus(status.name())
-                .players(PlayerMapper.toPlayerDtos(players))
+                .players(PlayerMapper.toLobbyPlayerDtos(players))
                 .build();
     }
 }

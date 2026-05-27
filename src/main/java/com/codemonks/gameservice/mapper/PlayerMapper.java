@@ -1,6 +1,7 @@
 package com.codemonks.gameservice.mapper;
 
 import com.codemonks.gameservice.engineModule.dto.common.PlayerDto;
+import com.codemonks.gameservice.engineModule.dto.realtime.LobbyPlayerDTO;
 import com.codemonks.gameservice.entity.PlayerEntity;
 import com.codemonks.gameservice.enums.PlayerSideEnum;
 import com.codemonks.gameservice.enums.RoomPlayerRole;
@@ -36,6 +37,27 @@ public final class PlayerMapper {
                                 : PlayerSideEnum.O.name()
                 )
                 .isBot(false)
+                .build();
+    }
+
+
+    public static List<LobbyPlayerDTO> toLobbyPlayerDtos(
+            List<PlayerEntity> players
+    ) {
+
+        return players.stream()
+                .map(PlayerMapper::toLobbyPlayerDto)
+                .toList();
+    }
+
+    public static LobbyPlayerDTO toLobbyPlayerDto(
+            PlayerEntity player
+    ) {
+
+        return LobbyPlayerDTO.builder()
+                .userId(player.getUserId())
+                .role(player.getRole().name())
+                .status(player.getStatus().name())
                 .build();
     }
 }
