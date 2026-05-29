@@ -13,6 +13,9 @@ public class RealtimeMoveDTO {
     @JsonProperty("room_id")
     private Long roomId;
 
+    @JsonProperty("room_code")
+    private String roomCode;
+
     @JsonProperty("player_id")
     private Long playerId;
 

@@ -37,6 +37,7 @@ public final class GameMapper {
 
         return RealtimeGameStateDTO.builder()
                 .roomId(room.getId())
+                .roomCode(room.getRoomCode())
                 .gameState(response.getGameState())
                 .currentTurnUserId(response.getCurrentTurnUserId())
                 .gameStatus(response.getStatus().name())

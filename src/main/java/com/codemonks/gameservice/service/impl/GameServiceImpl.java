@@ -109,6 +109,7 @@ public class GameServiceImpl implements GameService {
 
         RealtimeMoveDTO moveDTO = RealtimeMoveDTO.builder()
                 .roomId(room.getId())
+                .roomCode(room.getRoomCode())
                 .playerId(makeMoveRequestDTO.getUserId())
                 .moveData(makeMoveRequestDTO.getMoveData())
                 .build();

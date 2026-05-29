@@ -13,6 +13,9 @@ public class RealtimeGameStateDTO {
     @JsonProperty("room_id")
     private Long roomId;
 
+    @JsonProperty("room_code")
+    private String roomCode;
+
     @JsonProperty("game_state_data")
     private Map<String, Object> gameState;
 
