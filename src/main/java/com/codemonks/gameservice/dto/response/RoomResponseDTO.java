@@ -10,7 +10,7 @@ import lombok.Data;
 public class RoomResponseDTO {
 
     private Long roomId;
-    private String userId;
+    private Long userId;
     private String roomCode;
     private GameTypeEnum gameType;
     private RoomPlayerRole role;

@@ -66,7 +66,7 @@ public class RoomServiceImpl implements RoomService {
 
         return RoomMapper.toRoomResponse(
                 room,
-                RoomPlayerRole.HOST
+                host
         );
     }
 
@@ -93,7 +93,7 @@ public class RoomServiceImpl implements RoomService {
                 });
 
         int currentPlayers = playerRepository.countByRoom_Id(room.getId());
-        playerRepository.save(RoomMapper.toJoinPlayer(request, room));
+        PlayerEntity player = playerRepository.save(RoomMapper.toJoinPlayer(request, room));
 
         List<PlayerEntity> players = playerRepository.findByRoom_Id(room.getId());
 
@@ -113,7 +113,7 @@ public class RoomServiceImpl implements RoomService {
         log.info("User joined. roomId={}, userId={}, lobbyStatus={}",
                 room.getId(), request.getUserId(), status);
 
-        return RoomMapper.toRoomResponse(room, RoomPlayerRole.PLAYER);
+        return RoomMapper.toRoomResponse(room, player);
     }
 
     @Transactional

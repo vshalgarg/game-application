@@ -49,13 +49,14 @@ public class RoomMapper {
         return player;
     }
 
-    public static RoomResponseDTO toRoomResponse(RoomEntity room, RoomPlayerRole role) {
+    public static RoomResponseDTO toRoomResponse(RoomEntity room, PlayerEntity player) {
         return RoomResponseDTO.builder()
                 .roomId(room.getId())
                 .roomCode(room.getRoomCode())
+                .userId(player.getUserId())
                 .gameType(room.getGameType())
                 .status(room.getStatus().name())
-                .role(role)
+                .role(player.getRole())
                 .build();
     }
 
