@@ -1,0 +1,101 @@
+// import { useEffect } from "react";
+// import { supabase } from "../utils/supabaseClient";
+
+// const useRoomRealtime = ({ roomCode, onStartGame, onRoomUpdate }) => {
+//   useEffect(() => {
+
+//     console.log("ROOM REALTIME HOOK RUNNING");
+//     console.log("ROOM CODE:", roomCode);
+//     if (!roomCode) return;
+
+//     const channel = supabase
+//       .channel(`game-room-${roomCode}`)
+//       .on(
+//         "postgres_changes",
+//         {
+//           event: "UPDATE",
+//           schema: "public", 
+//           table: "realtime_game_state",
+//           filter: `room_code=eq.${roomCode}`,
+//         },
+//         (payload) => {
+//           console.log("REALTIME PAYLOAD:", payload);
+//           const updated = payload.new;
+
+//           console.log("Room Realtime:", updated);
+
+//           //  full room update callback
+//           if (onRoomUpdate) {
+//             onRoomUpdate(updated);
+//           }
+
+//           //  detect start game
+//           if (updated.game_status === "INITIALIZED") {
+//             onStartGame && onStartGame(updated);
+//           }
+//         }
+
+//       )
+//       .subscribe((status) => {
+//   console.log("SUBSCRIBE STATUS:", status);
+// });
+
+//     return () => {
+//       supabase.removeChannel(channel);
+//     };
+//   }, [roomCode]);
+// };
+
+// export default useRoomRealtime;
+
+
+
+import { useEffect } from "react";
+import { supabase } from "../utils/supabaseClient";
+
+const useRoomRealtime = ({ roomCode, onStartGame, onRoomUpdate }) => {
+  useEffect(() => {
+
+    console.log("ROOM REALTIME HOOK RUNNING");
+    console.log("ROOM CODE:", roomCode);
+    if (!roomCode) return;
+
+    const channel = supabase
+      .channel(`game-room-${roomCode}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public", 
+          table: "realtime_game_state",
+          // table: "realtime_room_lobby",
+          filter: `room_code=eq.${roomCode}`,
+        },
+        (payload) => {
+  console.log("REALTIME PAYLOAD:", payload);
+
+  const gameState = payload.new;
+
+  console.log("GAME STATE:", gameState);
+
+  if (onRoomUpdate) {
+    onRoomUpdate(gameState);
+  }
+
+  console.log("CALLING NAVIGATION");
+
+  onStartGame?.(gameState);
+}
+
+      )
+      .subscribe((status) => {
+  console.log("SUBSCRIBE STATUS:", status);
+});
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [roomCode]);
+};
+
+export default useRoomRealtime;
