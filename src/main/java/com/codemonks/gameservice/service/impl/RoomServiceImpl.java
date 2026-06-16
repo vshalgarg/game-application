@@ -7,10 +7,12 @@ import com.codemonks.gameservice.dto.response.RoomResponseDTO;
 import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeLobbyDTO;
 import com.codemonks.gameservice.engineModule.dto.realtime.enums.RoomRealtimeStatusEnum;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
+import com.codemonks.gameservice.engineModule.enums.MatchTypeEnum;
 import com.codemonks.gameservice.entity.GameConfigEntity;
 import com.codemonks.gameservice.entity.PlayerEntity;
 import com.codemonks.gameservice.entity.RoomEntity;
 import com.codemonks.gameservice.enums.RoomPlayerRole;
+import com.codemonks.gameservice.enums.RoomStatusEnum;
 import com.codemonks.gameservice.exceptions.GameException;
 import com.codemonks.gameservice.exceptions.ResourceNotFoundException;
 import com.codemonks.gameservice.mapper.LobbyMapper;
@@ -26,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -115,7 +118,6 @@ public class RoomServiceImpl implements RoomService {
 
         return RoomMapper.toRoomResponse(room, player);
     }
-
     @Transactional
     @Override
     public EngineGameStateResponseDTO startGame(String roomCode, Long userId) {
@@ -163,6 +165,34 @@ public class RoomServiceImpl implements RoomService {
         return RoomMapper.toRoomDetailsResponseDTO(room, players);
     }
 
+    @Transactional
+    @Override
+    public EngineGameStateResponseDTO restartGame(String roomCode, Long userId) {
+        log.info("Restart game request. roomCode={}, userId={}", roomCode, userId);
+
+        RoomEntity room = roomRepository.findByRoomCode(roomCode)
+                .orElseThrow(() -> new ResourceNotFoundException(ROOM_NOT_FOUND));
+
+        PlayerEntity player = playerRepository
+                .findByRoom_IdAndUserId(room.getId(), userId)
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
+
+        // Only host can restart
+        if (player.getRole() != RoomPlayerRole.HOST) {
+            throw new GameException(ONLY_HOST_CAN_START_GAME);
+        }
+
+        // Reset room state
+        room.setStatus(RoomStatusEnum.ACTIVE);
+        room.setStartedAt(LocalDateTime.now());
+        room.setEndedAt(null);
+        roomRepository.save(room);
+
+        log.info("Game restarting. roomId={}, matchType={}",
+                room.getId(), room.getMatchType());
+
+        return gameService.startGame(room);
+    }
     private String generateRoomCode() {
         return UUID.randomUUID()
                 .toString()

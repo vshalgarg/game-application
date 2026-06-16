@@ -10,7 +10,9 @@ public class ApiUrlConstants {
         public static final String CREATE_ROOM = "/create";
         public static final String JOIN_ROOM = "/{roomCode}/join";
         public static final String START_GAME = "/{roomCode}/start";
+        public static final String RESTART_GAME = "/{roomCode}/restart";
         public static final String GET_ROOM_DETAILS = "/{roomCode}";
+        public static final String ROLL_DICE = "/{roomCode}/roll-dice";
     }
 
     public static class Game{
