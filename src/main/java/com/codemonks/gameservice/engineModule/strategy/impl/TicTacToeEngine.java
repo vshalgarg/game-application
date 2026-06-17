@@ -2,7 +2,7 @@ package com.codemonks.gameservice.engineModule.strategy.impl;
 
 import com.codemonks.gameservice.client.TicTacToeFeignClient;
 import com.codemonks.gameservice.engineModule.dto.request.EngineMoveRequestDTO;
-import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequestDto;
+import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.gameservice.engineModule.strategy.GameEngine;
 import com.codemonks.gameservice.enums.GameTypeEnum;
@@ -21,7 +21,7 @@ public class TicTacToeEngine implements GameEngine {
     }
 
     @Override
-    public EngineGameStateResponseDTO startGame(EngineStartGameRequestDto request) {
+    public EngineGameStateResponseDTO startGame(EngineStartGameRequestDTO request) {
         return feignClient.start(request);
     }
 
