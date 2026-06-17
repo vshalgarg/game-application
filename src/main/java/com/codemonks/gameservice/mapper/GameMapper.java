@@ -1,7 +1,8 @@
 package com.codemonks.gameservice.mapper;
 
 import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeGameStateDTO;
-import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequestDto;
+import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequestDTO;
+import com.codemonks.gameservice.engineModule.dto.response.DiceRollResponseDTO;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.gameservice.entity.PlayerEntity;
 import com.codemonks.gameservice.entity.RoomEntity;
@@ -10,7 +11,7 @@ import java.util.List;
 
 public final class GameMapper {
 
-    public static EngineStartGameRequestDto toStartGameRequest(
+    public static EngineStartGameRequestDTO toStartGameRequest(
             RoomEntity room,
             List<PlayerEntity> players
     ) {
@@ -19,7 +20,7 @@ public final class GameMapper {
                 .map(PlayerEntity::getUserId)
                 .toList();
 
-        return EngineStartGameRequestDto.builder()
+        return EngineStartGameRequestDTO.builder()
                 .roomId(room.getId())
                 .roomCode(room.getRoomCode())
                 .gameType(room.getGameType())

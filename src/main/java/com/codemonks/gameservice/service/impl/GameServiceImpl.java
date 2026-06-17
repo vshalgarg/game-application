@@ -6,8 +6,10 @@ import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeGameStateDTO;
 import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeLobbyDTO;
 import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeMoveDTO;
 import com.codemonks.gameservice.engineModule.dto.realtime.enums.RoomRealtimeStatusEnum;
+import com.codemonks.gameservice.engineModule.dto.request.DiceRollRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineMoveRequestDTO;
-import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequestDto;
+import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequestDTO;
+import com.codemonks.gameservice.engineModule.dto.response.DiceRollResponseDTO;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.gameservice.engineModule.enums.GameStatusEnum;
 import com.codemonks.gameservice.engineModule.factory.GameEngineFactory;
@@ -26,6 +28,7 @@ import com.codemonks.gameservice.repository.PlayerEntityRepository;
 import com.codemonks.gameservice.repository.RoomEntityRepository;
 import com.codemonks.gameservice.service.GameService;
 import com.codemonks.gameservice.service.SupabaseService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -52,7 +55,7 @@ public class GameServiceImpl implements GameService {
     @Transactional
     public EngineGameStateResponseDTO startGame(RoomEntity room) {
         List<PlayerEntity> players = playerRepository.findByRoom_Id(room.getId());
-        EngineStartGameRequestDto request = GameMapper.toStartGameRequest(room, players);
+        EngineStartGameRequestDTO request = GameMapper.toStartGameRequest(room, players);
         GameEngine engine = gameEngineFactory.getStrategy(room.getGameType());
         EngineGameStateResponseDTO engineResponse = engine.startGame(request);
 
@@ -143,8 +146,49 @@ public class GameServiceImpl implements GameService {
         }
 
         log.info("Move processed. roomId={}, userId={}",
-                room.getId(), makeMoveRequestDTO.getUserId());
+                room.getId(), makeMoveRequestDTO.getUserId()    );
         return updatedState;
+    }
+
+    @Override
+    public DiceRollResponseDTO rollDice(String roomCode, Long playerId) {
+
+        // 1. Fetch room
+        RoomEntity room = roomRepository.findByRoomCode(roomCode)
+                .orElseThrow(() -> new ResourceNotFoundException(ROOM_NOT_FOUND));
+
+        // 2. Read authoritative gameState from Supabase — not from client
+        RealtimeGameStateDTO currentState = supabaseService.getGameState(room.getId());
+
+        // 3. Guard: game must be running
+        GameStatusEnum gameStatus = GameStatusEnum.valueOf(currentState.getGameStatus());
+        if (gameStatus == GameStatusEnum.WIN || gameStatus == GameStatusEnum.DRAW) {
+            throw new GameException(GAME_ALREADY_FINISHED);
+        }
+
+        // 4. Build engine request with server-side state
+        DiceRollRequestDTO engineRequest = DiceRollRequestDTO.builder()
+                .roomId(room.getId())
+                .playerId(playerId)
+                .gameState(currentState.getGameState()) // ← already Map<String,Object> from Supabase
+                .build();
+
+        // 5. Call engine via factory — generic, works for any game
+        GameEngine engine = gameEngineFactory.getStrategy(room.getGameType());
+        DiceRollResponseDTO result = engine.rollDice(engineRequest);
+
+        // 6. Write updated state back to Supabase
+        // pendingDice and playerTurnStage are now inside result.getGameState()
+        RealtimeGameStateDTO updatedRealtimeState = GameMapper.toRealtimeStateFromDiceRoll(
+                room, result, currentState.getVersion() + 1
+        );
+        supabaseService.upsertGameState(updatedRealtimeState);
+
+        // 7. Supabase Realtime broadcasts to all clients automatically
+        log.info("Dice rolled. roomId={}, playerId={}, dice={}",
+                room.getId(), playerId, result.getDice());
+
+        return result;
     }
 
 

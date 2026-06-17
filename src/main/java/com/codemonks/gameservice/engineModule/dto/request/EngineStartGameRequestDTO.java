@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class EngineStartGameRequestDto {
+public class EngineStartGameRequestDTO {
     private Long roomId;
     private String roomCode;
     private GameTypeEnum gameType;
