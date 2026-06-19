@@ -221,41 +221,6 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
         board.setCell(move.getRow(), move.getCol(), symbol);
     }
 
-//    private void processBotMove(
-//            Board board,
-//            PlayerDto botPlayer,
-//            BotDifficultyEnum difficulty
-//    ) {
-//
-//        try {
-//            Thread.sleep(getBotDelay(difficulty));
-//        } catch (InterruptedException e) {
-//            Thread.currentThread().interrupt();
-//            log.warn("[BOT_MOVE] Bot thinking delay was interrupted");}
-//
-//        BotStrategy strategy = botFactory.getStrategy(difficulty);
-//        CellValue botSymbol = CellValue.valueOf(botPlayer.getSide());
-//        Move botMove = strategy.chooseMove(board, botSymbol);
-//        applyMove(board, botMove, botSymbol);
-//        log.info(
-//                "[BOT_MOVE] {} bot played at [{},{}]",
-//                difficulty,
-//                botMove.getRow(),
-//                botMove.getCol()
-//        );
-//    }
-//
-//    private int getBotDelay(BotDifficultyEnum difficulty) {
-//        return switch (difficulty) {
-//            case EASY   -> 600;
-//            case MEDIUM -> 1000;
-//            case HARD   -> 1500;
-//        };
-//    }
-//
-
-
-
     private EngineGameStateResponseDTO checkGameOver(
             Board board,
             CellValue symbol,
