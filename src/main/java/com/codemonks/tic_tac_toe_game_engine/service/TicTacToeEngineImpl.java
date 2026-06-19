@@ -72,18 +72,47 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
 
         // DTO → Domain Mapping
         Board board = BoardMapper.toDomain(request.getGameState());
-        Move move = MoveMapper.toDomain(request.getMoveData());
         List<PlayerDto> players = normalizePlayers(request);
         request.setPlayers(players);
-        validateTurn(request);
 
+        //BOT MOVE (called by BotMoveService async thread
+        if (BotConstants.BOT_USER_ID.equals(request.getUserId())) {
+
+            PlayerDto botPlayer = getPlayerByUserId(players, BotConstants.BOT_USER_ID);
+            CellValue botSymbol = CellValue.valueOf(botPlayer.getSide());
+
+            BotStrategy strategy = botFactory.getStrategy(request.getBotDifficulty());
+            Move botMove = strategy.chooseMove(board, botSymbol);
+            applyMove(board, botMove, botSymbol);
+
+            log.info("[BOT_MOVE] {} bot played at [{},{}]",
+                    request.getBotDifficulty(), botMove.getRow(), botMove.getCol());
+
+            EngineGameStateResponseDTO botGameOver = checkGameOver(
+                    board, botSymbol, BotConstants.BOT_USER_ID, players, request.getBotDifficulty()
+            );
+            if (botGameOver != null) return botGameOver;
+
+            PlayerDto humanPlayer = getHumanPlayer(players);
+            return buildResponse(
+                    board,
+                    humanPlayer.getUserId(),
+                    GameStatusEnum.RUNNING,
+                    null,
+                    players,
+                    request.getBotDifficulty()
+            );
+        }
+
+        validateTurn(request);
+        Move move = MoveMapper.toDomain(request.getMoveData());
         PlayerDto currentPlayer = getPlayerByUserId(
                 players,
                 request.getUserId()
         );
 
         String playerSide = currentPlayer.getSide();
-        CellValue currentPlayerSymbol = CellValue.valueOf(playerSide);
+            CellValue currentPlayerSymbol = CellValue.valueOf(playerSide);
 
         validateMove(board, move);
         applyMove(board, move, currentPlayerSymbol);
@@ -108,35 +137,7 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
             return gameOverResponse;
         }
 
-        PlayerDto nextPlayer = getNextPlayer(
-                players,
-                request.getUserId()
-        );
-
-        if (Boolean.TRUE.equals(nextPlayer.getIsBot())) {
-            processBotMove(board, nextPlayer, request.getBotDifficulty());
-            CellValue botSymbol = CellValue.valueOf(nextPlayer.getSide());
-            EngineGameStateResponseDTO botGameOverResponse = checkGameOver(
-                            board,
-                            botSymbol,
-                            nextPlayer.getUserId(),
-                            players,
-                            request.getBotDifficulty()
-                    );
-
-            if (botGameOverResponse != null) return botGameOverResponse;
-
-            Long humanUserId = getHumanPlayer(players).getUserId();
-
-            return buildResponse(
-                    board,
-                    humanUserId,
-                    GameStatusEnum.RUNNING,
-                    null,
-                    players,
-                    request.getBotDifficulty()
-            );
-        }
+        PlayerDto nextPlayer = getNextPlayer(players, request.getUserId());
 
         return buildResponse(
                 board,
@@ -219,41 +220,6 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
     private void applyMove(Board board, Move move, CellValue symbol) {
         board.setCell(move.getRow(), move.getCol(), symbol);
     }
-
-    private void processBotMove(
-            Board board,
-            PlayerDto botPlayer,
-            BotDifficultyEnum difficulty
-    ) {
-
-        try {
-            Thread.sleep(getBotDelay(difficulty));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.warn("[BOT_MOVE] Bot thinking delay was interrupted");}
-
-        BotStrategy strategy = botFactory.getStrategy(difficulty);
-        CellValue botSymbol = CellValue.valueOf(botPlayer.getSide());
-        Move botMove = strategy.chooseMove(board, botSymbol);
-        applyMove(board, botMove, botSymbol);
-        log.info(
-                "[BOT_MOVE] {} bot played at [{},{}]",
-                difficulty,
-                botMove.getRow(),
-                botMove.getCol()
-        );
-    }
-
-    private int getBotDelay(BotDifficultyEnum difficulty) {
-        return switch (difficulty) {
-            case EASY   -> 600;
-            case MEDIUM -> 1000;
-            case HARD   -> 1500;
-        };
-    }
-
-
-
 
     private EngineGameStateResponseDTO checkGameOver(
             Board board,
