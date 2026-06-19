@@ -6,10 +6,8 @@ import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeGameStateDTO;
 import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeLobbyDTO;
 import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeMoveDTO;
 import com.codemonks.gameservice.engineModule.dto.realtime.enums.RoomRealtimeStatusEnum;
-import com.codemonks.gameservice.engineModule.dto.request.DiceRollRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineMoveRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequestDTO;
-import com.codemonks.gameservice.engineModule.dto.response.DiceRollResponseDTO;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.gameservice.engineModule.enums.GameStatusEnum;
 import com.codemonks.gameservice.engineModule.factory.GameEngineFactory;
@@ -26,9 +24,9 @@ import com.codemonks.gameservice.mapper.PlayerMapper;
 import com.codemonks.gameservice.repository.GameResultEntityRepository;
 import com.codemonks.gameservice.repository.PlayerEntityRepository;
 import com.codemonks.gameservice.repository.RoomEntityRepository;
+import com.codemonks.gameservice.service.BotMoveService;
 import com.codemonks.gameservice.service.GameService;
 import com.codemonks.gameservice.service.SupabaseService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -50,6 +48,7 @@ public class GameServiceImpl implements GameService {
     private final GameEngineFactory gameEngineFactory;
     private final SupabaseService supabaseService;
     private final GameResultEntityRepository gameResultEntityRepository;
+    private final BotMoveService botMoveService;
 
     @Override
     @Transactional
@@ -108,7 +107,7 @@ public class GameServiceImpl implements GameService {
                 .botDifficulty(room.getBotDifficulty())
                 .build();
         GameEngine engine = gameEngineFactory.getStrategy(room.getGameType());
-        EngineGameStateResponseDTO updatedState = engine.processMove(moveRequest);
+        EngineGameStateResponseDTO humanState = engine.processMove(moveRequest);
 
         RealtimeMoveDTO moveDTO = RealtimeMoveDTO.builder()
                 .roomId(room.getId())
@@ -118,79 +117,50 @@ public class GameServiceImpl implements GameService {
                 .build();
         supabaseService.saveMove(moveDTO);
 
-        RealtimeGameStateDTO realtimeState =
-                GameMapper.toRealtimeState(
-                        room,
-                        updatedState,
-                        currentState.getVersion() + 1
-                );
-        supabaseService.upsertGameState(realtimeState);
-
-        if (GameStatusEnum.WIN.equals(updatedState.getStatus())
-                || GameStatusEnum.DRAW.equals(updatedState.getStatus())) {
-            room.setStatus(RoomStatusEnum.COMPLETED);
-            roomRepository.save(room);
-            RealtimeLobbyDTO lobbyDTO =
-                    LobbyMapper.toLobbyDTO(
-                            room,
-                            roomPlayers,
-                            RoomRealtimeStatusEnum.COMPLETED
-                    );
-
-            supabaseService.upsertLobbyState(
-                    lobbyDTO
-            );
-            saveGameResult(room, updatedState);
-            log.info("Game completed. roomId={}, winner={}",
-                    room.getId(), updatedState.getWinnerUserId());
-        }
-
-        log.info("Move processed. roomId={}, userId={}",
-                room.getId(), makeMoveRequestDTO.getUserId()    );
-        return updatedState;
-    }
-
-    @Override
-    public DiceRollResponseDTO rollDice(String roomCode, Long playerId) {
-
-        // 1. Fetch room
-        RoomEntity room = roomRepository.findByRoomCode(roomCode)
-                .orElseThrow(() -> new ResourceNotFoundException(ROOM_NOT_FOUND));
-
-        // 2. Read authoritative gameState from Supabase — not from client
-        RealtimeGameStateDTO currentState = supabaseService.getGameState(room.getId());
-
-        // 3. Guard: game must be running
-        GameStatusEnum gameStatus = GameStatusEnum.valueOf(currentState.getGameStatus());
-        if (gameStatus == GameStatusEnum.WIN || gameStatus == GameStatusEnum.DRAW) {
-            throw new GameException(GAME_ALREADY_FINISHED);
-        }
-
-        // 4. Build engine request with server-side state
-        DiceRollRequestDTO engineRequest = DiceRollRequestDTO.builder()
-                .roomId(room.getId())
-                .playerId(playerId)
-                .gameState(currentState.getGameState()) // ← already Map<String,Object> from Supabase
-                .build();
-
-        // 5. Call engine via factory — generic, works for any game
-        GameEngine engine = gameEngineFactory.getStrategy(room.getGameType());
-        DiceRollResponseDTO result = engine.rollDice(engineRequest);
-
-        // 6. Write updated state back to Supabase
-        // pendingDice and playerTurnStage are now inside result.getGameState()
-        RealtimeGameStateDTO updatedRealtimeState = GameMapper.toRealtimeStateFromDiceRoll(
-                room, result, currentState.getVersion() + 1
+        //Publish human move state immediately
+        long newVersion = currentState.getVersion() + 1;
+        RealtimeGameStateDTO humanRealtimeState = GameMapper.toRealtimeState(
+                room, humanState, newVersion
         );
-        supabaseService.upsertGameState(updatedRealtimeState);
+        supabaseService.upsertGameState(humanRealtimeState);// Frontend sees human mark her
 
-        // 7. Supabase Realtime broadcasts to all clients automatically
-        log.info("Dice rolled. roomId={}, playerId={}, dice={}",
-                room.getId(), playerId, result.getDice());
+//Check if human move ended the game
+        if (GameStatusEnum.WIN.equals(humanState.getStatus())
+                || GameStatusEnum.DRAW.equals(humanState.getStatus())) {
+            room.setStatus(RoomStatusEnum.COMPLETED);
+            room.setEndedAt(LocalDateTime.now());
+            roomRepository.save(room);
+            RealtimeLobbyDTO lobbyDTO = LobbyMapper.toLobbyDTO(
+                    room, roomPlayers, RoomRealtimeStatusEnum.COMPLETED
+            );
+            supabaseService.upsertLobbyState(lobbyDTO);
+            saveGameResult(room, humanState);
+            log.info("Game completed after human move. roomId={}, winner={}",
+                    room.getId(), humanState.getWinnerUserId());
+            return humanState;
+        }
+        //If next turn is bot, fire async bot move
 
-        return result;
+        boolean isBotTurn = humanState.getPlayers() != null &&
+                humanState.getPlayers().stream()
+                        .anyMatch(p -> Boolean.TRUE.equals(p.getIsBot())
+                                && p.getUserId().equals(humanState.getCurrentTurnUserId()));
+
+        if (isBotTurn) {
+            botMoveService.processBotMove(
+                    room,
+                    roomPlayers,
+                    players,
+                    humanState.getGameState(),
+                    newVersion,
+                    room.getBotDifficulty()
+            );
+            // HTTP thread returns immediately — bot move happens in background
+        }
+        log.info("Move processed. roomId={}, userId={}",
+                room.getId(), makeMoveRequestDTO.getUserId());
+        return humanState;
     }
-
 
     private void saveGameResult(
             RoomEntity room,
