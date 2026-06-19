@@ -2,7 +2,6 @@ package com.codemonks.gameservice.mapper;
 
 import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeGameStateDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequestDTO;
-import com.codemonks.gameservice.engineModule.dto.response.DiceRollResponseDTO;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.gameservice.entity.PlayerEntity;
 import com.codemonks.gameservice.entity.RoomEntity;
