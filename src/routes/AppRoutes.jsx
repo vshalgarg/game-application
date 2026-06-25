@@ -12,6 +12,16 @@ import CreateRoom from "../pages/CreateRoom";
 import JoinRoom from "../pages/JoinRoom";
 import WaitingRoom from "../pages/WaitingRoom";
 import GameRoom from "../pages/GameRoom";
+import GameMode from "../pages/GameMode";
+import ComputerRoom from "../pages/ComputerRoom";
+
+import LudoGameMode from "../pages/ludoPages/LudoGameMode";
+import LudoCreateJoinRoom from "../pages/ludoPages/LudoCreateJoinRoom";
+import LudoBotCreateRoom from "../pages/ludoPages/LudoBotCreateRoom";
+import LudoCreateRoom from "../pages/ludoPages/LudoCreateRoom";
+import LudoJoinRoom from "../pages/ludoPages/LudoJoinRoom";
+import LudoWaitingRoom from "../pages/ludoPages/LudoWaitingRoom";
+import LudoGameRoom from "../pages/ludoPages/LudoGameRoom";
 
 import About from "../pages/About";
 import Contact from "../pages/Contact";
@@ -34,11 +44,17 @@ const AppRoutes = () => {
         <Route
           path="/*"
           element={
-            // <ProtectedRoute>
+            <ProtectedRoute>
               <MainLayout>
                 <Routes>
 
                   <Route path="/" element={<Landing />} />          {/*select game page */}
+
+                  {/* tic-tac-toe */}
+
+                  <Route path="/game-mode" element={<GameMode />} />   {/* Play With Person / Play With Computer */}
+
+                  <Route path="/computer-room" element={<ComputerRoom />} />   {/* Play with computer room created and start game button page */}
 
                   <Route path="/tic-tac-toe" element={<Home />} />      {/*create and join room button page */}
 
@@ -50,6 +66,17 @@ const AppRoutes = () => {
 
                   <Route path="/game-room/:roomCode" element={<GameRoom />} />      {/*actual tic tac toe game room page */}
 
+                  {/* Ludo */}
+                  
+                  <Route path="/ludoGame-mode" element={<LudoGameMode/>} />    {/* Play With Person / Play With Computer */}
+                  <Route path="/createjoin-room" element={<LudoCreateJoinRoom/>} />     {/*create and join room button page */}
+                  <Route path="/ludobotcreate-room" element={<LudoBotCreateRoom/>} />   {/* Play with computer room created and start game button page */}
+                  <Route path="/ludocreate-room" element={<LudoCreateRoom/>} />   {/*Room created page for host only */}
+                  <Route path="/ludojoin-room" element={<LudoJoinRoom/>} />
+                  <Route path="/ludowaiting-room/:roomCode" element={<LudoWaitingRoom/>} />
+                  <Route path="/ludogame-room/:roomCode" element={<LudoGameRoom/>} /> 
+                  {/* Navbar */}
+
                   <Route path="/about" element={<About />} />       {/*about page for of navigation bar */}
 
                   <Route path="/contact" element={<Contact />} />      {/*contact page of navigation bar */}
@@ -58,7 +85,7 @@ const AppRoutes = () => {
 
                 </Routes>
               </MainLayout>
-            // </ProtectedRoute>
+             </ProtectedRoute>
           }
         />
 

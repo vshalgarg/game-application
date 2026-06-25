@@ -8,12 +8,6 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // const passLogin  = ()=>  {
-      
-  //     localStorage.setItem("userId", username);
-  //     navigate("/")
-  // }
-
   const handleLogin = async () => {
     if (!email || !password) {
       alert("All fields are required");

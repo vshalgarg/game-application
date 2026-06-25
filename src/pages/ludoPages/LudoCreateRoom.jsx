@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaCopy } from "react-icons/fa";
 
-import GameButton from "../components/GameButton";
-import { createRoom } from "../services/roomService";
+import GameButton from "../../components/GameButton";
 
 const CreateRoom = () => { 
   const navigate = useNavigate();
@@ -12,59 +11,16 @@ const CreateRoom = () => {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
-  // Prevent duplicate API calls
-  const hasCreatedRoom = useRef(false);
-
-  // Create room when page loads
   useEffect(() => {
+  const roomId = Math.floor(
+    10000000 + Math.random() * 90000000
+  ).toString();
 
-    // Stop second execution in StrictMode
-    if (hasCreatedRoom.current) return;
+  setRoomCode(roomId);
+  setLoading(false);
+}, []);
 
-    // Mark as already executed
-    hasCreatedRoom.current = true;
-
-    console.log("Room Created");
-
-
-
-    const initRoom = async () => {
-
-
-      try {
-        const storedAuth = JSON.parse(localStorage.getItem("user") );
-
-        const hostUserId = storedAuth?.userId;  // checks for userId in local storage 
-
-        console.log("Logged In User ID:", hostUserId);
-
-        const res = await createRoom({       // res stores the response of the create api 
-            tenantId: "test-1",
-            userId: hostUserId,
-            gameType: "TIC_TAC_TOE",
-            matchType: "PVP",
-           
-  });
-
-
-        setRoomCode(res.data.roomCode);
-
-      } catch (err) {
-
-        console.error("Failed to create room:", err);
-
-      } finally {
-
-        setLoading(false);
-
-      }
-    };
-
-    initRoom();
-
-  }, []);
-
-  // Copy room code
+//   // Copy room code
   const handleCopy = async () => {
 
     await navigator.clipboard.writeText(roomCode);
@@ -77,11 +33,11 @@ const CreateRoom = () => {
   };
 
   // Navigate to waiting room
-  const handleStartGame = () => {
+  const handleJoinWaitingGame = () => {
 
     if (!roomCode) return;
 
-    navigate(`/waiting-room/${roomCode}`);
+    navigate(`/ludowaiting-room/${roomCode}`);
   };
 
   return (
@@ -138,12 +94,12 @@ const CreateRoom = () => {
           relative
           bg-black/30
           border
-          border-blue-500/40
+          border-green-500/40
           rounded-2xl
           py-6
           mb-8
           shadow-lg
-          shadow-blue-500/20
+          shadow-green-500/20
         ">
 
           {/* Copy Section */}
@@ -206,7 +162,7 @@ const CreateRoom = () => {
             hover:bg-green-600
             shadow-green-500/40
           "
-          onClick={handleStartGame}
+          onClick={handleJoinWaitingGame}
         />
 
       </div>

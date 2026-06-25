@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import GameButton from "../components/GameButton";
 import { startRoom } from "../services/roomService";
-import { useState } from "react";
+import { useState } from "react"; 
 import useWaitingRoomRealtime from "../hooks/useWaitingRoomRealtime";
 import useRoomRealtime from "../hooks/useRoomRealtime";
 
@@ -9,8 +9,6 @@ const WaitingRoom = () => {
   const navigate = useNavigate();
   const { roomCode } = useParams();
 
-  // Replace later with real auth
-  // const userId = Number(localStorage.getItem("userId")) || 500;
   const storedAuth = JSON.parse( localStorage.getItem("user"));
 
 const currentUserId = storedAuth?.userId;
@@ -48,9 +46,7 @@ const currentUserId = storedAuth?.userId;
         userId : currentUserId,
       });
       
-      // console.log("currentTurnUserId",result.data.currentTurnUserId)
-      // localStorage.setItem("currentTurnUserId",result.data.currentTurnUserId)
-      // navigate(`/game-room/${roomCode}`);
+      // navigate(`/game-room/${roomCode}`); // will navigate through listerner 
     } catch (err) {
       console.error("Failed to start game:", err);
       alert("Cannot start game yet");
@@ -61,7 +57,7 @@ const currentUserId = storedAuth?.userId;
 
 console.log("currentPlayer ", currentPlayer)
 
-  const isHost = currentPlayer?.role === "HOST";
+  const isHost = currentPlayer?.role === "HOST";  // host can start game only (currentPlayer == HOST)
   console.log("isHost ", isHost)
 
   return (

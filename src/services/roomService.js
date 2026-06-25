@@ -1,12 +1,13 @@
 import api from "./axios";
 
 // 1. CREATE ROOM
-export const createRoom = async ({ tenantId, userId, gameType, matchType }) => {
+export const createRoom = async ({ tenantId, userId, gameType, matchType, botDifficulty }) => {
   const res = await api.post("/rooms/create", {
     tenantId,
     userId,
     gameType,
     matchType,
+    botDifficulty,
   });
 
   return res.data; // important
@@ -45,6 +46,14 @@ export const makeMove = async ({ roomCode, userId, row, col }) => {
   });
 
   return res.data;
+};
+
+// 5. RESTART API
+export const restartRoom = async({roomCode, userId}) => {
+  const res = await api.post(`/rooms/${roomCode}/restart`, null,{
+    params:{ userId}
+  });
+    return res.data;
 };
 
 // 5. GET ROOM (Waiting Room Data)

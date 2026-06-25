@@ -1,0 +1,66 @@
+pipeline {
+  agent any
+
+  environment {
+    IMAGE_NAME = "game-application-ui"
+    CONTAINER_NAME = "game-application-ui"
+    PORT = "8092"
+  }
+
+  parameters {
+      string(name: 'BRANCH_NAME', defaultValue: 'dev', description: 'Branch to build')
+  }
+  
+  stages {
+    stage('Checkout') {
+        steps {
+          echo 'Checking out from git from branch ${params.BRANCH_NAME}'
+            git branch: "${params.BRANCH_NAME}",
+                url: 'git@github.com:vshalgarg/hrms-ui.git'
+        }
+    }
+
+    stage('Install & Build React App') {
+      steps {
+        echo "🧱 Installing dependencies and building the React app..."
+        sh '''
+          npm install
+          npm run build
+        '''
+      }
+    }
+
+    stage('Build Docker Image') {
+      steps {
+        echo "🐳 Building Docker image..."
+        sh 'docker build -t $IMAGE_NAME .'
+      }
+    }
+
+    stage('Stop Old Container') {
+      steps {
+        echo "🛑 Stopping and removing old container if it exists..."
+        sh '''
+          docker stop $CONTAINER_NAME || true
+          docker rm $CONTAINER_NAME || true
+        '''
+      }
+    }
+
+    stage('Run New Container') {
+      steps {
+        echo "🚀 Running new container on port $PORT..."
+        sh 'docker run -d --name $CONTAINER_NAME --restart unless-stopped  -p $PORT:80 $IMAGE_NAME'
+      }
+    }
+  }
+
+  post {
+    success {
+      echo "✅ Deployment successful! hrms-app running on port $PORT"
+    }
+    failure {
+      echo "❌ Deployment failed. Check build logs."
+    }
+  }
+}

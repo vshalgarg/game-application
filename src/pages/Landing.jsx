@@ -12,7 +12,11 @@ const Landing = () => {
 
     // Navigate only for Tic Tac Toe
     if (game === "Tic Tac Toe") {
-      navigate("/tic-tac-toe");
+      navigate("/game-mode");  // play with person or computer 
+    }
+
+    if (game === "Ludo") {
+      navigate("/ludoGame-mode");  // play with person or computer 
     }
   };
 

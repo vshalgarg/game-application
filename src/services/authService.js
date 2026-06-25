@@ -1,4 +1,3 @@
-// import api from "./axios";
 import authApi from "./authAxios";
 
 // Signup

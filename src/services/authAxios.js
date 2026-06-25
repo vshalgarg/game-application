@@ -14,3 +14,4 @@ const authApi = axios.create({
 });
 
 export default authApi; 
+
