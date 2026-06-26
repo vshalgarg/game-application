@@ -1,6 +1,14 @@
 spring:
   application:
-    name: tic-tac-toe-game-engine
+    name: tic-tac-toe-engine
 
 server:
   port: 8081
+
+supabase:
+  url: https://lmjhxwoelljmdjkbcdkp.supabase.co
+  api-key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtamh4d29lbGxqbWRqa2JjZGtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NDAzNzIsImV4cCI6MjA5MTExNjM3Mn0.W4A57w9PqJHXq6TyMakV7sWi5ZH5EYHSlFCWCvpr5XY"
+
+  tables:
+    realtime-game-state: realtime_game_state
+    realtime-game-moves: realtime_game_moves

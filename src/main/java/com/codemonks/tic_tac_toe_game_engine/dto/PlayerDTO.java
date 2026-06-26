@@ -9,8 +9,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class PlayerDto {
+public class PlayerDTO {
     private Long userId;
+    private String displayName;
     private Integer turnOrder;
     private String side;
     private Boolean isBot;
