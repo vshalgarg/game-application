@@ -1,6 +1,6 @@
 package com.codemonks.gameservice.mapper;
 
-import com.codemonks.gameservice.engineModule.dto.common.PlayerDto;
+import com.codemonks.gameservice.engineModule.dto.common.PlayerDTO;
 import com.codemonks.gameservice.engineModule.dto.realtime.LobbyPlayerDTO;
 import com.codemonks.gameservice.entity.PlayerEntity;
 import com.codemonks.gameservice.enums.PlayerSideEnum;
@@ -12,7 +12,7 @@ public final class PlayerMapper {
 
     private PlayerMapper() {}
 
-    public static List<PlayerDto> toPlayerDtos(
+    public static List<PlayerDTO> toPlayerDtos(
             List<PlayerEntity> players
     ) {
 
@@ -21,14 +21,14 @@ public final class PlayerMapper {
                 .toList();
     }
 
-    public static PlayerDto toPlayerDto(
+    public static PlayerDTO toPlayerDto(
             PlayerEntity player
     ) {
 
         boolean isHost =
                 player.getRole() == RoomPlayerRole.HOST;
 
-        return PlayerDto.builder()
+        return PlayerDTO.builder()
                 .userId(player.getUserId())
                 .turnOrder(isHost ? 1 : 2)
                 .side(

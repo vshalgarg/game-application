@@ -1,6 +1,6 @@
 package com.codemonks.gameservice.engineModule.dto.response;
 
-import com.codemonks.gameservice.engineModule.dto.common.PlayerDto;
+import com.codemonks.gameservice.engineModule.dto.common.PlayerDTO;
 import com.codemonks.gameservice.engineModule.enums.BotDifficultyEnum;
 import com.codemonks.gameservice.engineModule.enums.GameStatusEnum;
 import lombok.*;
@@ -19,6 +19,6 @@ public class EngineGameStateResponseDTO {
     private Long currentTurnUserId;
     private GameStatusEnum status;
     private Long winnerUserId;
-    private List<PlayerDto> players;
+    private List<PlayerDTO> players;
     private BotDifficultyEnum botDifficulty;
 }
