@@ -1,7 +1,7 @@
 package com.codemonks.tic_tac_toe_game_engine.controller;
 
 import com.codemonks.tic_tac_toe_game_engine.dto.request.EngineMoveRequestDTO; // Missing import added
-import com.codemonks.tic_tac_toe_game_engine.dto.request.EngineStartGameRequestDto;
+import com.codemonks.tic_tac_toe_game_engine.dto.request.EngineStartGameRequestDTO;
 import com.codemonks.tic_tac_toe_game_engine.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.tic_tac_toe_game_engine.service.TicTacToeEngine;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ public class EngineController {
     private final TicTacToeEngine ticTacToeEngine;
 
     @PostMapping(START_GAME)
-    public ResponseEntity<EngineGameStateResponseDTO> startGame(@RequestBody EngineStartGameRequestDto request) {
+    public ResponseEntity<EngineGameStateResponseDTO> startGame(@RequestBody EngineStartGameRequestDTO request) {
         log.info("Request received to start game for room: {}", request.getRoomCode());
         // fixed: using ticTacToeEngine instead of engine
         return ResponseEntity.ok(ticTacToeEngine.startGame(request));

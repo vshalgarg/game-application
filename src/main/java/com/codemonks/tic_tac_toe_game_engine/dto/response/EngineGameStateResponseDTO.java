@@ -1,7 +1,7 @@
 package com.codemonks.tic_tac_toe_game_engine.dto.response;
 
 import com.codemonks.tic_tac_toe_game_engine.bot.enums.BotDifficultyEnum;
-import com.codemonks.tic_tac_toe_game_engine.dto.PlayerDto;
+import com.codemonks.tic_tac_toe_game_engine.dto.PlayerDTO;
 import com.codemonks.tic_tac_toe_game_engine.enums.GameStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,6 +21,6 @@ public class EngineGameStateResponseDTO {
     private Long currentTurnUserId;
     private GameStatusEnum status; // Enum: RUNNING, WIN, DRAW
     private Long winnerUserId;
-    private List<PlayerDto> players;
+    private List<PlayerDTO> players;
     private BotDifficultyEnum botDifficulty;
 }

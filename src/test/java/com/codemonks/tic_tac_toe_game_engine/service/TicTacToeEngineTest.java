@@ -1,8 +1,8 @@
 package com.codemonks.tic_tac_toe_game_engine.service;
 
-import com.codemonks.tic_tac_toe_game_engine.dto.PlayerDto;
+import com.codemonks.tic_tac_toe_game_engine.dto.PlayerDTO;
 import com.codemonks.tic_tac_toe_game_engine.dto.request.EngineMoveRequestDTO;
-import com.codemonks.tic_tac_toe_game_engine.dto.request.EngineStartGameRequestDto;
+import com.codemonks.tic_tac_toe_game_engine.dto.request.EngineStartGameRequestDTO;
 import com.codemonks.tic_tac_toe_game_engine.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.tic_tac_toe_game_engine.enums.GameStatusEnum;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,7 +23,7 @@ class TicTacToeEngineImplTest {
 
     @Test
     void testStartGame_ShouldInitializeProperly() {
-        EngineStartGameRequestDto request = new EngineStartGameRequestDto();
+        EngineStartGameRequestDTO request = new EngineStartGameRequestDTO();
         request.setRoomCode("ROOM123");
         request.setPlayerIds(Arrays.asList(101L, 102L));
 
@@ -40,9 +40,9 @@ class TicTacToeEngineImplTest {
     void testMakeMove_ShouldUpdateBoardAndSwitchTurn() {
         // Setup: First start a game
         List<List<String>> board = createEmptyBoard();
-        List<PlayerDto> players = Arrays.asList(
-                new PlayerDto(101L, 101, "X"),
-                new PlayerDto(102L, 102, "O")
+        List<PlayerDTO> players = Arrays.asList(
+                new PlayerDTO(101L, 101, "X"),
+                new PlayerDTO(102L, 102, "O")
         );
 
         EngineMoveRequestDTO moveRequest = new EngineMoveRequestDTO();
@@ -69,7 +69,7 @@ class TicTacToeEngineImplTest {
     @Test
     void testMakeMove_ShouldThrowException_WhenWrongTurn() {
         List<List<String>> board = createEmptyBoard();
-        List<PlayerDto> players = Arrays.asList(new PlayerDto(101L, 1, "X"), new PlayerDto(102L, 2, "O"));
+        List<PlayerDTO> players = Arrays.asList(new PlayerDTO(101L, 1, "X"), new PlayerDTO(102L, 2, "O"));
 
         EngineMoveRequestDTO moveRequest = new EngineMoveRequestDTO();
         moveRequest.setCurrentTurnUserId(101L);
@@ -87,7 +87,7 @@ class TicTacToeEngineImplTest {
         board.get(0).set(1, "X");
         // We will make the winning move at 0,2
 
-        List<PlayerDto> players = Arrays.asList(new PlayerDto(101L, 1, "X"), new PlayerDto(102L, 2, "O"));
+        List<PlayerDTO> players = Arrays.asList(new PlayerDTO(101L, 1, "X"), new PlayerDTO(102L, 2, "O"));
 
         EngineMoveRequestDTO moveRequest = new EngineMoveRequestDTO();
         moveRequest.setBoardState(board);

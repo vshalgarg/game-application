@@ -10,7 +10,7 @@ import java.util.List;
 
 @Data
 @Getter
-public class EngineStartGameRequestDto {
+public class EngineStartGameRequestDTO {
 
     private Long roomId;
     private String roomCode;
