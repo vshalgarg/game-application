@@ -12,6 +12,6 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=builder /build/target/*.jar game-service.jar
 
-EXPOSE 8090
+EXPOSE 8091
 
 ENTRYPOINT ["java", "-jar", "game-service.jar"]
