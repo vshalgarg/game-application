@@ -23,8 +23,8 @@ public enum ResponseErrorCodes {
     GAME_ALREADY_FINISHED(1010, "Game already finished "),
     REALTIME_STATE_UPDATE_FAILED(1011, "REALTIME_STATE_UPDATE_FAILED"),
     REALTIME_MOVE_SAVE_FAILED(1012, "REALTIME_MOVE_SAVE_FAILED"),
-    REALTIME_STATE_FETCH_FAILED(1013, "REALTIME_STATE_FETCH_FAILED");
-
+    REALTIME_STATE_FETCH_FAILED(1013, "REALTIME_STATE_FETCH_FAILED"),
+    PLAYER_NOT_IN_ROOM(1014, "You are not a player in this room");
     private final int code;
     private final String message;
 

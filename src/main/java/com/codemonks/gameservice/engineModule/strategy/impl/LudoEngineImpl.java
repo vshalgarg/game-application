@@ -1,31 +1,40 @@
 package com.codemonks.gameservice.engineModule.strategy.impl;
 
-import com.codemonks.gameservice.client.TicTacToeFeignClient;
+import com.codemonks.gameservice.client.LudoFeignClient;
+import com.codemonks.gameservice.engineModule.dto.request.DiceRollRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineMoveRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequestDTO;
+import com.codemonks.gameservice.engineModule.dto.response.DiceRollResponseDTO;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.gameservice.engineModule.strategy.GameEngine;
 import com.codemonks.gameservice.enums.GameTypeEnum;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
+@Service
 @RequiredArgsConstructor
-public class TicTacToeEngine implements GameEngine {
+public class LudoEngineImpl implements GameEngine {
 
-    private final TicTacToeFeignClient feignClient;
+    private final LudoFeignClient feignClient;
+
 
     @Override
-    public GameTypeEnum supports() {
-        return GameTypeEnum.TIC_TAC_TOE;
-    }
+    public GameTypeEnum supports() {return GameTypeEnum.LUDO;}
+
 
     @Override
     public EngineGameStateResponseDTO startGame(EngineStartGameRequestDTO request) {
         return feignClient.start(request);
     }
+
     @Override
     public EngineGameStateResponseDTO processMove(EngineMoveRequestDTO request) {
         return feignClient.move(request);
     }
+
+    @Override
+    public DiceRollResponseDTO rollDice(DiceRollRequestDTO request) {
+        return feignClient.rollDice(request);
+    }
+
 }

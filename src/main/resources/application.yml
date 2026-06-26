@@ -17,11 +17,18 @@ spring:
         format_sql: true
 
 services:
-  tictactoe-engine:
-    base-url:  http://192.168.1.100/api/v1/engine
+  tic-tac-toe-engine:
+    base-url:  http://localhost:8081/api/v1/engine
     endpoints:
       start-game: /start-game
       move: /make-move
+
+  ludo-engine:
+    base-url: http://localhost:8082
+    endpoints:
+      start-game: /ludo-engine/api/v1/engine/start-game
+      move: /ludo-engine/api/v1/engine/process-move
+      roll-dice: /ludo-engine/api/v1/engine/roll-dice
 
 supabase:
   url: https://lmjhxwoelljmdjkbcdkp.supabase.co
@@ -29,5 +36,3 @@ supabase:
 
   tables:
     realtime-room-lobby: realtime_room_lobby
-    realtime-game-state: realtime_game_state
-    realtime-game-moves: realtime_game_moves
