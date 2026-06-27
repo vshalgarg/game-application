@@ -18,9 +18,8 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange
 
-                        .pathMatchers("/gateway/auth/**").permitAll()
-                        .pathMatchers("/game/**").authenticated()
-                        .pathMatchers("/engine/**").authenticated()
+                        .pathMatchers("/game-gateway/auth/**").permitAll()
+                        .pathMatchers("/game-gateway/game-service/**").authenticated()
                         .anyExchange().authenticated()
                 )
 
