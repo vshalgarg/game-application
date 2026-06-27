@@ -4,7 +4,7 @@ public class ApiUrlConstants {
 
     private ApiUrlConstants() {}
 
-    public static final String BASE_API = "/gameservice/api/v1";
+    public static final String BASE_API = "/game-service/api/v1";
     public static class Room{
         public static final String BASE = BASE_API + "/rooms";
         public static final String CREATE_ROOM = "/create";
