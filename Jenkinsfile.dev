@@ -15,7 +15,7 @@ pipeline {
 
         string(
                 name: 'BRANCH_NAME',
-                defaultValue: 'api-gateway-dev',
+                defaultValue: 'game-gateway-dev',
                 description: 'Branch to build'
         )
     }
