@@ -83,7 +83,6 @@ pipeline {
                       --name "$CONTAINER_NAME" \
                       -p "$PORT_MAPPING" \
                       --restart unless-stopped \
-                      --network game-network \
                       -e SPRING_PROFILES_ACTIVE=dev \
                       -v /var/log/tic-tac-toe-engine:/logs \
                       "$IMAGE_NAME:$TAG"
