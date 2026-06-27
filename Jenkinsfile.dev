@@ -93,7 +93,6 @@ pipeline {
                           --name "$CONTAINER_NAME" \
                           -p "$PORT_MAPPING" \
                           --restart unless-stopped \
-                          --network game-network \
                           --add-host=host.docker.internal:host-gateway \
                           -e SPRING_PROFILES_ACTIVE=dev \
                           -e spring.datasource.password="$MYSQL_PASSWORD" \
