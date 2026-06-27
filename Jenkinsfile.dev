@@ -4,9 +4,9 @@ pipeline {
 
     environment {
 
-        IMAGE_NAME = "vshalgargnpl/api-gateway"
+        IMAGE_NAME = "vshalgargnpl/game-gateway"
         TAG = "latest"
-        CONTAINER_NAME = "game-service"
+        CONTAINER_NAME = "game-gateway"
         PORT_MAPPING = "8091:8091"
         REGISTRY = "index.docker.io/v1/"
     }
@@ -84,7 +84,6 @@ pipeline {
                       --name "$CONTAINER_NAME" \
                       -p "$PORT_MAPPING" \
                       --restart unless-stopped \
-                      --network game-network \
                       -e SPRING_PROFILES_ACTIVE=dev \
                       -v /var/log/tic-tac-toe-engine:/logs \
                       "$IMAGE_NAME:$TAG"
