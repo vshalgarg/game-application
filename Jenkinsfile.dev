@@ -8,7 +8,7 @@ pipeline {
         TAG = "latest"
         CONTAINER_NAME = "game-service"
         PORT_MAPPING = "8089:8089"
-        REGISTRY = "index.docker.io/v1/"
+            REGISTRY = "index.docker.io/v1/"
     }
 
     parameters {
