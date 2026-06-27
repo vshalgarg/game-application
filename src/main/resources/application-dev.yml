@@ -1,8 +1,8 @@
 spring:
 
   datasource:
-    url: jdbc:mysql://host.docker.internal:3306/game_service_db
-    username:
+    url: jdbc:mysql://host.docker.internal:3306/game_db
+    username: game_user
     password:
 
   jpa:
@@ -11,7 +11,7 @@ spring:
     show-sql: false
 
 server:
-  port: 8081
+  port: 8089
 
 
 supabase:
