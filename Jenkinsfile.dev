@@ -79,7 +79,7 @@ pipeline {
             steps {
                 withCredentials([
                     string(
-                            credentialsId: 'GAME_SERVICE_DB_PASSWORD',
+                            credentialsId: 'GAME_MYSQL_PASSWORD_DEV',
                             variable: 'MYSQL_PASSWORD'
                     )
                 ]) {
