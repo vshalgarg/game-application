@@ -27,6 +27,10 @@ public class AuthGatewayService {
 
     @Value("${auth.service.url}")
     private String authServiceUrl;
+    @Value("${auth.service.client.name}")
+    private String authServiceClientName;
+    @Value("${auth.service.client.secret}")
+    private String authServiceClientSecret;
 
 
     public Mono<RegisterResponse> register(RegisterRequest request) {
@@ -44,10 +48,10 @@ public class AuthGatewayService {
         return webClient
                 .post()
                 .uri(authServiceUrl + "/auth/api/v1/register")
-                .header("clientName", "GAME_APP")
+                .header("clientName", authServiceClientName)
                 .header(
                         "clientSecret",
-                        "YzRkOWE3ZjJiMWM4N2Q1ZTlmM2ExNmI0YzhlNzUxMjM0NTY3ODkwYWJjZGVm"
+                        authServiceClientSecret
                 )
                 .bodyValue(authRequest)
                 .retrieve()
@@ -74,10 +78,10 @@ public class AuthGatewayService {
         return webClient
                 .post()
                   .uri(authServiceUrl + "/auth/api/v1/login")
-                .header("clientName", "GAME_APP")
+                .header("clientName", authServiceClientName)
                 .header(
                         "clientSecret",
-                        "YzRkOWE3ZjJiMWM4N2Q1ZTlmM2ExNmI0YzhlNzUxMjM0NTY3ODkwYWJjZGVm")
+                        authServiceClientSecret)
 
                 .bodyValue(authRequest)
                 .retrieve()

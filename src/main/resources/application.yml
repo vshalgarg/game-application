@@ -20,20 +20,10 @@ spring:
             - id: game-service
               uri: http://192.168.1.100
               predicates:
-                - Path=/api/v1/**
-
-            - id: engine-service
-              uri: http://192.168.1.100
-              predicates:
-                - Path=/engine/**
-
-            - id: auth-service
-              uri: http://192.168.1.100
-              predicates:
-                - Path=/auth/**
+                - Path=/game-gateway/game-service/**
               filters:
-                - AddRequestHeader=clientName,GAME_APP
-                - AddRequestHeader=clientSecret,YzRkOWE3ZjJiMWM4N2Q1ZTlmM2ExNmI0YzhlNzUxMjM0NTY3ODkwYWJjZGVm
+                - StripPrefix=1
+
 auth:
   service:
     url: http://192.168.1.100
