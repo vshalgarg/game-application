@@ -1,44 +1,13 @@
 const LudoCell = ({ type }) => {
-  if (type === "red-arrow") {
-  return (
-    <div className="border border-gray-400 bg-white flex items-center justify-center">
-      <span className="text-red-500 text-sm font-bold">
-        →
-      </span>
-    </div>
-  );
-}
+  let background = type;
 
-if (type === "green-arrow") {
-  return (
-    <div className="border border-gray-400 bg-white flex items-center justify-center">
-      <span className="text-green-500 text-sm font-bold">
-        ↓
-      </span>
-    </div>
-  );
-}
+  if (
+    type === "safe" ||
+    type.includes("arrow")
+  ) {
+    background = "#ffffff";
+  }
 
-if (type === "blue-arrow") {
-  return (
-    <div className="border border-gray-400 bg-white flex items-center justify-center">
-      <span className="text-blue-500 text-sm font-bold">
-        ↑
-      </span>
-    </div>
-  );
-}
-
-if (type === "yellow-arrow") {
-  return (
-    <div className="border border-gray-400 bg-white flex items-center justify-center">
-      <span className="text-yellow-500 text-sm font-bold">
-        ←
-      </span>
-    </div>
-  );
-}
-  if (type === "safe") {
   return (
     <div
       className="
@@ -47,20 +16,42 @@ if (type === "yellow-arrow") {
         flex
         items-center
         justify-center
-        bg-white
+        relative
       "
+      style={{
+        backgroundColor: background,
+      }}
     >
-      <span className="text-gray-500 text-xs">
-        ★
-      </span>
+      {type === "safe" && (
+        <span className="text-[11px] text-gray-500 leading-none">
+          ★
+        </span>
+      )}
+
+      {type === "red-arrow" && (
+        <span className="text-red-500 text-[14px] leading-none">
+          →
+        </span>
+      )}
+
+      {type === "green-arrow" && (
+        <span className="text-green-500 text-[14px] leading-none">
+          ↓
+        </span>
+      )}
+
+      {type === "blue-arrow" && (
+        <span className="text-blue-500 text-[14px] leading-none">
+          ↑
+        </span>
+      )}
+
+      {type === "yellow-arrow" && (
+        <span className="text-yellow-500 text-[14px] leading-none">
+          ←
+        </span>
+      )}
     </div>
-  );
-}
-  return (
-    <div
-      className="border border-gray-400"
-      style={{ backgroundColor: type, }}
-    />
   );
 };
 

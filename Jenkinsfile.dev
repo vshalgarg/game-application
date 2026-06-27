@@ -16,7 +16,7 @@ pipeline {
         steps {
           echo 'Checking out from git from branch ${params.BRANCH_NAME}'
             git branch: "${params.BRANCH_NAME}",
-                url: 'git@github.com:vshalgarg/hrms-ui.git'
+                url: 'git@github.com:vshalgarg/game-application.git'
         }
     }
 
@@ -57,7 +57,7 @@ pipeline {
 
   post {
     success {
-      echo "✅ Deployment successful! hrms-app running on port $PORT"
+      echo "✅ Deployment successful! game-application-ui running on port $PORT"
     }
     failure {
       echo "❌ Deployment failed. Check build logs."

@@ -12,6 +12,7 @@ const LudoBoard = () => {
         h-[450px]
         grid
         grid-cols-15
+        grid-rows-15
       "
     >
       {boardLayout.flat().map((cell, index) => (
@@ -26,10 +27,10 @@ const LudoBoard = () => {
       <div
         className="absolute"
         style={{
-          left: "40%",
-          top: "40%",
-          width: "20%",
-          height: "20%",
+            left: "calc(40% + 1px)",
+            top: "calc(40% + 1px)",
+            width: "calc(20% - 2px)",
+            height: "calc(20% - 2px)",
         }}
       >
         <CenterHome />
