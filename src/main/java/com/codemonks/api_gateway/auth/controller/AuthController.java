@@ -14,7 +14,7 @@
     import reactor.core.publisher.Mono;
 
     @RestController
-    @RequestMapping("/gateway/auth/api/v1/")
+    @RequestMapping("/game-gateway/auth/api/v1/")
     @RequiredArgsConstructor
     public class AuthController {
 
