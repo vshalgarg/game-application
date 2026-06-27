@@ -27,11 +27,12 @@ pipeline {
     stage('Install & Build React App') {
       steps {
         withCredentials([string(credentialsId: 'TIC_TAC_TOE_SUPABASE_SECRET_KEY_DEV', variable: 'TIC_TAC_TOE_SUPABASE_SECRET_KEY_DEV')]) {
-        echo "🧱 Installing dependencies and building the React app..."
+        echo "🧱 Installing dependencies and building the React app...VITE_SUPABASE_ANON_KEY=$SUPABASE_KEY"
         sh '''
           npm install
           cp .env.${ENV_FILE} .env
           echo "VITE_SUPABASE_ANON_KEY=$SUPABASE_KEY" >> .env
+   
           npm run build
         '''
       }
