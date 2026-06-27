@@ -5,10 +5,11 @@ pipeline {
     IMAGE_NAME = "game-application-ui"
     CONTAINER_NAME = "game-application-ui"
     PORT = "8092"
+    ENV_FILE = 'dev'
   }
 
   parameters {
-      string(name: 'BRANCH_NAME', defaultValue: 'dev', description: 'Branch to build')
+      string(name: 'BRANCH_NAME', defaultValue: 'game-ui-dev', description: 'Branch to build')
   }
   
   stages {
@@ -25,6 +26,7 @@ pipeline {
         echo "🧱 Installing dependencies and building the React app..."
         sh '''
           npm install
+          cp .env.${ENV_FILE} .env
           npm run build
         '''
       }
@@ -49,8 +51,17 @@ pipeline {
 
     stage('Run New Container') {
       steps {
-        echo "🚀 Running new container on port $PORT..."
-        sh 'docker run -d --name $CONTAINER_NAME --restart unless-stopped  -p $PORT:80 $IMAGE_NAME'
+        withCredentials([string(credentialsId: 'TIC_TAC_TOE_SUPABASE_SECRET_KEY_DEV', variable: 'TIC_TAC_TOE_SUPABASE_SECRET_KEY_DEV')]) {
+          echo "🚀 Running new container on port $PORT..."
+          sh '''
+            docker run -d \
+              --name $CONTAINER_NAME \
+              --restart unless-stopped \
+              -p $PORT:80 \
+              -e VITE_SUPABASE_ANON_KEY="$TIC_TAC_TOE_SUPABASE_SECRET_KEY_DEV" \
+              $IMAGE_NAME
+          '''
+        }
       }
     }
   }
