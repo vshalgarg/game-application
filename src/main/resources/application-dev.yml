@@ -1,2 +1,6 @@
 server:
   port: 8085
+
+supabase:
+  url: https://urbbdsdaamsxtxthqxbm.supabase.co
+  api-key:
