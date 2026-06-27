@@ -1,5 +1,8 @@
 pipeline {
   agent any
+  tools {
+        nodejs 'Node22'
+    }
 
   environment {
     IMAGE_NAME = "game-application-ui"
