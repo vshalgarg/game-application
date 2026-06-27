@@ -81,6 +81,10 @@ pipeline {
                     string(
                             credentialsId: 'GAME_MYSQL_PASSWORD_DEV',
                             variable: 'MYSQL_PASSWORD'
+                    ),
+                    string(
+                            credentialsId: 'TIC_TAC_TOE_SUPABASE_SECRET_KEY_DEV',
+                            variable: 'TIC_TAC_TOE_SUPABASE_SECRET_KEY_DEV'
                     )
                 ]) {
 
@@ -93,6 +97,7 @@ pipeline {
                           --add-host=host.docker.internal:host-gateway \
                           -e SPRING_PROFILES_ACTIVE=dev \
                           -e spring.datasource.password="$MYSQL_PASSWORD" \
+                          -e supabase-api-key="$TIC_TAC_TOE_SUPABASE_SECRET_KEY_DEV" \
                           -v /var/log/game-service:/logs \
                           "$IMAGE_NAME:$TAG"
                     '''
