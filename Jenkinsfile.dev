@@ -95,6 +95,7 @@ withCredentials([
                       "$IMAGE_NAME:$TAG"
                 '''
             }
+}
         }
 
         stage('Clean Old Images') {
