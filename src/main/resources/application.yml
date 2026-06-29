@@ -20,9 +20,7 @@ spring:
             - id: game-service
               uri: http://192.168.1.100
               predicates:
-                - Path=/game-gateway/game-service/**
-              filters:
-                - StripPrefix=1
+                - Path=/game-service/**
 
 auth:
   service:
