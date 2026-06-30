@@ -3,11 +3,15 @@ import { useNavigate } from "react-router-dom";
 import GameButton from "../components/GameButton";
 import { createRoom, startRoom } from "../services/roomService";
 
+import { useSnackbar } from "../context/SnackbarContext";
+
 const ComputerRoom = () => {
   const navigate = useNavigate();
 
   const [difficulty, setDifficulty] = useState("EASY");
   const [loading, setLoading] = useState(false);
+
+  const { showSnackbar } = useSnackbar();
 
   const difficulties = [
     {
@@ -58,6 +62,8 @@ const ComputerRoom = () => {
         roomCode,
         userId: playerUserId,
       });
+
+
 
       navigate(`/game-room/${roomCode}`);
     } catch (err) {

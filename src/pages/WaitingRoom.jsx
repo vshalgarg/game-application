@@ -5,9 +5,13 @@ import { useState } from "react";
 import useWaitingRoomRealtime from "../hooks/useWaitingRoomRealtime";
 import useRoomRealtime from "../hooks/useRoomRealtime";
 
+import { useSnackbar } from "../context/SnackbarContext";
+
 const WaitingRoom = () => {
   const navigate = useNavigate();
   const { roomCode } = useParams();
+
+  const { showSnackbar } = useSnackbar();
 
   const storedAuth = JSON.parse( localStorage.getItem("user"));
 
@@ -28,8 +32,6 @@ const currentUserId = storedAuth?.userId;
   },
 });
 
-   
-  // const [loading] = useState(false);
 
   // Start Game
   const handleStartGame = async () => {
@@ -45,11 +47,14 @@ const currentUserId = storedAuth?.userId;
         roomCode,
         userId : currentUserId,
       });
+
+      showSnackbar(result.message, "success");
       
       // navigate(`/game-room/${roomCode}`); // will navigate through listerner 
     } catch (err) {
       console.error("Failed to start game:", err);
-      alert("Cannot start game yet");
+      // alert("Cannot start game yet");
+      showSnackbar(err.response?.message || "Failed to start game room.","error");
     }
   };
 

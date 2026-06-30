@@ -4,11 +4,15 @@ import { useNavigate } from "react-router-dom";
 import GameButton from "../components/GameButton";
 import { joinRoom } from "../services/roomService";
 
+import { useSnackbar } from "../context/SnackbarContext";
+
 const JoinRoom = () => {
   const navigate = useNavigate();
 
   // Store input value
   const [roomCode, setRoomCode] = useState("");
+
+  const { showSnackbar } = useSnackbar();
 
   // Handle join room
   const handleJoinRoom = async () => {
@@ -29,13 +33,14 @@ const JoinRoom = () => {
               tenantId: "test-1",
               userId: joinUserId,
   });
-
-  console.log("Joined room:", res);   // res stores the response of the join api 
+          showSnackbar(res.message, "success");
+          console.log("Joined room:", res);   // res stores the response of the join api 
 
   navigate(`/waiting-room/${roomCode}`);
 } catch (err) {
+  showSnackbar(err.response?.message || "Failed to join room.","error");
   console.error("Failed to join room:", err);
-  alert("Invalid room or unable to join");
+  // alert("Invalid room or unable to join");
 }
   };
 

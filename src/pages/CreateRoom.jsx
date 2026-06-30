@@ -5,12 +5,16 @@ import { FaCopy } from "react-icons/fa";
 import GameButton from "../components/GameButton";
 import { createRoom } from "../services/roomService";
 
+import { useSnackbar } from "../context/SnackbarContext";
+
 const CreateRoom = () => { 
   const navigate = useNavigate();
 
   const [roomCode, setRoomCode] = useState("");
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+
+  const { showSnackbar } = useSnackbar();
 
   // Prevent duplicate API calls
   const hasCreatedRoom = useRef(false);
@@ -45,11 +49,15 @@ const CreateRoom = () => {
             matchType: "PVP",
            
   });
-
+      
+        showSnackbar(res.message, "success");
+  
 
         setRoomCode(res.data.roomCode);
 
       } catch (err) {
+
+        showSnackbar(err.response?.message || "Failed to create room.","error");
 
         console.error("Failed to create room:", err);
 
