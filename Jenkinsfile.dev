@@ -90,7 +90,7 @@ withCredentials([
                       -p "$PORT_MAPPING" \
                       --restart unless-stopped \
                       -e SPRING_PROFILES_ACTIVE=dev \
-                      -e supabase-api-key="$TIC_TAC_TOE_SUPABASE_SECRET_KEY_DEV" \
+                      -e supabase.api-key="$TIC_TAC_TOE_SUPABASE_SECRET_KEY_DEV" \
                       -v /var/log/tic-tac-toe-engine:/logs \
                       "$IMAGE_NAME:$TAG"
                 '''
