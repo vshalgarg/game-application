@@ -358,7 +358,13 @@ const checkWinningPattern = (board) => {
 
         <p className="text-gray-300 text-base mb-2">
           Current Turn User :{" "}
-            {currentTurn === currentUserId ? "You" : currentTurn}  
+          {
+            currentTurn === currentUserId
+              ? "You"
+                : currentTurn === -1
+                ? "Bot"
+                : currentTurn
+           }
         </p>
 
         {winner && (

@@ -39,6 +39,11 @@ const JoinRoom = () => {
 }
   };
 
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+    await handleJoinRoom();
+};
+
   return (
     <div className="
       min-h-screen
@@ -82,6 +87,7 @@ const JoinRoom = () => {
           Enter room ID to join the game
         </p>
 
+        <form onSubmit={handleSubmit}>
         <input
           type="text"
           placeholder="Enter Room ID"
@@ -111,8 +117,10 @@ const JoinRoom = () => {
             hover:bg-purple-600
             shadow-purple-500/40
           "
-          onClick={handleJoinRoom}
+          // onClick={handleJoinRoom}
+          type="submit"
         />
+        </form>
 
       </div>
 

@@ -36,6 +36,12 @@ const Login = () => {
     }
   };
 
+    // Handles form submission (button click or Enter key)
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await handleLogin();
+  };
+
   return (
     <div
       className="
@@ -68,9 +74,10 @@ const Login = () => {
         </h1>
 
         <p className="text-gray-300 text-center mb-8">
-          Enter the arena
+          Enter your login credentials
         </p>
 
+        <form onSubmit={handleSubmit}>
         <input
           type="text"
           placeholder="Email"
@@ -88,7 +95,7 @@ const Login = () => {
         />
 
         <button
-          onClick={handleLogin}
+          type="submit"
           className="
             w-full
             bg-blue-500
@@ -102,6 +109,7 @@ const Login = () => {
         >
           Login
         </button>
+        </form>
 
         <p
           onClick={() => navigate("/signup")}

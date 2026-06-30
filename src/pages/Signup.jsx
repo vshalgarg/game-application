@@ -42,6 +42,11 @@ const Signup = () => {
     }
   };
 
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  await handleSignup();
+};
+
   return (
     <div
       className="
@@ -77,6 +82,7 @@ const Signup = () => {
           Join the game arena
         </p>
 
+        <form onSubmit={handleSubmit}>
         <input
           type="email"
           placeholder="Email"
@@ -94,7 +100,7 @@ const Signup = () => {
         />
 
         <button
-          onClick={handleSignup}
+          type="submit"
           className="
             w-full
             bg-green-500
@@ -108,6 +114,7 @@ const Signup = () => {
         >
           Create Account
         </button>
+        </form>
 
         <p
           onClick={() => navigate("/login")}
