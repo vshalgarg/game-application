@@ -15,7 +15,6 @@ public class SupabaseConfig {
 
     @Bean
     public WebClient supabaseWebClient() {
-      log.info("supabase url: {} api key: {}", properties.getUrl(), properties.getApiKey());
         return WebClient.builder()
                 .baseUrl(properties.getUrl())
                 .defaultHeader(

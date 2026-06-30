@@ -18,10 +18,10 @@ spring:
 
 services:
   tic-tac-toe-engine:
-    base-url:  http://localhost:8081/api/v1/engine
+    base-url:  http://localhost:8081/game-engine
     endpoints:
-      start-game: /start-game
-      move: /make-move
+      start-game: /api/v1/start-game
+      move: /api/v1/make-move
 
   ludo-engine:
     base-url: http://localhost:8082
