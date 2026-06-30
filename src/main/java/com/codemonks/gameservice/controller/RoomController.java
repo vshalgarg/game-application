@@ -2,6 +2,7 @@ package com.codemonks.gameservice.controller;
 
 import com.codemonks.gameservice.constants.ApiUrlConstants;
 import com.codemonks.gameservice.dto.ApiResponse;
+import com.codemonks.gameservice.dto.ResponseMessages;
 import com.codemonks.gameservice.dto.request.CreateRoomRequestDTO;
 import com.codemonks.gameservice.dto.request.JoinRoomRequestDTO;
 import com.codemonks.gameservice.dto.request.RollDiceRequestDTO;
@@ -37,7 +38,8 @@ public class RoomController {
         );
 
         RoomResponseDTO response = roomService.createRoom(request);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(ApiResponse.success(response,
+                ResponseMessages.ROOM_CREATED));
     }
 
     @PostMapping(JOIN_ROOM)
@@ -50,7 +52,7 @@ public class RoomController {
                 request.getUserId()
         );
         RoomResponseDTO response = roomService.joinRoom(roomCode, request);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(ApiResponse.success(response,ResponseMessages.ROOM_JOINED));
     }
 
     @PostMapping(START_GAME)
@@ -65,7 +67,7 @@ public class RoomController {
         );
 
         EngineGameStateResponseDTO response = roomService.startGame(roomCode, userId);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(ApiResponse.success(response,ResponseMessages.GAME_STARTED));
     }
 
     @PostMapping(RESTART_GAME)
@@ -80,7 +82,7 @@ public class RoomController {
         );
 
         EngineGameStateResponseDTO response = roomService.restartGame(roomCode, userId);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(ApiResponse.success(response,ResponseMessages.GAME_RESTARTED));
     }
 
     @GetMapping(GET_ROOM_DETAILS)
@@ -92,7 +94,7 @@ public class RoomController {
                 roomService.getRoomDetails(roomCode);
 
         return ResponseEntity.ok(
-                ApiResponse.success(response)
+                ApiResponse.success(response,ResponseMessages.ROOM_DETAILS_FETCHED)
         );
     }
 

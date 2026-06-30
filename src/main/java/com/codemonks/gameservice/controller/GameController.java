@@ -2,6 +2,7 @@ package com.codemonks.gameservice.controller;
 
 import com.codemonks.gameservice.constants.ApiUrlConstants;
 import com.codemonks.gameservice.dto.ApiResponse;
+import com.codemonks.gameservice.dto.ResponseMessages;
 import com.codemonks.gameservice.dto.request.MakeMoveRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.gameservice.service.GameService;
@@ -34,7 +35,7 @@ public class GameController {
                 gameService.makeMove(roomCode, request);
 
         return ResponseEntity.ok(
-                ApiResponse.success(response)
+                ApiResponse.success(response, ResponseMessages.MOVE_PROCESSED)
         );
     }
 }
