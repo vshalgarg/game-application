@@ -25,11 +25,11 @@ import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.codemonks.tic_tac_toe_game_engine.constant.EngineErrorCodesEnum.*;
+import static com.codemonks.tic_tac_toe_game_engine.constant.EngineErrorCodesEnum.INVALID_TURN;
+import static com.codemonks.tic_tac_toe_game_engine.constant.EngineErrorCodesEnum.PLAYER_NOT_FOUND;
 
 @Service
 @Slf4j
@@ -86,6 +86,8 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                         .gameState(response.getGameState())
                         .currentTurnUserId(response.getCurrentTurnUserId())
                         .gameStatus(response.getStatus().name())
+                        .players(response.getPlayers())
+                        .botDifficulty(response.getBotDifficulty())
                         .winnerUserId(null)
                         .stateSequence(1L)
                         .build();
