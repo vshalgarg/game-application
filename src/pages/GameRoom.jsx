@@ -13,6 +13,8 @@ import { restartRoom } from "../services/roomService";
 import useGameRealtime from "../hooks/useGameRealtime";
 import { supabase } from "../utils/supabaseClient";
 
+import { useSnackbar } from "../context/SnackbarContext";
+
 const GameRoom = () => {
   const { roomCode } = useParams();
   const navigate = useNavigate();
@@ -30,6 +32,8 @@ const GameRoom = () => {
   const [status, setStatus] = useState("RUNNING");
   const [winningPattern, setWinningPattern] = useState(null);
   const [showWinnerPopup, setShowWinnerPopup] = useState(false);
+
+  const { showSnackbar } = useSnackbar();
 
   const storedAuth = JSON.parse(localStorage.getItem("user"));
 
@@ -227,7 +231,7 @@ const checkWinningPattern = (board) => {
         err.response?.data
       );
 
-      alert("Invalid move or not your turn");
+      showSnackbar("Invalid move.","error");
     }
   };
 

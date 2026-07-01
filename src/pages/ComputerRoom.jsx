@@ -58,17 +58,17 @@ const ComputerRoom = () => {
 
       console.log("Room Created:", roomCode);
 
-      await startRoom({
+      const startResponse = await startRoom({
         roomCode,
         userId: playerUserId,
       });
 
-
-
+      showSnackbar(startResponse.message, "success");
       navigate(`/game-room/${roomCode}`);
     } catch (err) {
       console.error("Failed to start game:", err);
-      alert("Unable to start game.");
+      showSnackbar(err.response?.message || "Failed to start game.","error");
+      
     } finally {
       setLoading(false);
     }

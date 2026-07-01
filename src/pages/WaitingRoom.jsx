@@ -50,11 +50,10 @@ const currentUserId = storedAuth?.userId;
 
       showSnackbar(result.message, "success");
       
-      // navigate(`/game-room/${roomCode}`); // will navigate through listerner 
+ 
     } catch (err) {
       console.error("Failed to start game:", err);
-      // alert("Cannot start game yet");
-      showSnackbar(err.response?.message || "Failed to start game room.","error");
+      showSnackbar(err.response?.message || "Failed to start game.","error");
     }
   };
 

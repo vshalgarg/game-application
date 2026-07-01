@@ -1,21 +1,35 @@
+import { checkLogicalError, handleApiError } from "../utils/errorHandler";
 import authApi from "./authAxios";
 
 // Signup
 export const signupUser = async ({ email, password }) => {
-  const res = await authApi.post("/register", {
+  try{
+    const res = await authApi.post("/register", {
     email,
     password,
   });
+const result= checkLogicalError(res.data)
+  return result;
+  }
 
-  return res.data;
+ catch (error) {
+    throw new Error(handleApiError(error))
+  }
+  
 };
 
 // Login
 export const loginUser = async ({ email, password }) => {
-  const res = await authApi.post("/login", {
+  try {
+    const res = await authApi.post("/login", {
     email,
     password,
   });
-
-  return res.data;
+   const result= checkLogicalError(res.data)
+  return result;
+    
+  } catch (error) {
+    throw new Error(handleApiError(error))
+  }
+  
 };
