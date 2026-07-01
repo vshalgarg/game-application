@@ -2,15 +2,19 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginUser } from "../services/authService";
 
+import { useSnackbar } from "../context/SnackbarContext";
+
 const Login = () => {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const { showSnackbar } = useSnackbar();
+
   const handleLogin = async () => {
     if (!email || !password) {
-      alert("All fields are required");
+      showSnackbar("Both fields are required.","error");
       return;
     }
 
@@ -24,15 +28,11 @@ const Login = () => {
 
       // Store backend response (userId, token, username, etc.)
       localStorage.setItem("user", JSON.stringify(response));
-
+      showSnackbar(response.message || "Login Successful", "success");
       navigate("/");    // select game page 
     } catch (error) {
       console.error("Login Error:", error);
-
-      alert(
-        error.response?.data?.message ||
-        "Invalid credentials"
-      );
+      showSnackbar(error.message || "Login Failed.","error");
     }
   };
 

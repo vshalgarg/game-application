@@ -2,22 +2,26 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signupUser } from "../services/authService";
 
+import { useSnackbar } from "../context/SnackbarContext";
+
 const Signup = () => {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const { showSnackbar } = useSnackbar();
+
   const handleSignup = async () => {
     console.log("Signup Button Clicked");
 
     if (!email || !password) {
-      alert("All fields are required");
+      showSnackbar("Both fields are required.","error");
       return;
     }
 
     console.log("Email:", email);
-    console.log("Password:", password);
+    // console.log("Password:", password);
 
     try {
       const response = await signupUser({
@@ -27,18 +31,19 @@ const Signup = () => {
 
       console.log("Signup Success:", response);
 
-      alert("Account created successfully");
+      showSnackbar(response.message || "Account Created Successfully", "success");
 
       navigate("/login");
     } catch (error) {
       console.log("Status:", error.response?.status);
       console.log("Data:", error.response?.data);
       console.log("Full Error:", error);
+     const errorMessage =
+    error.response?.data?.message ||
+    error.message ||
+    "Failed to create account.";
 
-      alert(
-        error.response?.data?.message ||
-          "Failed to create account"
-      );
+  showSnackbar(errorMessage, "error");
     }
   };
 

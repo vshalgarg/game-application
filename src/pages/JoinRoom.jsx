@@ -36,14 +36,14 @@ const JoinRoom = () => {
           showSnackbar(res.message, "success");
           console.log("Joined room:", res);   // res stores the response of the join api 
 
-  navigate(`/waiting-room/${roomCode}`);
-} catch (err) {
-  showSnackbar(err.response?.message || "Failed to join room.","error");
-  console.error("Failed to join room:", err);
-  // alert("Invalid room or unable to join");
-}
-  };
+          navigate(`/waiting-room/${roomCode}`);
+          } catch (err) {
+            showSnackbar(err.response?.message || "Failed to join room.","error");
+            console.error("Failed to join room:", err);
+          }
+};
 
+// for enter button click form submisison 
   const handleSubmit = async (e) => {
   e.preventDefault();
     await handleJoinRoom();
