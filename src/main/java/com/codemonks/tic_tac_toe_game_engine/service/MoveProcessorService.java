@@ -135,6 +135,8 @@ public class MoveProcessorService {
                         .currentTurnUserId(response.getCurrentTurnUserId())
                         .gameStatus(response.getStatus().name())
                         .winnerUserId(response.getWinnerUserId())
+                        .players(response.getPlayers())
+                        .botDifficulty(response.getBotDifficulty())
                         .stateSequence(existingState.getStateSequence() + 1)
                         .build();
         supabaseRealtimeService.upsertGameState(updatedState);
