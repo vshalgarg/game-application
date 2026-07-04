@@ -3,12 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { loginUser } from "../services/authService";
 
 import { useSnackbar } from "../context/SnackbarContext";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const Login = () => {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const { showSnackbar } = useSnackbar();
 
@@ -86,14 +88,23 @@ const Login = () => {
           className="w-full mb-4 px-4 py-3 rounded-xl bg-black/30 text-white outline-none border border-blue-500/30 focus:border-blue-500"
         />
 
+        <div className="relative mb-6">
         <input
-          type="password"
+          type={showPassword ? "text" : "password"}
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full mb-6 px-4 py-3 rounded-xl bg-black/30 text-white outline-none border border-purple-500/30 focus:border-purple-500"
+          className="w-full px-4 py-3 pr-12  rounded-xl bg-black/30 text-white outline-none border border-purple-500/30 focus:border-purple-500"
         />
 
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+        >
+              {showPassword ? <FaEye size={20} /> : <FaEyeSlash size={20} />}
+         </button>
+        </div>
         <button
           type="submit"
           className="

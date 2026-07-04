@@ -1,19 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaCopy } from "react-icons/fa";
-
 import GameButton from "../components/GameButton";
 import { createRoom } from "../services/roomService";
-
 import { useSnackbar } from "../context/SnackbarContext";
 
 const CreateRoom = () => { 
   const navigate = useNavigate();
-
   const [roomCode, setRoomCode] = useState("");
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-
   const { showSnackbar } = useSnackbar();
 
   // Prevent duplicate API calls
@@ -21,50 +17,31 @@ const CreateRoom = () => {
 
   // Create room when page loads
   useEffect(() => {
-
     // Stop second execution in StrictMode
     if (hasCreatedRoom.current) return;
 
     // Mark as already executed
     hasCreatedRoom.current = true;
-
-    console.log("Room Created");
-
-
-
     const initRoom = async () => {
-
-
       try {
         const storedAuth = JSON.parse(localStorage.getItem("user") );
-
         const hostUserId = storedAuth?.userId;  // checks for userId in local storage 
-
-        console.log("Logged In User ID:", hostUserId);
-
-        const res = await createRoom({       // res stores the response of the create api 
+        
+        const res = await createRoom({ 
             tenantId: "test-1",
             userId: hostUserId,
             gameType: "TIC_TAC_TOE",
             matchType: "PVP",
-           
   });
       
         showSnackbar(res.message, "success");
-  
-
         setRoomCode(res.data.roomCode);
 
       } catch (err) {
-
-        showSnackbar(err.response?.message || "Failed to create room.","error");
-
         console.error("Failed to create room:", err);
-
+        showSnackbar(err.response?.message || "Failed to create room.","error");
       } finally {
-
         setLoading(false);
-
       }
     };
 
@@ -86,9 +63,7 @@ const CreateRoom = () => {
 
   // Navigate to waiting room
   const handleStartGame = () => {
-
     if (!roomCode) return;
-
     navigate(`/waiting-room/${roomCode}`);
   };
 
@@ -106,7 +81,6 @@ const CreateRoom = () => {
     ">
 
       {/* Card */}
-
       <div className="
         w-full
         max-w-md

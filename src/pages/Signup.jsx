@@ -3,12 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { signupUser } from "../services/authService";
 
 import { useSnackbar } from "../context/SnackbarContext";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const Signup = () => {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const { showSnackbar } = useSnackbar();
 
@@ -38,12 +40,9 @@ const Signup = () => {
       console.log("Status:", error.response?.status);
       console.log("Data:", error.response?.data);
       console.log("Full Error:", error);
-     const errorMessage =
-    error.response?.data?.message ||
-    error.message ||
-    "Failed to create account.";
+      const errorMessage = error.response?.data?.message || error.message || "Failed to create account.";
 
-  showSnackbar(errorMessage, "error");
+      showSnackbar(errorMessage, "error");
     }
   };
 
@@ -96,13 +95,23 @@ const Signup = () => {
           className="w-full mb-4 px-4 py-3 rounded-xl bg-black/30 text-white outline-none border border-purple-500/30 focus:border-purple-500"
         />
 
+        <div className="relative mb-6">
         <input
-          type="password"
+          type={showPassword ? "text" : "password"}
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full mb-6 px-4 py-3 rounded-xl bg-black/30 text-white outline-none border border-green-500/30 focus:border-green-500"
+          className="w-full px-4 py-3 pr-12 rounded-xl bg-black/30 text-white outline-none border border-green-500/30 focus:border-green-500"
         />
+
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+        >
+              {showPassword ? <FaEye size={20} /> : <FaEyeSlash size={20} />}
+         </button>
+        </div>
 
         <button
           type="submit"
