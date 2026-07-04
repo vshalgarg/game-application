@@ -10,7 +10,7 @@ export const createRoom = async ({ tenantId, userId, gameType, matchType, botDif
     botDifficulty,
   });
 
-  return res.data; // important
+  return res.data; 
 };
 
 
@@ -55,9 +55,3 @@ export const restartRoom = async({roomCode, userId}) => {
   });
     return res.data;
 };
-
-// 5. GET ROOM (Waiting Room Data)
-// export const getRoom = async (roomCode) => {
-//   const res = await api.get(`/rooms/${roomCode}`);
-//   return res.data;
-// };

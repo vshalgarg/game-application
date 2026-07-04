@@ -3,10 +3,6 @@ import { supabase } from "../utils/supabaseClient";
 
 const useGameRealtime = ({ roomCode, onGameUpdate }) => {
   useEffect(() => {
-    
-    console.log("ROOM GAMEREALTIME HOOK RUNNING");
-    console.log("ROOM CODE:", roomCode);
-   
     if (!roomCode) return;
 
     const channel = supabase

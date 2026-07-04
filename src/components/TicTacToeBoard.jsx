@@ -1,7 +1,6 @@
 import Square from "./Square";
 
 const TicTacToeBoard = ({ board = [], handleClick, winningPattern, }) => {
-  console.log("Winning Pattern in Board:", winningPattern);
   const flattenedBoard = board.flat();
   
   const lineStyles = {

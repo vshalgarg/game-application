@@ -2,11 +2,9 @@ import { useNavigate } from "react-router-dom";
 import GameButton from "../components/GameButton";
 
 const Home = () => {
-
   const navigate = useNavigate();
-
+  
   return (
-    
     <div className="
       min-h-screen
       bg-gradient-to-br
@@ -20,7 +18,6 @@ const Home = () => {
     ">
 
       {/* Main Card */}
-
       <div className="
         w-full
         max-w-md

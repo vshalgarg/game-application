@@ -5,14 +5,6 @@ import { createRoom, startRoom } from "../services/roomService";
 
 import { useSnackbar } from "../context/SnackbarContext";
 
-const ComputerRoom = () => {
-  const navigate = useNavigate();
-
-  const [difficulty, setDifficulty] = useState("EASY");
-  const [loading, setLoading] = useState(false);
-
-  const { showSnackbar } = useSnackbar();
-
   const difficulties = [
     {
       id: "EASY",
@@ -37,14 +29,17 @@ const ComputerRoom = () => {
     },
   ];
 
+const ComputerRoom = () => {
+  const navigate = useNavigate();
+  const [difficulty, setDifficulty] = useState("EASY");
+  const [loading, setLoading] = useState(false);
+  const { showSnackbar } = useSnackbar();
+
   const handleStartGame = async () => {
     try {
       setLoading(true);
-
       const storedAuth = JSON.parse(localStorage.getItem("user"));
       const playerUserId = storedAuth?.userId;
-
-      console.log("Selected Difficulty:", difficulty);
 
       const createResponse = await createRoom({
         tenantId: "test-1",
@@ -55,9 +50,6 @@ const ComputerRoom = () => {
       });
 
       const roomCode = createResponse.data.roomCode;
-
-      console.log("Room Created:", roomCode);
-
       const startResponse = await startRoom({
         roomCode,
         userId: playerUserId,
