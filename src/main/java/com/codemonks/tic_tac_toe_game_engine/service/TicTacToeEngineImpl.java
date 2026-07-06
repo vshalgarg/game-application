@@ -44,7 +44,6 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
  @Lazy
     private  BotMoveService botMoveService;
 
-
     @Override
     public EngineGameStateResponseDTO startGame(EngineStartGameRequestDTO request) {
 
@@ -55,27 +54,30 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
         // Assign Players
         List<PlayerDTO> players = buildPlayers(request);
 
+        Long lastMoverUserId = fetchLastMoverIfExists(request.getRoomId());
+        PlayerDTO starter = resolveStarter(players, lastMoverUserId);
+
         log.info(
-                "[START_GAME] Match initialized | Room: {} | MatchType: {} | Players: {} vs {}",
+                "[START_GAME] Match initialized | Room: {} | MatchType: {}| Players: {} vs {} | Starter:{}",
                 request.getRoomCode(),
                 request.getMatchType(),
                 players.get(0).getUserId(),
-                players.get(1).getUserId()
+                players.get(1).getUserId(),
+                starter.getUserId()
         );
 
         BotDifficultyEnum difficulty = request.getBotDifficulty();
 
         Map<String, Object> gameState =
-        moveProcessorService.buildGameState(board, players, difficulty);
+        moveProcessorService.buildGameState(board, players, difficulty, null);
 
         EngineGameStateResponseDTO response =
                 EngineGameStateResponseDTO.builder()
                         .gameState(gameState)
-                        .currentTurnUserId(players.get(0).getUserId())
+                        .currentTurnUserId(starter.getUserId())
                         .status(GameStatusEnum.INITIALIZED)
                         .winnerUserId(null)
                         .players(players)
-                        //.botDifficulty(getBotDifficultyFromGameState(gameState))
                         .botDifficulty(request.getBotDifficulty())
                         .build();
 
@@ -100,6 +102,11 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
         );
         log.info("Top level players = {}", response.getPlayers());
 
+        if (Boolean.TRUE.equals(starter.getIsBot())) {
+            botMoveService.processBotMove(request.getRoomId());
+            log.info("[BOT_SCHEDULED_ON_START] roomId={}", request.getRoomId());
+        }
+
         return response;
     }
 
@@ -111,7 +118,6 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                 request.getUserId(),
                 request.getRoomId()
         );
-
 
         RealtimeGameStateDTO realtimeState =
                 supabaseRealtimeService.getGameState(
@@ -160,7 +166,9 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                             GameStatusEnum.RUNNING,
                             null,
                             players,
-                            getBotDifficultyFromGameState(gameState));
+                            getBotDifficultyFromGameState(gameState),
+                    BotConstants.BOT_USER_ID
+                    );
 
             moveProcessorService.persistUpdatedState(realtimeState, response);
             return response;
@@ -211,7 +219,8 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                 GameStatusEnum.RUNNING,
                 null,
                 players,
-                getBotDifficultyFromGameState(gameState)
+                getBotDifficultyFromGameState(gameState),
+                request.getUserId()
         );
             log.info("Response players after build = {}", response.getPlayers());
             moveProcessorService.persistUpdatedState(realtimeState, response);
@@ -301,20 +310,12 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
         }
     }
 
-
-
-
-
-
-
     private PlayerDTO getPlayerByUserId(List<PlayerDTO> players, Long userId) {
         return players.stream()
                 .filter(player -> player.getUserId().equals(userId))
                 .findFirst()
                 .orElseThrow(() -> new TicTacToeEngineException(PLAYER_NOT_FOUND));
     }
-
-
 
     private PlayerDTO getHumanPlayer(List<PlayerDTO> players) {
         return players.stream()
@@ -352,4 +353,26 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                 difficulty.toString()
         );
     }
+    private Long fetchLastMoverIfExists(Long roomId) {
+        try {
+            RealtimeGameStateDTO previousState = supabaseRealtimeService.getGameState(roomId);
+            Object val = previousState.getGameState() != null
+                    ? previousState.getGameState().get("lastMoverUserId")
+                    : null;
+            return val != null ? Long.valueOf(val.toString()) : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private PlayerDTO resolveStarter(List<PlayerDTO> players, Long lastMoverUserId) {
+        if (lastMoverUserId == null) {
+            return players.get(0);
+        }
+        return players.stream()
+                .filter(p -> !p.getUserId().equals(lastMoverUserId))
+                .findFirst()
+                .orElse(players.get(0));
+    }
+
 }
