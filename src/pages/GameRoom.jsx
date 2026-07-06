@@ -35,30 +35,30 @@ const GameRoom = () => {
   const currentUserId = storedAuth?.userId;
   
   // delay in winner pop up for line animation and cell highlighting 
-      useEffect(() => {
-      if (winner) {
-        const timer = setTimeout(() => {
-          setShowWinnerPopup(true);
-        }, 2000); // 2 seconds
+  useEffect(() => {
+    if (winner) {
+      const timer = setTimeout(() => {
+        setShowWinnerPopup(true);
+      }, 2000); // 2 seconds
 
-        return () => clearTimeout(timer);
-      } else {
+      return () => clearTimeout(timer);
+  } else {
         setShowWinnerPopup(false);
       }
     }, [winner]);
 
-    // delay for draw pop up 
-    useEffect(() => {
-  if (status === "DRAW") {
-    const timer = setTimeout(() => {
-      setShowDrawPopup(true);
-    }, 1000); // 1 second delay
+  // delay for draw pop up 
+  useEffect(() => {
+    if (status === "DRAW") {
+      const timer = setTimeout(() => {
+        setShowDrawPopup(true);
+        }, 1000); // 1 second delay
 
-    return () => clearTimeout(timer);
+        return () => clearTimeout(timer);
   } else {
-    setShowDrawPopup(false);
-  }
-}, [status]);
+        setShowDrawPopup(false);
+      }
+    }, [status]);
 
   // Supabase used to get the roles for restart button 
   const [isHost, setIsHost] = useState(false);
@@ -75,27 +75,21 @@ const GameRoom = () => {
       return;
     }
 
-const currentPlayer = data.players?.find(
-  (player) => player.user_id === currentUserId
-);
+    const currentPlayer = data.players?.find((player) => player.user_id === currentUserId);
+    const hostPlayer = data.players?.find((player) => player.role === "HOST");
+    const isHostPlayer = currentPlayer?.role === "HOST";
 
-const hostPlayer = data.players?.find(
-  (player) => player.role === "HOST"
-);
+    setIsHost(isHostPlayer);
+    setHostUserId(hostPlayer?.user_id);
 
-const isHostPlayer = currentPlayer?.role === "HOST";
-
-setIsHost(isHostPlayer);
-setHostUserId(hostPlayer?.user_id);
-
-// ⭐ ADD THIS
-setMySide(isHostPlayer ? "X" : "O");
+    // for visual switching 
+    setMySide(isHostPlayer ? "X" : "O");
   };
 
   fetchRole();
-}, [roomCode, currentUserId]); //
+}, [roomCode, currentUserId]); 
 
-   //  handleRestart Button Call 
+  //  handleRestart Button Call 
   const handleRestart = async () => {
     try {
       const res = await restartRoom({
@@ -121,7 +115,7 @@ setMySide(isHostPlayer ? "X" : "O");
     }
   };
 
-  // Realtime Listener
+  // Realtime Listener (listens for realtime events)
   useGameRealtime({
     roomCode,
 
@@ -140,63 +134,60 @@ setMySide(isHostPlayer ? "X" : "O");
 
   // to display the winning pattern green hightlighted cell on both tabs 
       if (game.winner_user_id) {
-      const pattern = checkWinningPattern(game.game_state_data?.board);
 
-  console.log("Realtime Winning Pattern:", pattern );
+        const pattern = checkWinningPattern(game.game_state_data?.board);
+        console.log("Realtime Winning Pattern:", pattern );
 
-  setWinningPattern(pattern);
-      }   else {
-          setWinningPattern(null);
+        setWinningPattern(pattern);
+    } else {
+        setWinningPattern(null);
         }
 
-  setCurrentTurn(game.current_turn_user_id);
+        setCurrentTurn(game.current_turn_user_id);
+        setStatus( game.game_status );
 
-  setStatus( game.game_status );
-      if (game.game_status === "INITIALIZED") {
-           setWinner(null);
-           setWinningPattern(null);
-}     else {
-  setWinner(game.winner_user_id);
+        if (game.game_status === "INITIALIZED") {
+          setWinner(null);
+          setWinningPattern(null);
+      } else {
+          setWinner(game.winner_user_id);
 }
-
-      setWinner(game.winner_user_id );
-    },
+        setWinner(game.winner_user_id);
+      },
   });
-  // checking winning patterns from the api response 
-const checkWinningPattern = (board) => {
-  const lines = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
+// checking winning patterns from the api response 
+  const checkWinningPattern = (board) => {
+    const lines = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
 
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
 
-    [0, 4, 8],
-    [2, 4, 6],
-  ];
+      [0, 4, 8],
+      [2, 4, 6],
+    ];
 
-  const flatBoard = board.flat();
+    const flatBoard = board.flat();
 
-  for (const line of lines) {
-    const [a, b, c] = line;
+    for (const line of lines) {
+      const [a, b, c] = line;
 
-    if (
-      flatBoard[a] &&
-      flatBoard[a] === flatBoard[b] &&
-      flatBoard[a] === flatBoard[c]
-    ) {
-      return line;
+      if (
+        flatBoard[a] &&
+        flatBoard[a] === flatBoard[b] &&
+        flatBoard[a] === flatBoard[c]
+      ) {
+        return line;
+      }
     }
-  }
-
-  return null;
-};
+    return null;
+  };
 
   // Handle board click
   const handleCellClick = async (index) => {
-    
     try {
       // Disable board after winner is declared
     if (winner) {
@@ -218,22 +209,15 @@ const checkWinningPattern = (board) => {
       console.log("Move Response:", res);
 
       if (res.success) {
-        setBoard(
-          res.data.gameState.board
-        );
-
-        setCurrentTurn(
-          res.data.currentTurnUserId
-        );
+        setBoard(res.data.gameState.board);
+        setCurrentTurn(res.data.currentTurnUserId);
 
         if (res.data.winnerUserId) {
            const pattern = checkWinningPattern(res.data.gameState.board);
             setWinningPattern(pattern);
             setWinner(res.data.winnerUserId);
         }
-        setStatus(
-          res.data.status
-        );
+        setStatus(res.data.status);
       }
     } catch (err) {
       console.error("Move failed:", err);
@@ -241,18 +225,18 @@ const checkWinningPattern = (board) => {
     }
   };
 
-const effectiveCurrentTurn = currentTurn ?? hostUserId;
+  const effectiveCurrentTurn = currentTurn ?? hostUserId;
 
-let xActive = false;
-let oActive = false;
+  let xActive = false;
+  let oActive = false;
 
-if (mySide === "X") {
-  xActive = effectiveCurrentTurn === currentUserId;
-  oActive = effectiveCurrentTurn !== currentUserId;
-} else if (mySide === "O") {
-  oActive = effectiveCurrentTurn === currentUserId;
-  xActive = effectiveCurrentTurn !== currentUserId;
-}
+  if (mySide === "X") {
+    xActive = effectiveCurrentTurn === currentUserId;
+    oActive = effectiveCurrentTurn !== currentUserId;
+  } else if (mySide === "O") {
+    oActive = effectiveCurrentTurn === currentUserId;
+    xActive = effectiveCurrentTurn !== currentUserId;
+  }
   return (
     <div
       className="
@@ -293,7 +277,7 @@ if (mySide === "X") {
       "
     >
       <h2 className="text-3xl font-bold text-yellow-400 mb-4">
-        🤝 It's a Draw!
+         It's a Draw!
       </h2>
 
       <p className="text-white text-lg mb-2">
@@ -309,7 +293,7 @@ if (mySide === "X") {
       <div className="flex flex-col gap-3">
         {isHost && (
           <GameButton
-            title="🔄 Restart Game"
+            title=" Restart Game"
             color="
               bg-red-500
               hover:bg-red-600
@@ -320,7 +304,7 @@ if (mySide === "X") {
         )}
 
         <GameButton
-          title="🏠 Back To Home"
+          title=" Back To Home"
           color="
             bg-blue-500
             hover:bg-blue-600
@@ -442,9 +426,6 @@ if (mySide === "X") {
           Tic Tac Toe
         </h1>
 
-        <p className="text-gray-300 text-base mb-2">
-          Status : {status}
-        </p>
 
         <div className="mb-5">
 

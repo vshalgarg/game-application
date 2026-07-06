@@ -1,8 +1,9 @@
-const Square = ({ value, onClick, isWinningCell,}) => {
+const Square = ({ value, onClick, isWinningCell, disabled}) => {
  
   return (
     <button
-      onClick={onClick}
+       onClick={disabled ? undefined : onClick}
+      disabled={disabled}
       className={`
         w-14
         h-14
@@ -20,6 +21,11 @@ const Square = ({ value, onClick, isWinningCell,}) => {
         duration-300
         shadow-md
 
+         ${
+      disabled
+        ? "cursor-not-allowed"
+        : "cursor-pointer hover:bg-cyan-500/20"
+          }
          ${
       isWinningCell
         ? `

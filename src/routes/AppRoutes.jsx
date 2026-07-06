@@ -53,17 +53,11 @@ const AppRoutes = () => {
                   {/* tic-tac-toe */}
 
                   <Route path="/game-mode" element={<GameMode />} />   {/* Play With Person / Play With Computer */}
-
                   <Route path="/computer-room" element={<ComputerRoom />} />   {/* Play with computer room created and start game button page */}
-
                   <Route path="/tic-tac-toe" element={<Home />} />      {/*create and join room button page */}
-
                   <Route path="/create-room" element={<CreateRoom />} />      {/*Room created page for host only */}
-
                   <Route path="/join-room" element={<JoinRoom />} />     {/*join room page for player only */}
-
                   <Route path="/waiting-room/:roomCode" element={<WaitingRoom />} />      {/*waiting room page for both host and player */}
-
                   <Route path="/game-room/:roomCode" element={<GameRoom />} />      {/*actual tic tac toe game room page */}
 
                   {/* Ludo */}
@@ -75,12 +69,10 @@ const AppRoutes = () => {
                   <Route path="/ludojoin-room" element={<LudoJoinRoom/>} />
                   <Route path="/ludowaiting-room/:roomCode" element={<LudoWaitingRoom/>} />
                   <Route path="/ludogame-room/:roomCode" element={<LudoGameRoom/>} /> 
+
                   {/* Navbar */}
-
                   <Route path="/about" element={<About />} />       {/*about page for of navigation bar */}
-
                   <Route path="/contact" element={<Contact />} />      {/*contact page of navigation bar */}
-
                   <Route path="/profile" element={<Profile />} />     {/*profile page of navigation bar*/}
 
                 </Routes>

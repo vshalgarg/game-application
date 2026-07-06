@@ -44,18 +44,14 @@ const CreateRoom = () => {
         setLoading(false);
       }
     };
-
     initRoom();
-
   }, []);
 
   // Copy room code
   const handleCopy = async () => {
-
     await navigator.clipboard.writeText(roomCode);
-
     setCopied(true);
-
+    
     setTimeout(() => {
       setCopied(false);
     }, 2000);

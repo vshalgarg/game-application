@@ -74,6 +74,7 @@ const lineStyle =
           value={square}
           onClick={() => handleClick(index)}
           isWinningCell={ winningPattern?.includes(index) }
+          disabled={square !== null && square !== ""}
         />
       ))}
       </div>

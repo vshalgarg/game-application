@@ -16,7 +16,7 @@ const Login = () => {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      showSnackbar("Both fields are required.","error");
+      showSnackbar("Both fields are required","error");
       return;
     }
 

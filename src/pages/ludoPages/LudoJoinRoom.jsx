@@ -14,6 +14,7 @@ const JoinRoom = () => {
   const handleJoinRoom = async () => {
     if (!roomCode) {
       alert("Please enter room ID"); 
+      show
       return;
     }
   
