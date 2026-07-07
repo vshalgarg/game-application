@@ -55,7 +55,8 @@ public class MoveProcessorService {
                     GameStatusEnum.WIN,
                     winnerUserId,
                     players,
-                    difficulty
+                    difficulty,
+                    winnerUserId
             );
         }
 
@@ -68,7 +69,8 @@ public class MoveProcessorService {
                     GameStatusEnum.DRAW,
                     null,
                     players,
-                    difficulty
+                    difficulty,
+                    winnerUserId
             );
         }
         return null;
@@ -88,8 +90,8 @@ public class MoveProcessorService {
             GameStatusEnum status,
             Long winnerUserId,
             List<PlayerDTO> players,
-            BotDifficultyEnum botDifficulty
-    ) {
+            BotDifficultyEnum botDifficulty,
+            Long lastMoverUserId) {
 
         log.info(
                 "[BUILD_RESPONSE] Status: {}, Next Turn: {}, Winner: {}",
@@ -101,7 +103,7 @@ public class MoveProcessorService {
         log.info("Response players before build = {}", players);
 
         return EngineGameStateResponseDTO.builder()
-                .gameState(buildGameState(board,players,botDifficulty))
+                .gameState(buildGameState(board,players,botDifficulty, lastMoverUserId))
                 .currentTurnUserId(currentTurnUserId)
                 .status(status)
                 .winnerUserId(winnerUserId)
@@ -110,14 +112,20 @@ public class MoveProcessorService {
                 .build();
     }
 
-    public Map<String, Object> buildGameState(Board board, List<PlayerDTO> players,BotDifficultyEnum botDifficulty) {
+    public Map<String, Object> buildGameState(Board board,
+                                              List<PlayerDTO> players,
+                                              BotDifficultyEnum botDifficulty,Long lastMoverUserId) {
 
         Map<String, Object> gameState =
                 new HashMap<>(BoardMapper.toMap(board));
         gameState.put("players", players);
 
         if (botDifficulty != null) {
-            gameState.put("botDifficulty", botDifficulty.name()); // ← persist karo
+            gameState.put("botDifficulty", botDifficulty.name());
+        }
+
+        if (lastMoverUserId != null) {
+            gameState.put("lastMoverUserId", lastMoverUserId);
         }
 
         return gameState;
