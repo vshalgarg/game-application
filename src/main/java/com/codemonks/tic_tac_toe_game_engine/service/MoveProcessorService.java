@@ -43,7 +43,8 @@ public class MoveProcessorService {
             CellValue symbol,
             Long winnerUserId,
             List<PlayerDTO> players,
-            BotDifficultyEnum difficulty
+            BotDifficultyEnum difficulty,
+            Integer restartCount
     ) {
 
         // win
@@ -56,7 +57,7 @@ public class MoveProcessorService {
                     winnerUserId,
                     players,
                     difficulty,
-                    winnerUserId
+                    restartCount
             );
         }
 
@@ -70,7 +71,7 @@ public class MoveProcessorService {
                     null,
                     players,
                     difficulty,
-                    winnerUserId
+                    restartCount
             );
         }
         return null;
@@ -91,7 +92,7 @@ public class MoveProcessorService {
             Long winnerUserId,
             List<PlayerDTO> players,
             BotDifficultyEnum botDifficulty,
-            Long lastMoverUserId) {
+            Integer restartCount) {
 
         log.info(
                 "[BUILD_RESPONSE] Status: {}, Next Turn: {}, Winner: {}",
@@ -103,7 +104,7 @@ public class MoveProcessorService {
         log.info("Response players before build = {}", players);
 
         return EngineGameStateResponseDTO.builder()
-                .gameState(buildGameState(board,players,botDifficulty, lastMoverUserId))
+                .gameState(buildGameState(board,players,botDifficulty, restartCount))
                 .currentTurnUserId(currentTurnUserId)
                 .status(status)
                 .winnerUserId(winnerUserId)
@@ -114,7 +115,7 @@ public class MoveProcessorService {
 
     public Map<String, Object> buildGameState(Board board,
                                               List<PlayerDTO> players,
-                                              BotDifficultyEnum botDifficulty,Long lastMoverUserId) {
+                                              BotDifficultyEnum botDifficulty,Integer restartCount) {
 
         Map<String, Object> gameState =
                 new HashMap<>(BoardMapper.toMap(board));
@@ -124,9 +125,7 @@ public class MoveProcessorService {
             gameState.put("botDifficulty", botDifficulty.name());
         }
 
-        if (lastMoverUserId != null) {
-            gameState.put("lastMoverUserId", lastMoverUserId);
-        }
+        gameState.put("restartCount",restartCount!=null ? restartCount:0);
 
         return gameState;
     }

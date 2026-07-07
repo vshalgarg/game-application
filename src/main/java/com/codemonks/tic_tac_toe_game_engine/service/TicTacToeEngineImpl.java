@@ -54,22 +54,24 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
         // Assign Players
         List<PlayerDTO> players = buildPlayers(request);
 
-        Long lastMoverUserId = fetchLastMoverIfExists(request.getRoomId());
-        PlayerDTO starter = resolveStarter(players, lastMoverUserId);
+        int newRestartCount = fetchRestartCountIfExists(request.getRoomId());
+        PlayerDTO starter = resolveStarterByCount(players, newRestartCount);
 
         log.info(
-                "[START_GAME] Match initialized | Room: {} | MatchType: {}| Players: {} vs {} | Starter:{}",
+                "[START_GAME] Match initialized | Room: {} | MatchType: {}| Players: {} vs {} || RestartCount: {} | Starter:{}",
                 request.getRoomCode(),
                 request.getMatchType(),
                 players.get(0).getUserId(),
                 players.get(1).getUserId(),
+                newRestartCount,
                 starter.getUserId()
         );
 
         BotDifficultyEnum difficulty = request.getBotDifficulty();
 
         Map<String, Object> gameState =
-        moveProcessorService.buildGameState(board, players, difficulty, null);
+        moveProcessorService.buildGameState(board, players,
+                difficulty,newRestartCount);
 
         EngineGameStateResponseDTO response =
                 EngineGameStateResponseDTO.builder()
@@ -119,21 +121,17 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                 request.getRoomId()
         );
 
-        RealtimeGameStateDTO realtimeState =
-                supabaseRealtimeService.getGameState(
-                        request.getRoomId()
-                );
+        RealtimeGameStateDTO realtimeState = supabaseRealtimeService.getGameState(
+                        request.getRoomId());
 
-        Map<String, Object> gameState =
-                realtimeState.getGameState();
-
+        Map<String, Object> gameState = realtimeState.getGameState();
         Board board = BoardMapper.toDomain(gameState);
+        Integer restartCount = getRestartCountFromGameState(gameState);
 
-        List<PlayerDTO> players =
-                extractPlayersFromGameState(gameState);
+            List<PlayerDTO> players = extractPlayersFromGameState(gameState);
             log.info("Players extracted = {}", players);
 
-        //BOT MOVE (called by BotMoveService async thread
+            //BOT MOVE (called by BotMoveService async thread
         if (BotConstants.BOT_USER_ID.equals(request.getUserId())) {
 
             PlayerDTO botPlayer = getPlayerByUserId(players, BotConstants.BOT_USER_ID);
@@ -147,8 +145,8 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                     getBotDifficultyFromGameState(gameState), botMove.getRow(), botMove.getCol());
 
             EngineGameStateResponseDTO botGameOver = moveProcessorService.checkGameOver(
-                    board, botSymbol, BotConstants.BOT_USER_ID, players, getBotDifficultyFromGameState(gameState)
-            );
+                    board, botSymbol, BotConstants.BOT_USER_ID, players,
+                    getBotDifficultyFromGameState(gameState),restartCount);
 
             if (botGameOver != null) {
                 moveProcessorService.persistUpdatedState(
@@ -167,7 +165,7 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                             null,
                             players,
                             getBotDifficultyFromGameState(gameState),
-                    BotConstants.BOT_USER_ID
+                            restartCount
                     );
 
             moveProcessorService.persistUpdatedState(realtimeState, response);
@@ -201,7 +199,8 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                         currentPlayerSymbol,
                         request.getUserId(),
                         players,
-                        getBotDifficultyFromGameState(gameState)
+                getBotDifficultyFromGameState(gameState),
+                restartCount
                 );
         if (gameOverResponse != null) {
 
@@ -220,7 +219,8 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                 null,
                 players,
                 getBotDifficultyFromGameState(gameState),
-                request.getUserId()
+                restartCount
+
         );
             log.info("Response players after build = {}", response.getPlayers());
             moveProcessorService.persistUpdatedState(realtimeState, response);
@@ -353,26 +353,28 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                 difficulty.toString()
         );
     }
-    private Long fetchLastMoverIfExists(Long roomId) {
+
+    private Integer getRestartCountFromGameState(Map<String, Object> gameState) {
+        Object val = gameState.get("restartCount");
+        return val != null ? Integer.valueOf(val.toString()) : 0;
+    }
+
+    private int fetchRestartCountIfExists(Long roomId) {
         try {
             RealtimeGameStateDTO previousState = supabaseRealtimeService.getGameState(roomId);
             Object val = previousState.getGameState() != null
-                    ? previousState.getGameState().get("lastMoverUserId")
+                    ? previousState.getGameState().get("restartCount")
                     : null;
-            return val != null ? Long.valueOf(val.toString()) : null;
+            int previousCount = val != null ? Integer.parseInt(val.toString()) : -1;
+            return previousCount + 1;
         } catch (Exception e) {
-            return null;
+            return 0;
         }
     }
 
-    private PlayerDTO resolveStarter(List<PlayerDTO> players, Long lastMoverUserId) {
-        if (lastMoverUserId == null) {
-            return players.get(0);
-        }
-        return players.stream()
-                .filter(p -> !p.getUserId().equals(lastMoverUserId))
-                .findFirst()
-                .orElse(players.get(0));
+    private PlayerDTO resolveStarterByCount(List<PlayerDTO> players, int restartCount) {
+        int index = restartCount % players.size();
+        return players.get(index);
     }
 
 }
