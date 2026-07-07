@@ -17,7 +17,7 @@ const JoinRoom = () => {
   // Handle join room
   const handleJoinRoom = async () => {
     if (!roomCode) {
-      alert("Please enter room ID"); 
+      showSnackbar("Please enter room ID", "error");
       return;
     }
   
@@ -44,9 +44,9 @@ const JoinRoom = () => {
 };
 
 // for enter button click form submisison 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
-    await handleJoinRoom();
+  await handleJoinRoom();
 };
 
   return (
@@ -97,7 +97,7 @@ const JoinRoom = () => {
           type="text"
           placeholder="Enter Room ID"
           value={roomCode}
-          onChange={(e) => setRoomCode(e.target.value)}
+          onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
           className="
             w-full
             bg-black/30
@@ -122,7 +122,6 @@ const JoinRoom = () => {
             hover:bg-purple-600
             shadow-purple-500/40
           "
-          // onClick={handleJoinRoom}
           type="submit"
         />
         </form>

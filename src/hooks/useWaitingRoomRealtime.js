@@ -11,11 +11,11 @@ const useWaitingRoomRealtime = (roomCode) => {
     console.log("Hook Running:", roomCode);
 
     //  Fetch existing players initially
-  const fetchPlayers = async () => {
-  const { data, error } = await supabase
-    .from("realtime_room_lobby")
-    .select("*")    
-    .eq("room_code", roomCode);
+    const fetchPlayers = async () => {
+    const { data, error } = await supabase
+      .from("realtime_room_lobby")
+      .select("*")    
+      .eq("room_code", roomCode);
 
   if (error) {
     console.error("Fetch players error:", error);

@@ -37,7 +37,7 @@ const currentUserId = storedAuth?.userId;
   const handleStartGame = async () => {
     try {
       if (players.length < 2) {
-        alert("Waiting for another player...");
+        showSnackbar("Waiting for another player...", "error");
         return;
       }
 
