@@ -115,3 +115,9 @@ VALUES (
     2,
     '["X","O"]'
 );
+
+
+ALTER TABLE rooms
+    ADD COLUMN bot_difficulty VARCHAR(20);
+ALTER TABLE rooms
+    ADD COLUMN match_type VARCHAR(20);

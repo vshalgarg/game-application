@@ -1,7 +1,6 @@
 package com.codemonks.gameservice.service.impl;
 
 import com.codemonks.gameservice.dto.request.MakeMoveRequestDTO;
-import com.codemonks.gameservice.engineModule.dto.common.PlayerDTO;
 import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeLobbyDTO;
 import com.codemonks.gameservice.engineModule.dto.realtime.enums.RoomRealtimeStatusEnum;
 import com.codemonks.gameservice.engineModule.dto.request.DiceRollRequestDTO;
@@ -20,12 +19,10 @@ import com.codemonks.gameservice.exceptions.GameException;
 import com.codemonks.gameservice.exceptions.ResourceNotFoundException;
 import com.codemonks.gameservice.mapper.GameMapper;
 import com.codemonks.gameservice.mapper.LobbyMapper;
-import com.codemonks.gameservice.mapper.PlayerMapper;
 import com.codemonks.gameservice.repository.GameResultEntityRepository;
 import com.codemonks.gameservice.repository.PlayerEntityRepository;
 import com.codemonks.gameservice.repository.RoomEntityRepository;
 import com.codemonks.gameservice.service.GameService;
-import com.codemonks.gameservice.service.SupabaseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -44,7 +41,6 @@ public class GameServiceImpl implements GameService {
     private final RoomEntityRepository roomRepository;
     private final PlayerEntityRepository playerRepository;
     private final GameEngineFactory gameEngineFactory;
-    private final SupabaseService supabaseService;
     private final GameResultEntityRepository gameResultEntityRepository;
 
     @Override
@@ -61,8 +57,7 @@ public class GameServiceImpl implements GameService {
                         RoomRealtimeStatusEnum.ACTIVE
                 );
 
-        supabaseService.upsertLobbyState(lobbyDTO);
-
+        engine.publishLobbyState(lobbyDTO);
         log.info("Game started and state published. roomCode={}", room.getRoomCode());
         return engineResponse;
     }
@@ -123,9 +118,7 @@ public class GameServiceImpl implements GameService {
                             RoomRealtimeStatusEnum.COMPLETED
                     );
 
-            supabaseService.upsertLobbyState(
-                    lobbyDTO
-            );
+           engine.publishLobbyState(lobbyDTO);
             saveGameResult(room, updatedState);
             log.info("Game completed. roomId={}, winner={}",
                     room.getId(), updatedState.getWinnerUserId());

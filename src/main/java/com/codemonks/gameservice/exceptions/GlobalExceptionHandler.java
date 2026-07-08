@@ -61,7 +61,7 @@ public class GlobalExceptionHandler {
                 ex
         );
         return ResponseEntity
-                .status(HttpStatus.BAD_GATEWAY)
+                .status(HttpStatus.OK)
                 .body(
                         ApiResponse.failure(
                                 ex.getExternalStatusCode(),
