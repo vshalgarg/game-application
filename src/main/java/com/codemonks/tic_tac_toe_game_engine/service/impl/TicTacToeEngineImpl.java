@@ -1,4 +1,4 @@
-package com.codemonks.tic_tac_toe_game_engine.service;
+package com.codemonks.tic_tac_toe_game_engine.service.impl;
 
 import com.codemonks.tic_tac_toe_game_engine.bot.constants.BotConstants;
 import com.codemonks.tic_tac_toe_game_engine.bot.enums.BotDifficultyEnum;
@@ -17,6 +17,8 @@ import com.codemonks.tic_tac_toe_game_engine.enums.GameStatusEnum;
 import com.codemonks.tic_tac_toe_game_engine.exception.TicTacToeEngineException;
 import com.codemonks.tic_tac_toe_game_engine.mapper.BoardMapper;
 import com.codemonks.tic_tac_toe_game_engine.mapper.MoveMapper;
+import com.codemonks.tic_tac_toe_game_engine.service.SupabaseRealtimeService;
+import com.codemonks.tic_tac_toe_game_engine.service.TicTacToeEngine;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +44,7 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
     private final ObjectMapper objectMapper;
  @Autowired
  @Lazy
-    private  BotMoveService botMoveService;
+    private BotMoveService botMoveService;
 
     @Override
     public EngineGameStateResponseDTO startGame(EngineStartGameRequestDTO request) {
