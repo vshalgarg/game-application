@@ -1,6 +1,7 @@
 package com.codemonks.gameservice.engineModule.strategy.impl;
 
 import com.codemonks.gameservice.client.TicTacToeFeignClient;
+import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeLobbyDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineMoveRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
@@ -28,4 +29,13 @@ public class TicTacToeEngine implements GameEngine {
     public EngineGameStateResponseDTO processMove(EngineMoveRequestDTO request) {
         return feignClient.move(request);
     }
+
+    @Override
+    public void publishLobbyState(RealtimeLobbyDTO lobbyDTO) {
+        feignClient.publishLobby(lobbyDTO);
+    }
+
+
+
+
 }

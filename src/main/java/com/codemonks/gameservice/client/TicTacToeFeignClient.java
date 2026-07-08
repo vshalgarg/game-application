@@ -1,6 +1,7 @@
 package com.codemonks.gameservice.client;
 
 import com.codemonks.gameservice.config.FeignConfig;
+import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeLobbyDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineMoveRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
@@ -21,4 +22,6 @@ public interface TicTacToeFeignClient {
     @PostMapping("${services.tic-tac-toe-engine.endpoints.move}")
     EngineGameStateResponseDTO move(@RequestBody EngineMoveRequestDTO request);
 
+    @PostMapping("${services.tic-tac-toe-engine.endpoints.lobby}")
+    void publishLobby(@RequestBody RealtimeLobbyDTO request);
 }

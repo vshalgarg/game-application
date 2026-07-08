@@ -7,7 +7,7 @@ import com.codemonks.gameservice.dto.response.RoomResponseDTO;
 import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeLobbyDTO;
 import com.codemonks.gameservice.engineModule.dto.realtime.enums.RoomRealtimeStatusEnum;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
-import com.codemonks.gameservice.engineModule.enums.MatchTypeEnum;
+import com.codemonks.gameservice.engineModule.factory.GameEngineFactory;
 import com.codemonks.gameservice.entity.GameConfigEntity;
 import com.codemonks.gameservice.entity.PlayerEntity;
 import com.codemonks.gameservice.entity.RoomEntity;
@@ -22,7 +22,6 @@ import com.codemonks.gameservice.repository.PlayerEntityRepository;
 import com.codemonks.gameservice.repository.RoomEntityRepository;
 import com.codemonks.gameservice.service.GameService;
 import com.codemonks.gameservice.service.RoomService;
-import com.codemonks.gameservice.service.SupabaseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,7 +44,7 @@ public class RoomServiceImpl implements RoomService {
     private final PlayerEntityRepository playerRepository;
     private final GameConfigEntityRepository gameConfigRepository;
     private final GameService gameService;
-    private final SupabaseService supabaseService;
+    private final GameEngineFactory gameEngineFactory;
 
     @Transactional
     @Override
@@ -62,7 +61,8 @@ public class RoomServiceImpl implements RoomService {
                         List.of(host),
                         RoomRealtimeStatusEnum.WAITING
                 );
-        supabaseService.upsertLobbyState(lobbyDTO);
+
+        gameEngineFactory.getStrategy(room.getGameType()).publishLobbyState(lobbyDTO);
 
         log.info("Room created. roomId={}, roomCode={}, hostUserId={}",
                 room.getId(), room.getRoomCode(), request.getUserId());
@@ -111,7 +111,8 @@ public class RoomServiceImpl implements RoomService {
                         players,
                         status
                 );
-        supabaseService.upsertLobbyState(lobbyDTO);
+
+        gameEngineFactory.getStrategy(room.getGameType()).publishLobbyState(lobbyDTO);
 
         log.info("User joined. roomId={}, userId={}, lobbyStatus={}",
                 room.getId(), request.getUserId(), status);

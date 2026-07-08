@@ -5,7 +5,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/game_db
     username: root
-    password: Dhami@123
+    password: 123451
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -22,17 +22,12 @@ services:
     endpoints:
       start-game: /api/v1/start-game
       move: /api/v1/make-move
+      lobby: /api/v1/lobby
 
   ludo-engine:
     base-url: http://localhost:8082
     endpoints:
-      start-game: /ludo-engine/api/v1/engine/start-game
+      start-game: /ludo-engine/api/v1/start-game
       move: /ludo-engine/api/v1/engine/process-move
       roll-dice: /ludo-engine/api/v1/engine/roll-dice
 
-supabase:
-  url: https://lmjhxwoelljmdjkbcdkp.supabase.co
-  api-key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtamh4d29lbGxqbWRqa2JjZGtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NDAzNzIsImV4cCI6MjA5MTExNjM3Mn0.W4A57w9PqJHXq6TyMakV7sWi5ZH5EYHSlFCWCvpr5XY"
-
-  tables:
-    realtime-room-lobby: realtime_room_lobby
