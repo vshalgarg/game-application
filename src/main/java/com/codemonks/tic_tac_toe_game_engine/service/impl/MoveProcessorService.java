@@ -1,4 +1,4 @@
-package com.codemonks.tic_tac_toe_game_engine.service;
+package com.codemonks.tic_tac_toe_game_engine.service.impl;
 
 import com.codemonks.tic_tac_toe_game_engine.bot.enums.BotDifficultyEnum;
 import com.codemonks.tic_tac_toe_game_engine.domain.board.Board;
@@ -10,6 +10,7 @@ import com.codemonks.tic_tac_toe_game_engine.dto.response.EngineGameStateRespons
 import com.codemonks.tic_tac_toe_game_engine.enums.GameStatusEnum;
 import com.codemonks.tic_tac_toe_game_engine.exception.TicTacToeEngineException;
 import com.codemonks.tic_tac_toe_game_engine.mapper.BoardMapper;
+import com.codemonks.tic_tac_toe_game_engine.service.SupabaseRealtimeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

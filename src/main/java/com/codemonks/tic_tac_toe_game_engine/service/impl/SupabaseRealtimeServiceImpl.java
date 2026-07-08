@@ -1,9 +1,10 @@
-package com.codemonks.tic_tac_toe_game_engine.service;
+package com.codemonks.tic_tac_toe_game_engine.service.impl;
 
 import com.codemonks.tic_tac_toe_game_engine.config.SupabaseProperties;
 import com.codemonks.tic_tac_toe_game_engine.dto.realtime.RealtimeGameStateDTO;
 import com.codemonks.tic_tac_toe_game_engine.dto.realtime.RealtimeMoveDTO;
 import com.codemonks.tic_tac_toe_game_engine.exception.SupabaseStateException;
+import com.codemonks.tic_tac_toe_game_engine.service.SupabaseRealtimeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;

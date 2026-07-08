@@ -12,3 +12,4 @@ supabase:
   tables:
     realtime-game-state: realtime_game_state
     realtime-game-moves: realtime_game_moves
+    realtime-room-lobby: realtime_room_lobby

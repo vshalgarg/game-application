@@ -20,7 +20,7 @@ public class SupabaseProperties {
     @Getter
     @Setter
     public static class Tables {
-        //  private String realtimeRoomLobby;
+        private String realtimeRoomLobby;
         private String realtimeGameState;
         private String realtimeGameMoves;
     }

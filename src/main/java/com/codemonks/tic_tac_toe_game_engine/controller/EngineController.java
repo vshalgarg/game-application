@@ -1,8 +1,10 @@
 package com.codemonks.tic_tac_toe_game_engine.controller;
 
+import com.codemonks.tic_tac_toe_game_engine.dto.realtime.RealtimeLobbyDTO;
 import com.codemonks.tic_tac_toe_game_engine.dto.request.EngineMoveRequestDTO; // Missing import added
 import com.codemonks.tic_tac_toe_game_engine.dto.request.EngineStartGameRequestDTO;
 import com.codemonks.tic_tac_toe_game_engine.dto.response.EngineGameStateResponseDTO;
+import com.codemonks.tic_tac_toe_game_engine.service.LobbyService;
 import com.codemonks.tic_tac_toe_game_engine.service.TicTacToeEngine;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +19,7 @@ import static com.codemonks.tic_tac_toe_game_engine.constant.EngineApiUrlConstan
 public class EngineController {
 
     private final TicTacToeEngine ticTacToeEngine;
+    private final LobbyService lobbyService;
 
     @PostMapping(START_GAME)
     public ResponseEntity<EngineGameStateResponseDTO> startGame(@RequestBody EngineStartGameRequestDTO request) {
@@ -30,5 +33,12 @@ public class EngineController {
         log.info("Request received to process move for player: {} in game: {}", request.getUserId(), request.getRoomId());
         // fixed: using ticTacToeEngine instead of engine
         return ResponseEntity.ok(ticTacToeEngine.makeMove(request));
+    }
+
+    @PostMapping(LOBBY)
+    public ResponseEntity<Void> publishLobby(@RequestBody RealtimeLobbyDTO request) {
+        log.info("Lobby publish received. roomId={}", request.getRoomId());
+        lobbyService.publishLobbyState(request);
+        return ResponseEntity.ok().build();
     }
 }

@@ -1,9 +1,9 @@
-package com.codemonks.tic_tac_toe_game_engine.service;
+package com.codemonks.tic_tac_toe_game_engine.service.impl;
 
 
 import com.codemonks.tic_tac_toe_game_engine.bot.constants.BotConstants;
 import com.codemonks.tic_tac_toe_game_engine.dto.request.EngineMoveRequestDTO;
-import lombok.RequiredArgsConstructor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -11,7 +11,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
-//@RequiredArgsConstructor
 @Slf4j
 public class BotMoveService {
 
