@@ -31,41 +31,19 @@ pipeline {
                         url: 'git@github.com:vshalgarg/game-application.git'
             }
         }
-
-        stage('Build Jar') {
-            steps {
-                echo 'Building game-service jar'
-                sh '''
-                    chmod +x mvnw
-                    ./mvnw clean package -DskipTests
-                '''
+stage('Build and Push Docker Image') {
+    steps {
+        script {
+            docker.withRegistry(
+                    "https://${REGISTRY}",
+                    'docker-credentials-id'
+            ) {
+                def appImage = docker.build("${IMAGE_NAME}:${TAG}")
+                appImage.push()
             }
         }
-
-        stage('Build Docker Image') {
-            steps {
-                echo 'Building Docker image'
-                sh '''
-                    docker build -t "$IMAGE_NAME:$TAG" .
-                '''
-            }
-        }
-
-        stage('Push Docker Image') {
-            steps {
-                script {
-
-                    docker.withRegistry(
-                            "https://${REGISTRY}",
-                            'docker-credentials-id'
-                    ) {
-                        def appImage = docker.build("${IMAGE_NAME}:${TAG}")
-                        appImage.push()
-                    }
-                }
-            }
-        }
-
+    }
+}
         stage('Stop Existing Container') {
             steps {
                 sh '''

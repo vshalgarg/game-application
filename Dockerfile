@@ -6,7 +6,7 @@ WORKDIR /build
 COPY pom.xml .
 COPY src ./src
 
-RUN mvn clean package -DskipTests
+RUN --mount=type=cache,target=/root/.m2 mvn clean package -DskipTests
 
 
 # Runtime Stage
@@ -14,8 +14,8 @@ FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
-COPY --from=builder /build/target/*.jar game-service.jar
+COPY --from=builder /build/target/*.jar tic-tac-toe-game-engine.jar
 
 EXPOSE 8090
 
-ENTRYPOINT ["java", "-jar", "game-service.jar"]
+ENTRYPOINT ["java", "-jar", "tic-tac-toe-game-engine.jar"]
