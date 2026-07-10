@@ -38,7 +38,7 @@ const JoinRoom = () => {
 
           navigate(`/waiting-room/${roomCode}`);
           } catch (err) {
-            showSnackbar(err.response?.message || "Failed to join room.","error");
+            showSnackbar(err.res?.message || "Failed to join room.","error");
             console.error("Failed to join room:", err);
           }
 };

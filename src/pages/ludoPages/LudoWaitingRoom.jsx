@@ -5,10 +5,25 @@ const WaitingRoom = () => {
   const navigate = useNavigate();
   const { roomCode } = useParams();
 
-  const handleStartGame = () => {
-    navigate(`/ludogame-room/${roomCode}`);
-  };
-
+    const handleStartGame = async () => {
+      try {
+        if (players.length < 2) {
+          showSnackbar("Waiting for another player...", "error");
+          return;
+        }
+  
+        console.log("Starting game for room:", roomCode);
+        const result = await startRoom({
+          roomCode,
+          userId : currentUserId,
+        });
+  
+        showSnackbar(result.message, "success");
+      } catch (err) {
+        console.error("Failed to start game:", err);
+        showSnackbar(err.result?.message || "Failed to start game.","error");
+      }
+    };
   return (
     <div
       className="

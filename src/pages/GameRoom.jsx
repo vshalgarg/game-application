@@ -10,6 +10,8 @@ import { restartRoom } from "../services/roomService";
 import useGameRealtime from "../hooks/useGameRealtime";
 import { supabase } from "../utils/supabaseClient";
 import { useSnackbar } from "../context/SnackbarContext";
+import { TbMoodSad } from "react-icons/tb";
+import { TbMoodSmileBeam } from "react-icons/tb";
 
 const GameRoom = () => {
   const { roomCode } = useParams();
@@ -221,7 +223,8 @@ const GameRoom = () => {
       }
     } catch (err) {
       console.error("Move failed:", err);
-      showSnackbar("Invalid move.","error");
+      // showSnackbar(err.res.error?.message || "Not your turn", "error");
+      showSnackbar( "Not your turn", "error"); 
     }
   };
 
@@ -252,11 +255,11 @@ const GameRoom = () => {
       "
     >
     {showDrawPopup && (
-      <>
-    {/* Background Overlay */}
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" />
+  <>
+    {/* Overlay */}
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" />
 
-    {/* Draw Popup */}
+    {/* Popup */}
     <div
       className="
         fixed
@@ -265,35 +268,74 @@ const GameRoom = () => {
         -translate-x-1/2
         -translate-y-1/2
         z-50
-        bg-gray-900
-        border
-        border-yellow-500/40
-        rounded-2xl
-        shadow-2xl
-        p-6
         w-[90%]
         max-w-sm
+        rounded-3xl
+        bg-white/10
+        backdrop-blur-xl
+        border
+        border-cyan-400/30
+        shadow-2xl
+        shadow-cyan-500/20
+        p-8
         text-center
       "
     >
-      <h2 className="text-3xl font-bold text-yellow-400 mb-4">
-         It's a Draw!
+
+      {/* Top Icon */}
+      <div
+        className="
+          mx-auto
+          mb-6
+          flex
+          h-20
+          w-20
+          items-center
+          justify-center
+          rounded-full
+          border-2
+          border-cyan-400
+          bg-cyan-400/10
+          text-4xl
+          shadow-lg
+          shadow-cyan-400/40
+        "
+      >
+        <TbMoodSad className="text-[42px] text-cyan-300" />
+      </div>
+
+      {/* Heading */}
+      <h2
+        className="
+          text-4xl
+          font-bold
+          tracking-widest
+          text-cyan-300
+        "
+      >
+        DRAW
       </h2>
 
-      <p className="text-white text-lg mb-2">
-        ⚔️ What a battle!
+      {/* Divider */}
+      <div className="flex items-center justify-center gap-3 my-5">
+        <div className="h-px w-16 bg-cyan-400/40" />
+        <div className="h-2 w-2 rounded-full bg-cyan-300" />
+        <div className="h-px w-16 bg-cyan-400/40" />
+      </div>
+
+      {/* Message */}
+
+      <p className="text-cyan-200 mt-2 mb-8">
+        Ready for another battle?
       </p>
 
-      <p className="text-gray-300 mb-6">
-        
-        <br />
-        🎮 Ready for a rematch?
-      </p>
+      {/* Buttons */}
 
-      <div className="flex flex-col gap-3">
+      <div className="space-y-4">
+
         {isHost && (
           <GameButton
-            title=" Restart Game"
+            title="Restart Game"
             color="
               bg-red-500
               hover:bg-red-600
@@ -304,7 +346,7 @@ const GameRoom = () => {
         )}
 
         <GameButton
-          title=" Back To Home"
+          title="Back To Home"
           color="
             bg-blue-500
             hover:bg-blue-600
@@ -312,11 +354,12 @@ const GameRoom = () => {
           "
           onClick={() => navigate("/")}
         />
+
       </div>
+
     </div>
   </>
 )}
-
       {/* confetti */}
       {showWinnerPopup && winner === currentUserId && (
   <div className="fixed inset-0 z-45 pointer-events-none">
@@ -331,63 +374,162 @@ const GameRoom = () => {
 )}
       {/* pop up */}
       {showWinnerPopup && (
-      <>
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" />
+  <>
+    {/* Overlay */}
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" />
+
+    {/* Popup */}
+    <div
+      className="
+        fixed
+        top-1/2
+        left-1/2
+        -translate-x-1/2
+        -translate-y-1/2
+        z-50
+
+        w-[90%]
+        max-w-sm
+
+        rounded-3xl
+
+        bg-white/10
+        backdrop-blur-xl
+
+        border
+        border-cyan-400/30
+
+        shadow-2xl
+        shadow-cyan-500/20
+
+        p-8
+
+        text-center
+      "
+    >
+      {/* Result Icon */}
+      <div
+        className={`
+          mx-auto
+          mb-6
+
+          flex
+          h-20
+          w-20
+
+          items-center
+          justify-center
+
+          rounded-full
+
+          border-2
+
+          ${
+            winner === currentUserId
+              ? `
+                border-green-400
+                bg-green-400/15
+                shadow-[0_0_30px_rgba(74,222,128,0.8)]
+              `
+              : `
+                border-red-400
+                bg-red-400/15
+                shadow-[0_0_30px_rgba(248,113,113,0.8)]
+              `
+          }
+        `}
+      >
+        {winner === currentUserId ? (
+          <TbMoodSmileBeam className="text-[46px] text-green-300" />
+        ) : (
+          <TbMoodSad className="text-[46px] text-red-300" />
+        )}
+      </div>
+
+      {/* Heading */}
+      <h2
+        className={`
+          text-4xl
+          font-extrabold
+          tracking-[0.2em]
+
+          ${
+            winner === currentUserId
+              ? "text-green-300 drop-shadow-[0_0_12px_rgba(74,222,128,0.9)]"
+              : "text-red-300 drop-shadow-[0_0_12px_rgba(248,113,113,0.9)]"
+          }
+        `}
+      >
+        {winner === currentUserId ? "YOU WIN" : "YOU LOSE"}
+      </h2>
+
+      {/* Divider */}
+      <div className="flex items-center justify-center gap-3 my-5">
+        <div
+          className={`h-px w-16 ${
+            winner === currentUserId
+              ? "bg-green-400/50"
+              : "bg-red-400/50"
+          }`}
+        />
 
         <div
-          className="
-            fixed
-            top-1/2
-            left-1/2
-            -translate-x-1/2
-            -translate-y-1/2
-            z-50
-            bg-gray-900
-            border
-            border-green-500/40
-            rounded-2xl
-            shadow-2xl
-            p-6
-            w-[90%]
-            max-w-sm
-             text-center 
+          className={`h-2 w-2 rounded-full ${
+            winner === currentUserId
+              ? "bg-green-300"
+              : "bg-red-300"
+          }`}
+        />
+
+        <div
+          className={`h-px w-16 ${
+            winner === currentUserId
+              ? "bg-green-400/50"
+              : "bg-red-400/50"
+          }`}
+        />
+      </div>
+
+      {/* Message */}
+      <p className="text-lg text-white">
+        {winner === currentUserId
+          ? "Congratulations!"
+          : "Better luck next time!"}
+      </p>
+
+      <p className="mt-2 mb-8 text-gray-300">
+        {winner === currentUserId
+          ? "🏆 You played brilliantly."
+          : "🎮 Ready for another challenge?"}
+      </p>
+
+      {/* Buttons */}
+      <div className="space-y-4">
+        {isHost && (
+          <GameButton
+            title="Restart Game"
+            color="
+              bg-red-500
+              hover:bg-red-600
+              shadow-red-500/40
+            "
+            onClick={handleRestart}
+          />
+        )}
+
+        <GameButton
+          title="Back To Home"
+          color="
+            bg-blue-500
+            hover:bg-blue-600
+            shadow-blue-500/40
           "
-        >
-          <h2 className="text-3xl font-bold text-green-400 mb-4">
-            🎉 Game Over
-          </h2>
-
-          <p className="text-white text-lg mb-6">
-            {winner === currentUserId
-              ? "🏆 You Won!"
-              : "😔 You Lose!"}
-          </p>
-
-          <div className="flex flex-col gap-3">
-            {isHost && (
-              <GameButton
-                title="Restart Game"
-                color="
-                  bg-red-500
-                  hover:bg-red-600
-                  shadow-red-500/40
-                "
-                onClick={handleRestart}
-              />
-            )}
-            <GameButton
-              title="Back To Home"
-              color="
-                bg-blue-500
-                hover:bg-blue-600
-                shadow-blue-500/40
-              "
-              onClick={() => navigate("/")}
-            />
-          </div>
-        </div>
-      </>
-    )}
+          onClick={() => navigate("/")}
+        />
+      </div>
+    </div>
+  </>
+)}
 
     {/* game card */}
       <div
@@ -469,7 +611,7 @@ const GameRoom = () => {
   {mySide === "O"
       ? "You"
       : currentTurn === -1
-      ? "Bot"
+      ? "Bot is thinking.."
       : "Opponent"}
 </p>
 

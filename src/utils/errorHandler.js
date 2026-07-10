@@ -16,6 +16,7 @@ export const handleApiError = (error) => {
   return error?.message || 'Something went wrong.';
 };
   
+// when the status is 200 OK and shows message based on response code 
 export const checkLogicalError = (data, fallbackMessage = 'Action failed') => {
   if (data?.responseCode) {
     const errorMessage = data.message || fallbackMessage;
