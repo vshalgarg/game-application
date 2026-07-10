@@ -53,7 +53,7 @@ const currentUserId = storedAuth?.userId;
  
     } catch (err) {
       console.error("Failed to start game:", err);
-      showSnackbar(err.response?.message || "Failed to start game.","error");
+      showSnackbar(err.result?.message || "Failed to start game.","error");
     }
   };
 

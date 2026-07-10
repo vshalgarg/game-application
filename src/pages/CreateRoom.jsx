@@ -17,7 +17,7 @@ const CreateRoom = () => {
 
   // Create room when page loads
   useEffect(() => {
-    // Stop second execution in StrictMode
+    // Stop second execution in StrictMode 
     if (hasCreatedRoom.current) return;
 
     // Mark as already executed
@@ -39,7 +39,7 @@ const CreateRoom = () => {
 
       } catch (err) {
         console.error("Failed to create room:", err);
-        showSnackbar(err.response?.message || "Failed to create room.","error");
+        showSnackbar(err.res?.message || "Failed to create room","error");
       } finally {
         setLoading(false);
       }

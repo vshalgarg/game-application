@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaCopy } from "react-icons/fa";
-
 import GameButton from "../../components/GameButton";
+import { createRoom } from "../../services/roomService";
+import { useSnackbar } from "../../context/SnackbarContext";
 
 const CreateRoom = () => { 
   const navigate = useNavigate();
@@ -10,23 +11,47 @@ const CreateRoom = () => {
   const [roomCode, setRoomCode] = useState("");
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const { showSnackbar } = useSnackbar();
 
-  useEffect(() => {
-  const roomId = Math.floor(
-    10000000 + Math.random() * 90000000
-  ).toString();
-
-  setRoomCode(roomId);
-  setLoading(false);
-}, []);
-
-//   // Copy room code
+    // Prevent duplicate API calls
+    const hasCreatedRoom = useRef(false);
+  
+    // Create room when page loads
+    useEffect(() => {
+      // Stop second execution in StrictMode
+      if (hasCreatedRoom.current) return;
+  
+      // Mark as already executed
+      hasCreatedRoom.current = true;
+      const initRoom = async () => {
+        try {
+          const storedAuth = JSON.parse(localStorage.getItem("user") );
+          const hostUserId = storedAuth?.userId;  // checks for userId in local storage 
+          
+          const res = await createRoom({ 
+              tenantId: "test-1",
+              userId: hostUserId,
+              gameType: "LUDO",
+              matchType: "PVP",
+    });
+        
+          showSnackbar(res.message, "success");
+          setRoomCode(res.data.roomCode);
+  
+        } catch (err) {
+          console.error("Failed to create room:", err);
+          showSnackbar(err.res?.message || "Failed to create room","error");
+        } finally {
+          setLoading(false);
+        }
+      };
+      initRoom();
+    }, []);
+  
+   // Copy room code
   const handleCopy = async () => {
-
     await navigator.clipboard.writeText(roomCode);
-
     setCopied(true);
-
     setTimeout(() => {
       setCopied(false);
     }, 2000);
@@ -34,10 +59,8 @@ const CreateRoom = () => {
 
   // Navigate to waiting room
   const handleJoinWaitingGame = () => {
-
-    if (!roomCode) return;
-
-    navigate(`/ludowaiting-room/${roomCode}`);
+    // if (!roomCode) return;
+    navigate(`/ludowaiting-room/${roomCode}`); 
   };
 
   return (

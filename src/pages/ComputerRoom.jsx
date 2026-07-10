@@ -59,7 +59,7 @@ const ComputerRoom = () => {
       navigate(`/game-room/${roomCode}`);
     } catch (err) {
       console.error("Failed to start game:", err);
-      showSnackbar(err.response?.message || "Failed to start game.","error");
+      showSnackbar(err.startResponse?.message || "Failed to start game.","error");
       
     } finally {
       setLoading(false);

@@ -1,44 +1,50 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import GameButton from "../../components/GameButton";
-// import { joinRoom } from "../services/roomService";
+import { joinRoom } from "../../services/roomService";
+import { useSnackbar } from "../../context/SnackbarContext";
 
 const JoinRoom = () => {
   const navigate = useNavigate();
 
   // Store input value
   const [roomCode, setRoomCode] = useState("");
+  const { showSnackbar } = useSnackbar();
 
   // Handle join room
   const handleJoinRoom = async () => {
     if (!roomCode) {
-      alert("Please enter room ID"); 
-      show
+      showSnackbar("Please enter room ID", "error");
       return;
     }
   
-//     try {
-//          const storedAuth = JSON.parse( localStorage.getItem("user") );
+    try {
+        const storedAuth = JSON.parse( localStorage.getItem("user") );
+        const joinUserId = storedAuth?.userId;
 
-//           const joinUserId = storedAuth?.userId;
+        console.log("Current User ID:", joinUserId);
 
-//           console.log("Current User ID:", joinUserId);
+          const res = await joinRoom({
+              roomCode,
+              tenantId: "test-1",
+              userId: joinUserId,
+  });
+          showSnackbar(res.message, "success");
+          console.log("Joined room:", res);   // res stores the response of the join api 
 
-//           const res = await joinRoom({
-//               roomCode,
-//               tenantId: "test-1",
-//               userId: joinUserId,
-//   });
+          navigate(`/waiting-room/${roomCode}`);
+          } catch (err) {
+            showSnackbar(err.res?.message || "Failed to join room.","error");
+            console.error("Failed to join room:", err);
+          }
+};
 
-//   console.log("Joined room:", res);   // res stores the response of the join api 
+// for enter button click form submisison 
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  await handleJoinRoom();
+};
 
-  navigate(`/ludowaiting-room/${roomCode}`);
-// } catch (err) {
-//   console.error("Failed to join room:", err);
-//   alert("Invalid room or unable to join");
-// }
-  };
 
   return (
     <div className="
