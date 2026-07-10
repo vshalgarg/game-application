@@ -22,5 +22,6 @@ public class SupabaseProperties {
     public static class Tables {
         private String realtimeGameState;
         private String realtimeGameMoves;
+        private String realtimeRoomLobby;
     }
 }

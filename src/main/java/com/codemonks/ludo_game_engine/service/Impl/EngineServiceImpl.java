@@ -2,6 +2,7 @@ package com.codemonks.ludo_game_engine.service.Impl;
 import com.codemonks.ludo_game_engine.constant.BoardConstants;
 import com.codemonks.ludo_game_engine.dto.common.*;
 import com.codemonks.ludo_game_engine.dto.realtime.RealtimeGameStateDTO;
+import com.codemonks.ludo_game_engine.dto.realtime.RealtimeLobbyDTO;
 import com.codemonks.ludo_game_engine.dto.request.DiceRollRequestDTO;
 import com.codemonks.ludo_game_engine.dto.realtime.RealtimeMoveDTO;
 import com.codemonks.ludo_game_engine.dto.request.EngineMoveRequestDTO;
@@ -91,6 +92,11 @@ public class EngineServiceImpl implements EngineService {
                 initializedGameState.getCurrentTurnPlayerId()
         );
         return response;
+    }
+    @Override
+    public void publishLobbyState(RealtimeLobbyDTO lobbyDTO) {
+        supabaseRealtimeService.publishLobbyState(lobbyDTO);
+        log.info("[LOBBY_STATE_DELEGATED] roomId={}", lobbyDTO.getRoomId());
     }
 
     @Override

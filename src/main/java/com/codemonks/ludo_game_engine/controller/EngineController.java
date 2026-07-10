@@ -2,6 +2,7 @@ package com.codemonks.ludo_game_engine.controller;
 
 
 import com.codemonks.ludo_game_engine.constant.ApiConstants;
+import com.codemonks.ludo_game_engine.dto.realtime.RealtimeLobbyDTO;
 import com.codemonks.ludo_game_engine.dto.request.DiceRollRequestDTO;
 import com.codemonks.ludo_game_engine.dto.request.EngineMoveRequestDTO;
 import com.codemonks.ludo_game_engine.dto.request.EngineStartGameRequestDTO;
@@ -40,6 +41,13 @@ public class EngineController {
             @Valid @RequestBody EngineMoveRequestDTO request
     ){
         return ResponseEntity.ok(engineService.processMove(request));
+    }
+
+    @PostMapping(LOBBY)
+    public ResponseEntity<Void> publishLobby(@RequestBody RealtimeLobbyDTO request) {
+        log.info("Lobby publish received for roomId:{}", request.getRoomId());
+        engineService.publishLobbyState(request);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(ApiConstants.ROLL_DICE)

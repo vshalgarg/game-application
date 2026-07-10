@@ -9,6 +9,7 @@ public final class ApiConstants {
     public static final String START_GAME = "/start-game";
     public static final String ROLL_DICE="/roll-dice";
     public static final String PROCESS_MOVE="/process-move";
+    public static final String LOBBY = "/lobby";
 
 
 }
