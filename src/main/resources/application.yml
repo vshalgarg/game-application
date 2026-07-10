@@ -25,9 +25,10 @@ services:
       lobby: /api/v1/lobby
 
   ludo-engine:
-    base-url: http://localhost:8082
+    base-url: http://localhost:8082/ludo-engine
     endpoints:
-      start-game: /ludo-engine/api/v1/start-game
-      move: /ludo-engine/api/v1/engine/process-move
-      roll-dice: /ludo-engine/api/v1/engine/roll-dice
+      start-game: /api/v1/start-game
+      move: /api/v1/process-move
+      roll-dice: /api/v1/roll-dice
+      lobby: /api/v1/lobby
 
