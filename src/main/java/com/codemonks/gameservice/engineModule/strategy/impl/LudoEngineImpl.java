@@ -1,6 +1,7 @@
 package com.codemonks.gameservice.engineModule.strategy.impl;
 
 import com.codemonks.gameservice.client.LudoFeignClient;
+import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeLobbyDTO;
 import com.codemonks.gameservice.engineModule.dto.request.DiceRollRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineMoveRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequestDTO;
@@ -21,6 +22,11 @@ public class LudoEngineImpl implements GameEngine {
     @Override
     public GameTypeEnum supports() {return GameTypeEnum.LUDO;}
 
+
+    @Override
+    public void publishLobbyState(RealtimeLobbyDTO lobbyDTO) {
+        feignClient.publishLobby(lobbyDTO);
+    }
 
     @Override
     public EngineGameStateResponseDTO startGame(EngineStartGameRequestDTO request) {

@@ -2,6 +2,7 @@ package com.codemonks.gameservice.client;
 
 
 import com.codemonks.gameservice.config.FeignConfig;
+import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeLobbyDTO;
 import com.codemonks.gameservice.engineModule.dto.request.DiceRollRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineMoveRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequestDTO;
@@ -25,5 +26,8 @@ public interface LudoFeignClient {
 
     @PostMapping("${services.ludo-engine.endpoints.roll-dice}")
     DiceRollResponseDTO rollDice(@RequestBody DiceRollRequestDTO request);
+
+    @PostMapping("${services.ludo-engine.endpoints.lobby}")
+    void publishLobby(@RequestBody RealtimeLobbyDTO request);
 
 }
