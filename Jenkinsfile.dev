@@ -31,19 +31,41 @@ pipeline {
                         url: 'git@github.com:vshalgarg/game-application.git'
             }
         }
-stage('Build and Push Docker Image') {
-    steps {
-        script {
-            docker.withRegistry(
-                    "https://${REGISTRY}",
-                    'docker-credentials-id'
-            ) {
-                def appImage = docker.build("${IMAGE_NAME}:${TAG}")
-                appImage.push()
-            }
-        }
-    }
-}
+
+        stage('Build Jar') {
+                    steps {
+                        echo 'Building tic-tac-toe-engine jar'
+                        sh '''
+                            chmod +x mvnw
+                            ./mvnw clean package -DskipTests
+                        '''
+                    }
+                }
+
+        stage('Build Docker Image') {
+                    steps {
+                        echo 'Building Docker image'
+                        sh '''
+                            docker build -t "$IMAGE_NAME:$TAG" .
+                        '''
+                    }
+                }
+
+        stage('Push Docker Image') {
+                    steps {
+                        script {
+
+                            docker.withRegistry(
+                                    "https://${REGISTRY}",
+                                    'docker-credentials-id'
+                            ) {
+                                def appImage = docker.build("${IMAGE_NAME}:${TAG}")
+                                appImage.push()
+                            }
+                        }
+                    }
+                }
+
         stage('Stop Existing Container') {
             steps {
                 sh '''
@@ -56,7 +78,7 @@ stage('Build and Push Docker Image') {
         stage('Run Container') {
 
             steps {
-withCredentials([
+             withCredentials([
                     string(
                             credentialsId: 'TIC_TAC_TOE_SUPABASE_SECRET_KEY_DEV',
                             variable: 'TIC_TAC_TOE_SUPABASE_SECRET_KEY_DEV'
