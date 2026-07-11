@@ -85,7 +85,7 @@ pipeline {
                       -p "$PORT_MAPPING" \
                       --restart unless-stopped \
                       -e SPRING_PROFILES_ACTIVE=dev \
-                      -v /var/log/tic-tac-toe-engine:/logs \
+                      -v /var/log/game-gateway:/logs \
                       "$IMAGE_NAME:$TAG"
                 '''
             }
