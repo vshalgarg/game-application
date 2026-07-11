@@ -59,8 +59,7 @@ pipeline {
                             "https://${REGISTRY}",
                             'docker-credentials-id'
                     ) {
-                        def appImage = docker.build("${IMAGE_NAME}:${TAG}")
-                        appImage.push()
+                        docker.image("${IMAGE_NAME}:${TAG}").push()
                     }
                 }
             }
