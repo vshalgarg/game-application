@@ -4,3 +4,21 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: game-service
+              uri: http://game-service-prod
+              predicates:
+                - Path=/game-gateway/game-service/**
+              filters:
+                - StripPrefix=1
+
+auth:
+  service:
+    url: http://auth-api-prod:8080
+    client:
+      name: GAME_APP
+      secret: YzRkOWE3ZjJiMWM4N2Q1ZTlmM2ExNmI0YzhlNzUxMjM0NTY3ODkwYWJjZGVm
