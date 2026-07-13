@@ -18,8 +18,8 @@ export const handleApiError = (error) => {
   
 // when the status is 200 OK and shows message based on response code 
 export const checkLogicalError = (data, fallbackMessage = 'Action failed') => {
-  if (data?.responseCode) {
-    const errorMessage = data.message || fallbackMessage;
+  if (data?.responseCode || data?.error?.responseCode) {
+    const errorMessage = data.message || data?.error?.message|| fallbackMessage;
     throw new Error(errorMessage);
   }
   

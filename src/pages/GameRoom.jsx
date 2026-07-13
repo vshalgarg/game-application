@@ -221,10 +221,9 @@ const GameRoom = () => {
         }
         setStatus(res.data.status);
       }
-    } catch (err) {
-      console.error("Move failed:", err);
-      // showSnackbar(err.res.error?.message || "Not your turn", "error");
-      showSnackbar( "Not your turn", "error"); 
+    } catch (error) {
+      console.error("Move failed:", error);
+      showSnackbar(error.message || "Not your turn", "error");
     }
   };
 

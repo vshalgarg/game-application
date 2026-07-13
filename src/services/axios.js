@@ -1,4 +1,5 @@
 import axios from "axios";
+import { showGlobalSnackbar } from "../services/snackbarService";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -27,17 +28,13 @@ let isLoggingOut = false;
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (
-      error.response?.status === 401 &&
-      !isLoggingOut
-    ) {
+    console.log("Response interceptor triggered");
+    console.log(error.response);
+    if (error.response?.status === 401 && !isLoggingOut) {
       isLoggingOut = true;
 
       // Show snackbar
-      showSnackbar(
-        "Login session expired. Please login again.",
-        "warning"
-      );
+      showGlobalSnackbar("Login session expired. Please login again.","error");
 
       // Clear auth data
       localStorage.removeItem("user");

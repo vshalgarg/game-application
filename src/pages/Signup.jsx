@@ -40,9 +40,7 @@ const Signup = () => {
       console.log("Status:", error.response?.status);
       console.log("Data:", error.response?.data);
       console.log("Full Error:", error);
-      const errorMessage = error.response?.data?.message || error.message || "Failed to create account.";
-
-      showSnackbar(errorMessage, "error");
+      showSnackbar(error.message || "Failed to create account.", "error");
     }
   };
 
