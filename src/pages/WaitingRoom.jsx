@@ -2,9 +2,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import GameButton from "../components/GameButton";
 import { startRoom } from "../services/roomService";
 import { useState } from "react"; 
+import { FaCopy } from "react-icons/fa";
 import useWaitingRoomRealtime from "../hooks/useWaitingRoomRealtime";
 import useRoomRealtime from "../hooks/useRoomRealtime";
-
 import { useSnackbar } from "../context/SnackbarContext";
 
 const WaitingRoom = () => {
@@ -12,6 +12,7 @@ const WaitingRoom = () => {
   const { roomCode } = useParams();
 
   const { showSnackbar } = useSnackbar();
+  const [copied, setCopied] = useState(false);
 
   const storedAuth = JSON.parse( localStorage.getItem("user"));
 
@@ -50,10 +51,9 @@ const currentUserId = storedAuth?.userId;
 
       showSnackbar(result.message, "success");
       
- 
-    } catch (err) {
-      console.error("Failed to start game:", err);
-      showSnackbar(err.result?.message || "Failed to start game.","error");
+    } catch (error) {
+      console.error("Failed to start game:", error);
+      showSnackbar(error.message || "Failed to start game.","error");
     }
   };
 
@@ -63,6 +63,16 @@ console.log("currentPlayer ", currentPlayer)
 
   const isHost = currentPlayer?.role === "HOST";  // host can start game only (currentPlayer == HOST)
   console.log("isHost ", isHost)
+
+  // Copy room code
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(roomCode);
+    setCopied(true);
+    
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+  };
 
   return (
     <div
@@ -106,15 +116,47 @@ console.log("currentPlayer ", currentPlayer)
         </h1>
 
         {/* Room ID */}
-        <p
-          className="
-          text-cyan-400
-          mb-6
-          tracking-widest
-        "
-        >
-          ROOM ID : {roomCode}
-        </p>
+        <div
+  className="
+    flex
+    items-center
+    justify-center
+    gap-3
+    mb-6
+  "
+>
+  <p
+    className="
+      text-cyan-400
+      tracking-widest
+    "
+  >
+    ROOM ID : {roomCode}
+  </p>
+
+  <button
+    onClick={handleCopy}
+    className="
+      text-white
+      hover:text-cyan-400
+      transition
+    "
+    title="Copy Room ID"
+  >
+    <FaCopy />
+  </button>
+
+  {copied && (
+    <span
+      className="
+        text-xs
+        text-green-400
+      "
+    >
+      Copied!
+    </span>
+  )}
+</div>
 
         {/* Status */}
         <p

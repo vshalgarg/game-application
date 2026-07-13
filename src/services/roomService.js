@@ -1,57 +1,89 @@
 import api from "./axios";
+import { checkLogicalError, handleApiError } from "../utils/errorHandler";
 
 // 1. CREATE ROOM
-export const createRoom = async ({ tenantId, userId, gameType, matchType, botDifficulty }) => {
-  const res = await api.post("/rooms/create", {
-    tenantId,
-    userId,
-    gameType,
-    matchType,
-    botDifficulty,
-  });
+export const createRoom = async ({tenantId, userId, gameType, matchType, botDifficulty,}) => {
+  try {
+    const res = await api.post("/rooms/create", {
+      tenantId,
+      userId,
+      gameType,
+      matchType,
+      botDifficulty,
+    });
 
-  return res.data; 
+    const result = checkLogicalError(res.data);
+    return result;
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
 };
-
 
 // 2. JOIN ROOM
 export const joinRoom = async ({ roomCode, tenantId, userId }) => {
-  const res = await api.post(`/rooms/${roomCode}/join`, {
-    tenantId,
-    userId,
-  });
+  try {
+    const res = await api.post(`/rooms/${roomCode}/join`, {
+      tenantId,
+      userId,
+    });
 
-  return res.data;
+    const result = checkLogicalError(res.data);
+    return result;
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
 };
-
 
 // 3. START ROOM
 export const startRoom = async ({ roomCode, userId }) => {
-  const res = await api.post(`/rooms/${roomCode}/start`, null, {
-    params: { userId },
-  });
+  try {
+    const res = await api.post(
+      `/rooms/${roomCode}/start`,
+      null,
+      {
+        params: { userId },
+      }
+    );
 
-  return res.data;
+    const result = checkLogicalError(res.data);
+    return result;
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
 };
-
 
 // 4. MAKE MOVE
 export const makeMove = async ({ roomCode, userId, row, col }) => {
-  const res = await api.post(`/game/${roomCode}/move`, {
-    userId,
-    moveData: {
-      row,
-      col,
-    },
-  });
+  try {
+    const res = await api.post(`/game/${roomCode}/move`, {
+      userId,
+      moveData: {
+        row,
+        col,
+      },
+    });
 
-  return res.data;
+    const result = checkLogicalError(res.data);
+    return result;
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
 };
 
-// 5. RESTART API
-export const restartRoom = async({roomCode, userId}) => {
-  const res = await api.post(`/rooms/${roomCode}/restart`, null,{
-    params:{ userId}
-  });
-    return res.data;
+// 5. RESTART ROOM
+export const restartRoom = async ({ roomCode, userId }) => {
+  try {
+    const res = await api.post(
+      `/rooms/${roomCode}/restart`,
+      null,
+      {
+        params: { userId },
+      }
+    );
+
+    const result = checkLogicalError(res.data);
+    return result;
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
 };

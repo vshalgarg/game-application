@@ -47,8 +47,10 @@ export const SnackbarProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    registerSnackbar(showSnackbar);
-  }, []);
+  registerSnackbar(showSnackbar);
+
+  return () => registerSnackbar(null);
+}, [showSnackbar]);
 
   const closeSnackbar = () => {
     setSnackbar((prev) => ({

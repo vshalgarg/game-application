@@ -22,23 +22,21 @@ const JoinRoom = () => {
     }
   
     try {
-         const storedAuth = JSON.parse( localStorage.getItem("user") );
+        const storedAuth = JSON.parse( localStorage.getItem("user") );
+        const joinUserId = storedAuth?.userId;
 
-          const joinUserId = storedAuth?.userId;
+        console.log("Current User ID:", joinUserId);
 
-          console.log("Current User ID:", joinUserId);
-
-          const res = await joinRoom({
-              roomCode,
-              tenantId: "test-1",
-              userId: joinUserId,
+        const res = await joinRoom({
+            roomCode,
+            tenantId: "test-1",
+            userId: joinUserId,
   });
-          showSnackbar(res.message, "success");
-          console.log("Joined room:", res);   // res stores the response of the join api 
-
-          navigate(`/waiting-room/${roomCode}`);
-          } catch (err) {
-            showSnackbar(err.res?.message || "Failed to join room.","error");
+        showSnackbar(res.message, "success");
+        console.log("Joined room:", res);   // res stores the response of the join api 
+        navigate(`/waiting-room/${roomCode}`);
+          } catch (error) {
+            showSnackbar(error.message || "Failed to join room.","error");
             console.error("Failed to join room:", err);
           }
 };

@@ -1,9 +1,11 @@
 import { useNavigate, useParams } from "react-router-dom";
 import GameButton from "../../components/GameButton";
+import { FaCopy } from "react-icons/fa";
 
 const WaitingRoom = () => {
   const navigate = useNavigate();
   const { roomCode } = useParams();
+  const [copied, setCopied] = useState(false);
 
     const handleStartGame = async () => {
       try {
@@ -24,6 +26,17 @@ const WaitingRoom = () => {
         showSnackbar(err.result?.message || "Failed to start game.","error");
       }
     };
+
+      // Copy room code
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(roomCode);
+    setCopied(true);
+    
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+  };
+
   return (
     <div
       className="
