@@ -41,6 +41,14 @@ pipeline {
                 '''
             }
         }
+       stage('Build Docker Image') {
+                   steps {
+                       echo 'Building Docker image'
+                       sh '''
+                           docker build -t "$IMAGE_NAME:$TAG" .
+                       '''
+                   }
+               }
 
         stage('Push Docker Image') {
             steps {
@@ -50,8 +58,7 @@ pipeline {
                             "https://${REGISTRY}",
                             'docker-credentials-id'
                     ) {
-                        def appImage = docker.build("${IMAGE_NAME}:${TAG}")
-                        appImage.push()
+                         docker.image("${IMAGE_NAME}:${TAG}").push()
                     }
                 }
             }
