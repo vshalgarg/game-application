@@ -5,14 +5,44 @@ CREATE TABLE IF NOT EXISTS game_config (
     game_type        VARCHAR(50) NOT NULL,
     min_players      INT NOT NULL,
     max_players      INT NOT NULL,
-    roles_json       JSONB,
+    roles_json       JSON,
 
-    created_at       TIMESTAMP NOT NULL,
-    updated_at       TIMESTAMP NOT NULL,
+    created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (tenant_id, game_type)
 
 );
+
+
+INSERT INTO game_config (
+    tenant_id,
+    game_type,
+    min_players,
+    max_players,
+    roles_json
+)
+VALUES (
+           'TEST-1',
+           'TIC_TAC_TOE',
+           2,
+           2,
+           '["X","O"]'
+       );
+
+INSERT INTO game_config (
+    tenant_id,
+    game_type,
+    min_players,
+    max_players,
+    roles_json
+) VALUES (
+             'TEST-1',
+             'LUDO',
+             2,
+             4,
+             '["RED","GREEN","YELLOW","BLUE"]'
+         );
 
 
 CREATE TABLE IF NOT EXISTS rooms (
@@ -21,13 +51,15 @@ CREATE TABLE IF NOT EXISTS rooms (
     tenant_id        VARCHAR(50) NOT NULL,
     room_code        VARCHAR(10) NOT NULL,
     game_type        TINYINT NOT NULL,
+    match_type       VARCHAR(20) NOT NULL,
+    bot_difficulty   VARCHAR(20),
     status           VARCHAR(20) NOT NULL,
 
     started_at       DATETIME,
     ended_at         DATETIME,
 
-    created_at       DATETIME NOT NULL,
-    updated_at       DATETIME NOT NULL,
+    created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     CONSTRAINT uk_room_code
         UNIQUE (room_code)
@@ -53,8 +85,8 @@ CREATE TABLE IF NOT EXISTS players (
     joined_at        DATETIME NOT NULL,
     room_id          BIGINT NOT NULL,
 
-    created_at       DATETIME NOT NULL,
-    updated_at       DATETIME NOT NULL,
+    created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     CONSTRAINT uk_room_user
         UNIQUE (room_id, user_id),
@@ -82,8 +114,8 @@ CREATE TABLE IF NOT EXISTS game_results (
     winner_id        BIGINT,
     completed_at     DATETIME NOT NULL,
 
-    created_at       DATETIME NOT NULL,
-    updated_at       DATETIME NOT NULL,
+    created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_game_result_room
         FOREIGN KEY (room_id)
@@ -100,24 +132,3 @@ CREATE INDEX idx_result_tenant
 CREATE INDEX idx_result_winner
     ON game_results (winner_id);
 
-
-INSERT INTO game_config (
-    tenant_id,
-    game_type,
-    min_players,
-    max_players,
-    roles_json
-)
-VALUES (
-    'TEST-1',
-    'TIC_TAC_TOE',
-    2,
-    2,
-    '["X","O"]'
-);
-
-
-ALTER TABLE rooms
-    ADD COLUMN bot_difficulty VARCHAR(20);
-ALTER TABLE rooms
-    ADD COLUMN match_type VARCHAR(20);
