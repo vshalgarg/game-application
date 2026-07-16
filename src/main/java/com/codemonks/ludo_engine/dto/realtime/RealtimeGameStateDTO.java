@@ -1,12 +1,13 @@
 package com.codemonks.ludo_engine.dto.realtime;
 
-
+import com.codemonks.ludo_engine.dto.common.PlayerDTO;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -24,6 +25,9 @@ public class RealtimeGameStateDTO {
     @JsonProperty("game_state_data")
     private Map<String, Object> gameState;
 
+    @JsonProperty("players")
+    private List<PlayerDTO> players;
+
     @JsonProperty("current_turn_user_id")
     private Long currentTurnUserId;
 
@@ -35,4 +39,7 @@ public class RealtimeGameStateDTO {
 
     @JsonProperty("version")
     private Long version;
+
+    @JsonProperty("bot_difficulty")
+    private String botDifficulty;
 }
