@@ -16,7 +16,7 @@ import static com.codemonks.tic_tac_toe_game_engine.constant.EngineApiUrlConstan
 @RequestMapping(BASE_API)
 @RequiredArgsConstructor
 @Slf4j
-public class EngineController {
+public class TicTacToeEngineController {
 
     private final TicTacToeEngine ticTacToeEngine;
     private final LobbyService lobbyService;
