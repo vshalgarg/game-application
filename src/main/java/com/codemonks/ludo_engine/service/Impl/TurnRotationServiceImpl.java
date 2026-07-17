@@ -1,7 +1,9 @@
 package com.codemonks.ludo_engine.service.Impl;
 
+import com.codemonks.ludo_engine.constant.BoardConstants;
 import com.codemonks.ludo_engine.dto.common.GameStateDTO;
 import com.codemonks.ludo_engine.dto.common.PlayerDTO;
+import com.codemonks.ludo_engine.enums.PlayerColorEnum;
 import com.codemonks.ludo_engine.service.TurnRotationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,11 +22,8 @@ public class TurnRotationServiceImpl implements TurnRotationService {
         log.debug("Turn service execution started for playerId:{}", currentPlayerId);
 
         //Find current player
-
         PlayerDTO currentPlayer = null;
-
         for (PlayerDTO player : gameState.getPlayers()) {
-
             if (player.getPlayerId().equals(currentPlayerId)) {
                 currentPlayer = player;
                 break;
@@ -50,27 +49,37 @@ public class TurnRotationServiceImpl implements TurnRotationService {
             return gameState;
         }
 
-        //Get all players
         List<PlayerDTO> players = gameState.getPlayers();
-        int currentPlayerIndex = -1;
-        //Find current player index
-        for (int i = 0; i < players.size(); i++) {
-            if (players.get(i).getPlayerId().equals(currentPlayerId)) {
-                currentPlayerIndex = i;
+
+        PlayerColorEnum currentColor = currentPlayer.getColor();
+        int currentColorIndex = BoardConstants.TURN_ORDER.indexOf(currentColor);
+
+        if (currentColorIndex == -1) {
+            log.error("Current player's color not found in TURN_ORDER: {}", currentColor);
+            return gameState;
+        }
+
+        Long nextPlayerId = null;
+        int size = BoardConstants.TURN_ORDER.size();
+
+        for (int step = 1; step <= size; step++) {
+            PlayerColorEnum candidateColor = BoardConstants.TURN_ORDER.get((currentColorIndex + step) % size);
+
+            for (PlayerDTO player : players) {
+                if (player.getColor() == candidateColor) {
+                    nextPlayerId = player.getPlayerId();
+                    break;
+                }
+            }
+            if (nextPlayerId != null) {
                 break;
             }
         }
-
-        //Safety check
-
-        if (currentPlayerIndex == -1) {
-            log.error("Current player not found:{}", currentPlayerId);
+        if (nextPlayerId == null) {
+            log.error("No next player found in clockwise rotation. CurrentColor:{}", currentColor);
             return gameState;
         }
-        //Next player
-        int nextPlayerIndex = (currentPlayerIndex + 1) % players.size();
-        Long nextPlayerId = players.get(nextPlayerIndex).getPlayerId();
         gameState.setCurrentTurnPlayerId(nextPlayerId);
+        log.info("[TURN_ROTATED] From:{}({}) To:{}", currentPlayerId, currentColor, nextPlayerId);
         return gameState;
-    }
-}
+}}

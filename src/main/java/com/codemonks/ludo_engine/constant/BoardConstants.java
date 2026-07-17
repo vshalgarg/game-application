@@ -3,6 +3,7 @@ package com.codemonks.ludo_engine.constant;
 
 import com.codemonks.ludo_engine.enums.PlayerColorEnum;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -11,7 +12,6 @@ public class BoardConstants {
     public static final Integer BOARD_SIZE=52; //Standard ludo track size
 
     public static final int HOME_PATH_SIZE = 6; // positions 0 to 5
-
 
     // because har color TRACK pe 50 cells travel karta  hai before entering its own home path.
     public static final int HOME_PATH_ENTRY_DISTANCE = 50;
@@ -26,6 +26,12 @@ public class BoardConstants {
             PlayerColorEnum.GREEN,  13,
             PlayerColorEnum.YELLOW, 26,
             PlayerColorEnum.BLUE,   39
+    );
+    public static final List<PlayerColorEnum> TURN_ORDER = List.of(
+            PlayerColorEnum.RED,
+            PlayerColorEnum.GREEN,
+            PlayerColorEnum.YELLOW,
+            PlayerColorEnum.BLUE
     );
 
 }
