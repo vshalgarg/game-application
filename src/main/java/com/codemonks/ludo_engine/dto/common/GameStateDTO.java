@@ -22,4 +22,7 @@ public class GameStateDTO {
     // Winner information
     private Long winnerPlayerId;
 
+    private Integer lastDice;
+
+    private Long lastDicePlayerId;
 }

@@ -1,6 +1,7 @@
 package com.codemonks.ludo_engine.service.Impl;
 
 import com.codemonks.ludo_engine.constant.BoardConstants;
+import com.codemonks.ludo_engine.constant.ErrorCodesEnum;
 import com.codemonks.ludo_engine.dto.common.*;
 import com.codemonks.ludo_engine.dto.realtime.RealtimeGameStateDTO;
 import com.codemonks.ludo_engine.dto.realtime.RealtimeLobbyDTO;
@@ -15,6 +16,7 @@ import com.codemonks.ludo_engine.enums.GameStatusEnum;
 import com.codemonks.ludo_engine.enums.PlayerTurnStageEnum;
 import com.codemonks.ludo_engine.enums.TokenStateEnum;
 import com.codemonks.ludo_engine.exception.InvalidMoveException;
+import com.codemonks.ludo_engine.exception.ResourceNotFoundException;
 import com.codemonks.ludo_engine.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -333,7 +335,7 @@ public class EngineServiceImpl implements EngineService {
                     gameState.getCurrentTurnPlayerId(),
                     request.getPlayerId()
             );
-            throw new IllegalStateException("Not your turn to roll dice");
+            throw new InvalidMoveException(ErrorCodesEnum.INVALID_TURN);
         }
 
         // Stage validation
@@ -346,7 +348,7 @@ public class EngineServiceImpl implements EngineService {
                     gameState.getPlayerTurnStage()
             );
 
-            throw new IllegalStateException("Player must complete token movement first");
+            throw new InvalidMoveException(ErrorCodesEnum.DICE_ALREADY_ROLLED);
 
         }
 
@@ -360,12 +362,16 @@ public class EngineServiceImpl implements EngineService {
         }
 
         if (currentPlayer == null) {
-            throw new IllegalStateException("Player not found");
+            throw new ResourceNotFoundException(ErrorCodesEnum.PLAYER_NOT_FOUND);
         }
 
         // Roll dice
         int diceNumber = ThreadLocalRandom.current().nextInt(1, 7);
         log.info("[DICE_GENERATED] DiceNumber:{}", diceNumber);
+
+        // NEW
+        gameState.setLastDice(diceNumber);
+        gameState.setLastDicePlayerId(request.getPlayerId());
 
         currentPlayer.getPendingDice().add(diceNumber);
         log.info(
