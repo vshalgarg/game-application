@@ -70,15 +70,19 @@ public class EngineServiceImpl implements EngineService {
         response.setPlayers(initializedGameState.getPlayers());
         response.setBotDifficulty(request.getBotDifficulty());
 
-        // ── Persist initial state to Supabase
+        // ── Wrap game state in "board" for frontend, persist to Supabase
+        Map<String, Object> startBoardWrapped = new HashMap<>();
+        startBoardWrapped.put("board", response.getGameState());
         RealtimeGameStateDTO initialRealtimeState = RealtimeGameStateDTO.builder()
                 .roomId(request.getRoomId())
                 .roomCode(request.getRoomCode())
-                .gameState(response.getGameState())
+                .gameState(startBoardWrapped)
+                .players(initializedGameState.getPlayers())
                 .currentTurnUserId(initializedGameState.getCurrentTurnPlayerId())
                 .gameStatus(GameStatusEnum.RUNNING.name())
                 .winnerUserId(null)
                 .version(1L)
+                .botDifficulty(request.getBotDifficulty() != null ? request.getBotDifficulty().name() : null)
                 .build();
         supabaseRealtimeService.upsertGameState(initialRealtimeState);
         log.info(
@@ -112,7 +116,10 @@ public class EngineServiceImpl implements EngineService {
                 realtimeState.getGameStatus()
         );
 
-        GameStateDTO gameState = objectMapper.convertValue(realtimeState.getGameState(), GameStateDTO.class);
+        Map<String, Object> rawState = realtimeState.getGameState();
+        Object boardObj = rawState.get("board");
+        Map<String, Object> gameStateMap = boardObj instanceof Map ? (Map<String, Object>) boardObj : rawState;
+        GameStateDTO gameState = objectMapper.convertValue(gameStateMap, GameStateDTO.class);
 
 
         Long tokenId = getTokenId(request);
@@ -259,11 +266,14 @@ public class EngineServiceImpl implements EngineService {
             response.setStatus(GameStatusEnum.RUNNING);
         }
 
-        // ── Persist updated state
+        // ── Wrap game state in "board" for frontend, persist to Supabase
+        Map<String, Object> moveBoardWrapped = new HashMap<>();
+        moveBoardWrapped.put("board", persistedStateMap);
         RealtimeGameStateDTO updatedRealtimeState = RealtimeGameStateDTO.builder()
                 .roomId(request.getRoomId())
                 .roomCode(request.getRoomCode())
-                .gameState(persistedStateMap)
+                .gameState(moveBoardWrapped)
+                .players(updatedGameState.getPlayers())
                 .currentTurnUserId(updatedGameState.getCurrentTurnPlayerId())
                 .gameStatus(response.getStatus().name())
                 .winnerUserId(response.getWinnerUserId())
@@ -303,7 +313,10 @@ public class EngineServiceImpl implements EngineService {
 
         // ── Fetch authoritative state from Supabase
         RealtimeGameStateDTO realtimeState = supabaseRealtimeService.getGameState(request.getRoomId());
-        GameStateDTO gameState = objectMapper.convertValue(realtimeState.getGameState(), GameStateDTO.class);
+        Map<String, Object> rawState = realtimeState.getGameState();
+        Object boardObj = rawState.get("board");
+        Map<String, Object> gameStateMap = boardObj instanceof Map ? (Map<String, Object>) boardObj : rawState;
+        GameStateDTO gameState = objectMapper.convertValue(gameStateMap, GameStateDTO.class);
 
         log.info(
                 "[STATE_LOADED] Room:{} Version:{} Turn:{} Stage:{}",
@@ -407,11 +420,14 @@ public class EngineServiceImpl implements EngineService {
             }
         }
 
-        // ── Persist updated state to Supabase
+        // ── Wrap game state in "board" for frontend, persist to Supabase
+        Map<String, Object> diceBoardWrapped = new HashMap<>();
+        diceBoardWrapped.put("board", objectMapper.convertValue(gameState, Map.class));
         RealtimeGameStateDTO updatedRealtimeState = RealtimeGameStateDTO.builder()
                 .roomId(realtimeState.getRoomId())
                 .roomCode(realtimeState.getRoomCode())
-                .gameState(objectMapper.convertValue(gameState, Map.class))
+                .gameState(diceBoardWrapped)
+                .players(gameState.getPlayers())
                 .currentTurnUserId(gameState.getCurrentTurnPlayerId())
                 .gameStatus(realtimeState.getGameStatus()) // dice rolls never change win/draw status
                 .winnerUserId(realtimeState.getWinnerUserId())

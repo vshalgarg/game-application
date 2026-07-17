@@ -63,11 +63,9 @@ public class GameSetupServiceImpl implements GameSetupService {
         log.info("Player creation started");
         List<PlayerDTO> playerList = new ArrayList<>();
         //Get all available colors
-        List<PlayerColorEnum> availableColors = new ArrayList<>(Arrays.asList(PlayerColorEnum.values()));
-        //Shuffle colors randomly
-        Collections.shuffle(availableColors);
-
+        List<PlayerColorEnum> availableColors = selectColorsForPlayerCount(playerIds.size());
         //Create player one by one
+        
         for (int playerIndex = 0; playerIndex < playerIds.size(); playerIndex++) {
             Long playerId = playerIds.get(playerIndex);
             PlayerColorEnum assignedColor = availableColors.get(playerIndex);
@@ -89,6 +87,7 @@ public class GameSetupServiceImpl implements GameSetupService {
 
         return playerList;
     }
+
     //Create 4 tokens for each player
     private List<TokenDTO> createTokens(PlayerColorEnum color) {
 
@@ -115,5 +114,27 @@ public class GameSetupServiceImpl implements GameSetupService {
                 .current()
                 .nextInt(playerIds.size());
         return playerIds.get(randomIndex);
+    }
+
+    private List<PlayerColorEnum> selectColorsForPlayerCount(int playerCount) {
+
+        if (playerCount == 2) {
+            List<List<PlayerColorEnum>> oppositePairs = List.of(
+                    List.of(PlayerColorEnum.RED, PlayerColorEnum.YELLOW),
+                    List.of(PlayerColorEnum.GREEN, PlayerColorEnum.BLUE)
+            );
+
+            List<PlayerColorEnum> chosenPair = new ArrayList<>(
+                    oppositePairs.get(ThreadLocalRandom.current().nextInt(oppositePairs.size()))
+            );
+
+            Collections.shuffle(chosenPair);
+            log.info("[2P_COLOR_SELECTION] Opposite pair chosen: {}", chosenPair);
+            return chosenPair;
+        }
+
+        List<PlayerColorEnum> allColors = new ArrayList<>(Arrays.asList(PlayerColorEnum.values()));
+        Collections.shuffle(allColors);
+        return allColors;
     }
 }
