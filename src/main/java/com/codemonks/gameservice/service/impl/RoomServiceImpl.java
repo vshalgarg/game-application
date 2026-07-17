@@ -95,7 +95,13 @@ public class RoomServiceImpl implements RoomService {
                     return new GameException(GAME_CONFIG_NOT_FOUND);
                 });
 
-        int currentPlayers = playerRepository.countByRoom_Id(room.getId());
+
+// ── Duplicate-join check
+        boolean alreadyInRoom = playerRepository.existsByRoom_IdAndUserId(room.getId(), request.getUserId());
+        if (alreadyInRoom) {
+            log.warn("User already in room. roomId={}, userId={}", room.getId(), request.getUserId());
+            throw new GameException(USER_ALREADY_IN_ROOM);
+        }
         PlayerEntity player = playerRepository.save(RoomMapper.toJoinPlayer(request, room));
 
         List<PlayerEntity> players = playerRepository.findByRoom_Id(room.getId());
