@@ -24,11 +24,7 @@ public class FeignErrorDecoder implements ErrorDecoder {
             String methodKey,
             Response response
     ) {
-        try {
-            String body =
-                    Util.toString(
-                            response.body().asReader()
-                    );
+        try {String body = Util.toString(response.body().asReader());
 
             log.error("External service call failed");
             log.error(
