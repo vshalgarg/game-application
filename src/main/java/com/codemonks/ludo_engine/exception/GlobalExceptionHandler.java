@@ -76,6 +76,6 @@ public class GlobalExceptionHandler {
                 .errorCode(error.getCode())
                 .errorMessage(error.getMessage())
                 .build();
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
