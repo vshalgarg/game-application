@@ -87,3 +87,19 @@ export const restartRoom = async ({ roomCode, userId }) => {
     throw new Error(handleApiError(error));
   }
 };
+
+// 6. DICE ROLL IN LUDO
+export const rollDice = async ({ roomCode, userId }) => {
+  try {
+    const res = await api.post(
+      `/rooms/${roomCode}/roll-dice`,
+      {
+        userId,
+      }
+    );
+
+    return checkLogicalError(res.data);
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
