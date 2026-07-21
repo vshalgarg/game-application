@@ -85,7 +85,7 @@ public class KillRuleServiceImpl implements KillRuleService {
                         && token.getPosition().equals(currentPosition)) {
 
                     token.setState(TokenStateEnum.BASE);
-                    token.setPosition(-1);
+                    token.setPosition(null);
                     result.setTokenKilled(true);
                     result.setKilledPlayerId(player.getPlayerId());
                     result.setKilledTokenId(token.getTokenId());

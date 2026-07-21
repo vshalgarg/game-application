@@ -21,5 +21,5 @@ public class TokenDTO {
         private PlayerColorEnum color;
         // Token ka apna color — TRACK_START aur HOME_PATH entry distance calculate karne ke liye zaroori hai
 
-
+    private Integer baseSlot;
 }

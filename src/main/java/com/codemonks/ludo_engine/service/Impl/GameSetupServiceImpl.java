@@ -63,7 +63,9 @@ public class GameSetupServiceImpl implements GameSetupService {
         log.info("Player creation started");
         List<PlayerDTO> playerList = new ArrayList<>();
         //Get all available colors
+
         List<PlayerColorEnum> availableColors = selectColorsForPlayerCount(playerIds.size());
+
         //Create player one by one
         
         for (int playerIndex = 0; playerIndex < playerIds.size(); playerIndex++) {
@@ -73,9 +75,11 @@ public class GameSetupServiceImpl implements GameSetupService {
 
             player.setPlayerId(playerId);
             player.setColor(assignedColor);
+            // Generate unique starting token id for this player
+            long startingTokenId = (playerIndex * 4L) + 1;
             //Create tokens for player — color-aware, taaki TokenMovementService
             //inka TRACK_START aur HOME_PATH entry color se nikal sake
-            player.setTokens(createTokens(assignedColor));
+            player.setTokens(createTokens(assignedColor,startingTokenId));
 
             //initialize dice buffer
             player.setPendingDice(new ArrayList<>());
@@ -89,22 +93,27 @@ public class GameSetupServiceImpl implements GameSetupService {
     }
 
     //Create 4 tokens for each player
-    private List<TokenDTO> createTokens(PlayerColorEnum color) {
+    private List<TokenDTO> createTokens(PlayerColorEnum color, long startingTokenId) {
 
         List<TokenDTO> tokenList = new ArrayList<>();
-        //Every player receives:token 1,token 2,3,4
-        for (long tokenNumber = 1; tokenNumber <= 4; tokenNumber++) {
+        // Every player receives 4 unique tokens
+        for (int i = 0; i < 4; i++) {
 
             TokenDTO token = new TokenDTO();
-            token.setTokenId(tokenNumber);
-            //Initial token state:inside base
+
+            token.setTokenId(startingTokenId + i);
+
+            // Initial token state: inside base
             token.setState(TokenStateEnum.BASE);
 
-            //Base position
-            token.setPosition(-1);
+            // Token
+            token.setPosition(null);
+            // Permanent base location
+            token.setBaseSlot(i);
             token.setColor(color);
             tokenList.add(token);
         }
+
         return tokenList;
     }
 
