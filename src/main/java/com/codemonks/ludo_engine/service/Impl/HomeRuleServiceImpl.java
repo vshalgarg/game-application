@@ -46,6 +46,7 @@ public class HomeRuleServiceImpl implements HomeRuleService {
                         && token.getPosition() == BoardConstants.HOME_PATH_SIZE - 1) {
 
                     token.setState(TokenStateEnum.FINISHED);
+                    token.setPosition(null);
 
                     result.setReachedHome(true);
                     result.setPlayerId(playerId);

@@ -16,7 +16,6 @@ public class BoardConstants {
     // because har color TRACK pe 50 cells travel karta  hai before entering its own home path.
     public static final int HOME_PATH_ENTRY_DISTANCE = 50;
 
-
     public static final Set<Integer> SAFE_CELLS=Set.of(0,8,13,21,26,34,39,47);
     //Token can not be killed on these safe places
 
