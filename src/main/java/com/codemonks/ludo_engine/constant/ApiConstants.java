@@ -10,6 +10,6 @@ public final class ApiConstants {
     public static final String ROLL_DICE="/roll-dice";
     public static final String PROCESS_MOVE="/make-move";
     public static final String LOBBY = "/lobby";
-
+    public static final String BOARD_LAYOUT = "/board-layout";
 
 }

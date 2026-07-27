@@ -1,6 +1,5 @@
 package com.codemonks.ludo_engine.service.Impl;
 
-import com.codemonks.ludo_engine.constant.BoardConstants;
 import com.codemonks.ludo_engine.constant.ErrorCodesEnum;
 import com.codemonks.ludo_engine.dto.common.*;
 import com.codemonks.ludo_engine.dto.realtime.RealtimeGameStateDTO;
@@ -21,7 +20,7 @@ import com.codemonks.ludo_engine.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,9 +29,8 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static com.codemonks.ludo_engine.constant.ErrorCodesEnum.INVALID_MOVE;
-
-@Service
 @Slf4j
+@Service
 @RequiredArgsConstructor
 public class EngineServiceImpl implements EngineService {
 
@@ -41,12 +39,14 @@ public class EngineServiceImpl implements EngineService {
     private final MoveValidationService moveValidationService;
     private final TokenMovementService tokenMovementService;
     private final KillRuleService killRuleService;
-    private final HomeRuleService homeRuleService;
     private final WinConditionService winConditionService;
     private final TurnRotationService turnRotationService;
     private final EventService eventService;
     private final ObjectMapper objectMapper;
     private final SupabaseRealtimeService supabaseRealtimeService;
+    private final ExtraTurnService extraTurnService;
+    private final BoardService boardService;
+    private final PathOrderService pathOrderService;
 
     @Override
     public EngineGameStateResponseDTO startGame(EngineStartGameRequestDTO request) {
@@ -83,14 +83,12 @@ public class EngineServiceImpl implements EngineService {
                 .currentTurnUserId(initializedGameState.getCurrentTurnPlayerId())
                 .gameStatus(GameStatusEnum.RUNNING.name())
                 .winnerUserId(null)
-                .version(1L)
                 .botDifficulty(request.getBotDifficulty() != null ? request.getBotDifficulty().name() : null)
                 .build();
         supabaseRealtimeService.upsertGameState(initialRealtimeState);
         log.info(
-                "[INITIAL_STATE_PERSISTED] Room:{} Version:{}",
-                request.getRoomCode(),
-                1L
+                "[INITIAL_STATE_PERSISTED] Room:{}",
+                request.getRoomCode()
         );
         log.info(
                 "[GAME_STARTED] Room:{} CurrentTurn:{}",
@@ -111,9 +109,8 @@ public class EngineServiceImpl implements EngineService {
         RealtimeGameStateDTO realtimeState = supabaseRealtimeService.getGameState(request.getRoomId());
 
         log.info(
-                "[STATE_LOADED] Room:{} Version:{} CurrentTurn:{} Status:{}",
+                "[STATE_LOADED] Room:{} CurrentTurn:{} Status:{}",
                 realtimeState.getRoomId(),
-                realtimeState.getVersion(),
                 realtimeState.getCurrentTurnUserId(),
                 realtimeState.getGameStatus()
         );
@@ -194,21 +191,72 @@ public class EngineServiceImpl implements EngineService {
                     "Player " + request.getUserId() + " killed opponent token"));
         }
 
-        // ── Home Rule
-        // CHANGED - migrated to DTO flow
-        HomeRuleResultDTO homeResult =
-                homeRuleService.processHomeRule(
-                        updatedGameState,
-                        request.getUserId(),
-                        tokenId
+        boolean tokenFinished = false;
+
+        for (PlayerDTO player : updatedGameState.getPlayers()) {
+
+            if (!player.getPlayerId().equals(request.getUserId())) {
+                continue;
+            }
+
+            for (TokenDTO token : player.getTokens()) {
+
+                if (token.getTokenId().equals(tokenId)) {
+                    tokenFinished = token.getState() == TokenStateEnum.FINISHED;
+                    break;
+                }
+            }
+
+            break;
+        }
+
+        if (tokenFinished) {
+
+            events.add(
+                    eventService.createEvent(
+                            EventTypeEnum.TOKEN_REACHED_HOME,
+                            "Player " + request.getUserId() + " reached home"
+                    )
+            );
+        }
+        boolean extraTurn = extraTurnService.hasExtraTurn(
+                        consumedDice,
+                        killResult.isTokenKilled(),
+                        tokenFinished
                 );
 
-        updatedGameState = homeResult.getGameState();
+        updatedGameState = turnRotationService.updateTurn(
+                        updatedGameState,
+                        request.getUserId(),
+                        extraTurn
+                );
 
-        if (homeResult.isReachedHome()) {
-            events.add(eventService.createEvent(EventTypeEnum.TOKEN_REACHED_HOME,
-                    "Player " + request.getUserId() + " reached home"));
+        PlayerDTO nextTurnPlayer = null;
+
+        for (PlayerDTO player : updatedGameState.getPlayers()) {
+            if (player.getPlayerId().equals(updatedGameState.getCurrentTurnPlayerId())) {
+                nextTurnPlayer = player;
+                break;
+            }
         }
+        if (nextTurnPlayer != null
+                && nextTurnPlayer.getPendingDice() != null
+                && !nextTurnPlayer.getPendingDice().isEmpty())  {
+
+            updatedGameState.setPlayerTurnStage(PlayerTurnStageEnum.TOKEN_MOVE);
+
+        } else {
+
+            updatedGameState.setPlayerTurnStage(PlayerTurnStageEnum.ROLL_DICE);
+        }
+
+        log.info(
+                "[NEXT_TURN_STATE] Turn:{} Stage:{} PendingDice:{}",
+                updatedGameState.getCurrentTurnPlayerId(),
+                updatedGameState.getPlayerTurnStage(),
+                nextTurnPlayer != null ? nextTurnPlayer.getPendingDice() : null
+        );
+
 
         // ── Winner Check
         EngineGameStateResponseDTO winnerResponse = winConditionService.checkWinner(
@@ -220,64 +268,26 @@ public class EngineServiceImpl implements EngineService {
                     winnerResponse.getWinnerUserId()
             );
         }
-        // ── Extra Turn Logic
-        boolean extraTurn = killResult.isTokenKilled() || homeResult.isReachedHome();
 
-        // ── Stage Decision
-        PlayerDTO currentPlayer = null;
-        for (PlayerDTO player : updatedGameState.getPlayers()) {
-            if (player.getPlayerId().equals(request.getUserId())) {
-                currentPlayer = player;
-                break;
-            }
-        }
-
-        if (currentPlayer != null
-                && currentPlayer.getPendingDice() != null
-                && !currentPlayer.getPendingDice().isEmpty()) {
-            updatedGameState.setPlayerTurnStage(PlayerTurnStageEnum.TOKEN_MOVE);
-            log.info("[STAGE RETAINED] Player:{} buffer:{} Stage:TOKEN_MOVE",
-                    request.getUserId(), currentPlayer.getPendingDice());
-        } else {
-            updatedGameState.setPlayerTurnStage(PlayerTurnStageEnum.ROLL_DICE);
-            log.info("[STAGE RESET] Player:{} buffer empty. Stage:ROLL_DICE", request.getUserId());
-        }
-
-        // ── Turn Update
-        updatedGameState = turnRotationService.updateTurn(
-                updatedGameState, request.getUserId(), extraTurn);
-
-        if (extraTurn) {
-            events.add(eventService.createEvent(EventTypeEnum.EXTRA_TURN,
-                    "Player " + request.getUserId() + " received extra turn"));
-        }
-
-        // ── Build Response — separate maps so the durable Supabase state never carries the transient events list
-//        Map<String, Object> persistedStateMap = objectMapper.convertValue(updatedGameState, Map.class);
-//        Map<String, Object> responseStateMap = new HashMap<>(persistedStateMap);
-//        responseStateMap.put("events", events);
-//
-//        EngineGameStateResponseDTO response = new EngineGameStateResponseDTO();
-//        response.setGameState(responseStateMap);
-//        response.setCurrentTurnUserId(updatedGameState.getCurrentTurnPlayerId());
-
-// ── Compute legal moves for whoever's turn it is now (self if extra turn, else next player)
-        PlayerDTO nextTurnPlayer = null;
-        for (PlayerDTO player : updatedGameState.getPlayers()) {
-            if (player.getPlayerId().equals(updatedGameState.getCurrentTurnPlayerId())) {
-                nextTurnPlayer = player;
-                break;
-            }
-        }
-        List<LegalMoveDTO> legalMoves = (nextTurnPlayer != null && nextTurnPlayer.getPendingDice() != null)
-                ? computeLegalMoves(nextTurnPlayer, nextTurnPlayer.getPendingDice())
-                : new ArrayList<>();
+        List<LegalMoveDTO> legalMoves =
+                (nextTurnPlayer != null
+                        && nextTurnPlayer.getPendingDice() != null)
+                        ? computeLegalMoves(
+                        updatedGameState,
+                        nextTurnPlayer,
+                        nextTurnPlayer.getPendingDice())
+                        : new ArrayList<>();
 
 // ── Build Response — events + legalMoves now part of the persisted state, replaced fresh every move
+        log.info("[BEFORE_PERSIST] Turn:{} Stage:{}",
+                updatedGameState.getCurrentTurnPlayerId(),
+                updatedGameState.getPlayerTurnStage());
+
         Map<String, Object> persistedStateMap = objectMapper.convertValue(updatedGameState, Map.class);
         persistedStateMap.put("events", events);
         persistedStateMap.put("legalMoves", legalMoves);
 
+        log.info("[MAP_STAGE] {}", persistedStateMap.get("playerTurnStage"));
         EngineGameStateResponseDTO response = new EngineGameStateResponseDTO();
         response.setGameState(persistedStateMap);
         response.setCurrentTurnUserId(updatedGameState.getCurrentTurnPlayerId());
@@ -300,13 +310,11 @@ public class EngineServiceImpl implements EngineService {
                 .currentTurnUserId(updatedGameState.getCurrentTurnPlayerId())
                 .gameStatus(response.getStatus().name())
                 .winnerUserId(response.getWinnerUserId())
-                .version(realtimeState.getVersion() + 1)
                 .build();
         supabaseRealtimeService.upsertGameState(updatedRealtimeState);
         log.info(
-                "[STATE_PERSISTED] Room:{} Version:{}",
-                request.getRoomId(),
-                updatedRealtimeState.getVersion()
+                "[STATE_PERSISTED] Room:{}",
+                request.getRoomId()
         );
         // ── Persist move history
         RealtimeMoveDTO moveDTO = RealtimeMoveDTO.builder()
@@ -339,12 +347,14 @@ public class EngineServiceImpl implements EngineService {
         Map<String, Object> rawState = realtimeState.getGameState();
         Object boardObj = rawState.get("board");
         Map<String, Object> gameStateMap = boardObj instanceof Map ? (Map<String, Object>) boardObj : rawState;
+
+        log.info("[GAME_STATE_FROM_DB] {}", gameStateMap);
+
         GameStateDTO gameState = objectMapper.convertValue(gameStateMap, GameStateDTO.class);
 
         log.info(
-                "[STATE_LOADED] Room:{} Version:{} Turn:{} Stage:{}",
+                "[STATE_LOADED] Room:{} Turn:{} Stage:{}",
                 realtimeState.getRoomId(),
-                realtimeState.getVersion(),
                 gameState.getCurrentTurnPlayerId(),
                 gameState.getPlayerTurnStage()
         );
@@ -373,9 +383,10 @@ public class EngineServiceImpl implements EngineService {
 
         }
 
-        // Find current player
         PlayerDTO currentPlayer = null;
+
         for (PlayerDTO player : gameState.getPlayers()) {
+
             if (player.getPlayerId().equals(request.getPlayerId())) {
                 currentPlayer = player;
                 break;
@@ -402,9 +413,6 @@ public class EngineServiceImpl implements EngineService {
         );
         List<Integer> pendingDice = currentPlayer.getPendingDice();
 
-        // Tracks whether the turn was already forfeited by a triple-6, so the stage-decision
-        // block below gets skipped — otherwise it would re-evaluate the same dice roll and
-        // undo the forfeiture (flip stage back / rotate turn a second time).
         boolean tripleSixForfeited = false;
 
         // ── Triple 6 Check
@@ -427,8 +435,12 @@ public class EngineServiceImpl implements EngineService {
 
         // ── Stage Decision after dice roll — skipped if triple-six already forfeited the turn
         if (!tripleSixForfeited) {
-            boolean legalMoveExists = hasAnyLegalMove(currentPlayer, diceNumber);
-
+            boolean legalMoveExists =
+                    hasAnyLegalMove(
+                            gameState,
+                            currentPlayer,
+                            diceNumber
+                    );
             if (diceNumber == 6) {
                 gameState.setPlayerTurnStage(PlayerTurnStageEnum.ROLL_DICE);
                 log.info("[ROLLED_6] Extra roll granted. PlayerId:{} Buffer:{}",
@@ -448,15 +460,14 @@ public class EngineServiceImpl implements EngineService {
         }
 
         // ── Wrap game state in "board" for frontend, persist to Supabase
-//        Map<String, Object> diceBoardWrapped = new HashMap<>();
-//        diceBoardWrapped.put("board", objectMapper.convertValue(gameState, Map.class));
-//        RealtimeGameStateDTO updatedRealtimeState = RealtimeGameStateDTO.builder()
-        // ── Compute legal moves for the current pendingDice, so frontend knows exactly what's tappable
-        List<LegalMoveDTO> legalMoves = computeLegalMoves(currentPlayer, currentPlayer.getPendingDice());
+        List<LegalMoveDTO> legalMoves =
+                computeLegalMoves(
+                        gameState,
+                        currentPlayer,
+                        currentPlayer.getPendingDice()
+                );
+        Map<String, Object> diceStateMap = objectMapper.convertValue(gameState, Map.class);
 
-// ── Wrap game state in "board" for frontend, persist to Supabase
-       Map<String, Object> diceStateMap = objectMapper.convertValue(gameState, Map.class);
-     //response.setGameState(diceStateMap);   // reuse same map — Postman & Supabase now match, includes legalMoves
         diceStateMap.put("legalMoves", legalMoves);
 
         Map<String, Object> diceBoardWrapped = new HashMap<>();
@@ -467,15 +478,13 @@ public class EngineServiceImpl implements EngineService {
                 .gameState(diceBoardWrapped)
                 .players(gameState.getPlayers())
                 .currentTurnUserId(gameState.getCurrentTurnPlayerId())
-                .gameStatus(realtimeState.getGameStatus()) // dice rolls never change win/draw status
+                .gameStatus(realtimeState.getGameStatus())
                 .winnerUserId(realtimeState.getWinnerUserId())
-                .version(realtimeState.getVersion() + 1)
                 .build();
         supabaseRealtimeService.upsertGameState(updatedRealtimeState);
         log.info(
-                "[DICE_STATE_PERSISTED] Room:{} Version:{}",
-                request.getRoomId(),
-                updatedRealtimeState.getVersion()
+                "[DICE_STATE_PERSISTED] Room:{}",
+                request.getRoomId()
         );
         // ── Build Response
         DiceRollResponseDTO response = new DiceRollResponseDTO();
@@ -483,8 +492,7 @@ public class EngineServiceImpl implements EngineService {
         response.setPlayerId(request.getPlayerId());
         response.setDice(diceNumber);
         response.setPendingDice(currentPlayer.getPendingDice());
-       // response.setGameState(objectMapper.convertValue(gameState, Map.class));
-        response.setGameState(diceStateMap);   // reuse the map that already has legalMoves
+        response.setGameState(diceStateMap);
         response.setCurrentTurnPlayerId(gameState.getCurrentTurnPlayerId());
         response.setPlayerTurnStage(gameState.getPlayerTurnStage());
         response.setTripleSixForfeited(tripleSixForfeited);
@@ -499,73 +507,128 @@ public class EngineServiceImpl implements EngineService {
         return response;
     }
 
+    private List<LegalMoveDTO> computeLegalMoves(
+            GameStateDTO gameState,
+            PlayerDTO player,
+            List<Integer> pendingDice
+    ) {
 
-    private boolean hasAnyLegalMove(PlayerDTO player, int diceNumber) {
-        for (TokenDTO token : player.getTokens()) {
-
-            if (token.getState() == TokenStateEnum.BASE && diceNumber == 6) {
-                return true;
-            }
-
-            if (token.getState() == TokenStateEnum.TRACK) {
-                int trackStart = BoardConstants.TRACK_START.get(token.getColor());
-                int effectiveDistance = (token.getPosition() - trackStart + BoardConstants.BOARD_SIZE)
-                        % BoardConstants.BOARD_SIZE;
-                int newEffectiveDistance = effectiveDistance + diceNumber;
-
-                if (newEffectiveDistance >= BoardConstants.HOME_PATH_ENTRY_DISTANCE) {
-                    int homePathPos = newEffectiveDistance - BoardConstants.HOME_PATH_ENTRY_DISTANCE;
-                    if (homePathPos <= BoardConstants.HOME_PATH_SIZE - 1) {
-                        return true;
-                    }
-                } else {
-                    return true;
-                }
-            }
-
-            if (token.getState() == TokenStateEnum.HOME_PATH) {
-                int newPos = token.getPosition() + diceNumber;
-                if (newPos <= BoardConstants.HOME_PATH_SIZE - 1) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-    private List<LegalMoveDTO> computeLegalMoves(PlayerDTO player, List<Integer> pendingDice) {
         List<LegalMoveDTO> legal = new ArrayList<>();
-        if (pendingDice == null) return legal;
+
+        if (pendingDice == null) {
+            return legal;
+        }
+
+        //List<Integer> path = boardService.getPath(player.getColorIndex());
+        Integer pathOrder =
+                pathOrderService.getPathOrder(
+                        gameState,
+                        player.getPlayerId()
+                );
+
+        List<Integer> path = boardService.getPath(pathOrder);
+
+        if (path == null || path.isEmpty()) {
+            log.error(
+                    "[COMPUTE_LEGAL_MOVES] Board path not found. Player:{} ColorIndex:{}",
+                    player.getPlayerId(),
+                    player.getColorIndex()
+            );
+            return legal;
+        }
+
         for (Integer dice : pendingDice) {
+
             for (TokenDTO token : player.getTokens()) {
-                if (isTokenMovable(token, dice)) {
-                    legal.add(LegalMoveDTO.builder()
-                            .tokenId(token.getTokenId())
-                            .dice(dice)
-                            .build());
+
+                if (isTokenMovable(token, dice, path)) {
+
+                    legal.add(
+                            LegalMoveDTO.builder()
+                                    .tokenId(token.getTokenId())
+                                    .dice(dice)
+                                    .build()
+                    );
                 }
             }
         }
+
         return legal;
     }
 
-    private boolean isTokenMovable(TokenDTO token, int diceNumber) {
+    private boolean hasAnyLegalMove(  GameStateDTO gameState,PlayerDTO player, int diceNumber) {
+
+        //List<Integer> path = boardService.getPath(player.getColorIndex());
+        Integer pathOrder =
+                pathOrderService.getPathOrder(
+                        gameState,
+                        player.getPlayerId()
+                );
+
+        List<Integer> path =
+                boardService.getPath(pathOrder);
+
+        if (path == null || path.isEmpty()) {
+            log.error(
+                    "[HAS_ANY_LEGAL_MOVE] Board path not found. Player:{} ColorIndex:{}",
+                    player.getPlayerId(),
+                    player.getColorIndex()
+            );
+            return false;
+        }
+
+
+        for (TokenDTO token : player.getTokens()) {
+
+            if (isTokenMovable(token, diceNumber, path)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean isTokenMovable(
+            TokenDTO token,
+            int diceNumber,
+            List<Integer> path
+    ) {
+
+        // Finished token can't move
+        if (token.getState() == TokenStateEnum.FINISHED) {
+            return false;
+        }
+
+        // Token in base
         if (token.getState() == TokenStateEnum.BASE) {
             return diceNumber == 6;
         }
+
+        // Token already on the board
         if (token.getState() == TokenStateEnum.TRACK) {
-            int trackStart = BoardConstants.TRACK_START.get(token.getColor());
-            int effectiveDistance = (token.getPosition() - trackStart + BoardConstants.BOARD_SIZE)
-                    % BoardConstants.BOARD_SIZE;
-            int newEffectiveDistance = effectiveDistance + diceNumber;
-            if (newEffectiveDistance >= BoardConstants.HOME_PATH_ENTRY_DISTANCE) {
-                int homePathPos = newEffectiveDistance - BoardConstants.HOME_PATH_ENTRY_DISTANCE;
-                return homePathPos <= BoardConstants.HOME_PATH_SIZE - 1;
+
+            Integer currentIndex = token.getPathIndex();
+
+            if (currentIndex == null
+                    || currentIndex < 0
+                    || currentIndex >= path.size()) {
+
+                log.warn(
+                        "[INVALID_TOKEN_PATH_INDEX] Token:{} PathIndex:{} PathSize:{}",
+                        token.getTokenId(),
+                        currentIndex,
+                        path.size()
+                );
+
+                return false;
             }
-            return true;
+
+            int newIndex = currentIndex + diceNumber;
+
+           // Exact dice required to reach goal
+            return newIndex < path.size();
         }
-        if (token.getState() == TokenStateEnum.HOME_PATH) {
-            return token.getPosition() + diceNumber <= BoardConstants.HOME_PATH_SIZE - 1;
-        }
+
         return false;
     }
 

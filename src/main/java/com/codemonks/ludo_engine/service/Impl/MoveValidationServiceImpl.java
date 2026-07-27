@@ -1,206 +1,179 @@
-package com.codemonks.ludo_engine.service.Impl;
+    package com.codemonks.ludo_engine.service.Impl;
 
-import com.codemonks.ludo_engine.constant.BoardConstants;
-import com.codemonks.ludo_engine.dto.common.GameStateDTO;
-import com.codemonks.ludo_engine.dto.common.PlayerDTO;
-import com.codemonks.ludo_engine.dto.common.TokenDTO;
-import com.codemonks.ludo_engine.enums.TokenStateEnum;
-import com.codemonks.ludo_engine.exception.InvalidMoveException;
-import com.codemonks.ludo_engine.service.MoveValidationService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+    import com.codemonks.ludo_engine.dto.common.GameStateDTO;
+    import com.codemonks.ludo_engine.dto.common.PlayerDTO;
+    import com.codemonks.ludo_engine.dto.common.TokenDTO;
+    import com.codemonks.ludo_engine.enums.TokenStateEnum;
+    import com.codemonks.ludo_engine.exception.InvalidMoveException;
+    import com.codemonks.ludo_engine.service.BoardService;
+    import com.codemonks.ludo_engine.service.MoveValidationService;
+    import com.codemonks.ludo_engine.service.PathOrderService;
+    import lombok.RequiredArgsConstructor;
+    import lombok.extern.slf4j.Slf4j;
+    import org.springframework.stereotype.Service;
 
-import static com.codemonks.ludo_engine.constant.ErrorCodesEnum.INVALID_MOVE;
+    import java.util.List;
 
-@Service
-@Slf4j
-public class MoveValidationServiceImpl implements MoveValidationService {
+    import static com.codemonks.ludo_engine.constant.ErrorCodesEnum.INVALID_MOVE;
 
-    @Override
-    public void validateMove(
-            GameStateDTO gameState,
-            Long userId,
-            Long tokenId,
-            Integer consumedDice
-    ) {
+    @Service
+    @Slf4j
+    @RequiredArgsConstructor
+    public class MoveValidationServiceImpl implements MoveValidationService {
 
-        log.info(
-                "[MOVE_VALIDATION_STARTED] Player:{} Token:{} Dice:{}",
-                userId,
-                tokenId,
-                consumedDice
-        );
+        private final BoardService boardService;
+        private final PathOrderService pathOrderService;
 
-        validateTokenExists(gameState, userId, tokenId);
-        validateConsumedDice(gameState, userId, consumedDice);
-        validateBaseExitRule(gameState, userId, tokenId, consumedDice);
-        validateHomePathOvershoot(gameState, userId, tokenId, consumedDice);
+        @Override
+        public void validateMove(
+                GameStateDTO gameState,
+                Long userId,
+                Long tokenId,
+                Integer consumedDice
+        ) {
 
-        log.info(
-                "[MOVE_VALIDATION_COMPLETED] Player:{} Token:{} Dice:{}",
-                userId,
-                tokenId,
-                consumedDice
-        );
-    }
+            log.info(
+                    "[MOVE_VALIDATION_STARTED] Player:{} Token:{} Dice:{}",
+                    userId,
+                    tokenId,
+                    consumedDice
+            );
 
-    private void validateTokenExists(
-            GameStateDTO gameState,
-            Long userId,
-            Long tokenId
-    ) {
+            validateTokenExists(gameState, userId, tokenId);
+            validateConsumedDice(gameState, userId, consumedDice);
+            validateBaseExitRule(gameState, userId, tokenId, consumedDice);
+            validatePathLimit(gameState, userId, tokenId, consumedDice);
 
-        for (PlayerDTO player : gameState.getPlayers()) {
-
-            if (!player.getPlayerId().equals(userId)) {
-                continue;
-            }
-
-            for (TokenDTO token : player.getTokens()) {
-
-                if (token.getTokenId().equals(tokenId)) {
-                    log.info("[TOKEN_VALIDATED] Player:{} Token:{}",
-                            userId,
-                            tokenId);
-                    return;
-                }
-            }
+            log.info(
+                    "[MOVE_VALIDATION_COMPLETED] Player:{} Token:{} Dice:{}",
+                    userId,
+                    tokenId,
+                    consumedDice
+            );
         }
 
-        log.error(
-                "[TOKEN_NOT_FOUND] Player:{} Token:{}",
-                userId,
-                tokenId
-        );
+        private void validateTokenExists(
+                GameStateDTO gameState,
+                Long userId,
+                Long tokenId
+        ) {
 
-        throw new InvalidMoveException(INVALID_MOVE);
-    }
+            for (PlayerDTO player : gameState.getPlayers()) {
 
-    private void validateConsumedDice(
-            GameStateDTO gameState,
-            Long userId,
-            Integer consumedDice
-    ) {
+                if (!player.getPlayerId().equals(userId)) {
+                    continue;
+                }
 
-        if (consumedDice == null || consumedDice < 1 || consumedDice > 6) {
+                for (TokenDTO token : player.getTokens()) {
+
+                    if (token.getTokenId().equals(tokenId)) {
+                        log.info("[TOKEN_VALIDATED] Player:{} Token:{}",
+                                userId,
+                                tokenId);
+                        return;
+                    }
+                }
+            }
 
             log.error(
-                    "[INVALID_DICE] Player:{} Dice:{}",
+                    "[TOKEN_NOT_FOUND] Player:{} Token:{}",
                     userId,
-                    consumedDice
+                    tokenId
             );
 
             throw new InvalidMoveException(INVALID_MOVE);
         }
 
-        PlayerDTO currentPlayer = null;
+        private void validateConsumedDice(
+                GameStateDTO gameState,
+                Long userId,
+                Integer consumedDice
+        ) {
 
-        for (PlayerDTO player : gameState.getPlayers()) {
+            if (consumedDice == null || consumedDice < 1 || consumedDice > 6) {
 
-            if (player.getPlayerId().equals(userId)) {
-                currentPlayer = player;
-                break;
+                log.error(
+                        "[INVALID_DICE] Player:{} Dice:{}",
+                        userId,
+                        consumedDice
+                );
+
+                throw new InvalidMoveException(INVALID_MOVE);
             }
-        }
 
-        if (currentPlayer == null) {
+            PlayerDTO currentPlayer = null;
 
-            log.error("[PLAYER_NOT_FOUND] Player:{}", userId);
+            for (PlayerDTO player : gameState.getPlayers()) {
 
-            throw new InvalidMoveException(INVALID_MOVE);
-        }
+                if (player.getPlayerId().equals(userId)) {
+                    currentPlayer = player;
+                    break;
+                }
+            }
 
-        if (currentPlayer.getPendingDice() == null
-                || !currentPlayer.getPendingDice().contains(consumedDice)) {
+            if (currentPlayer == null) {
 
-            log.error(
-                    "[DICE_NOT_AVAILABLE] Player:{} Dice:{} Buffer:{}",
+                log.error("[PLAYER_NOT_FOUND] Player:{}", userId);
+
+                throw new InvalidMoveException(INVALID_MOVE);
+            }
+
+            if (currentPlayer.getPendingDice() == null
+                    || !currentPlayer.getPendingDice().contains(consumedDice)) {
+
+                log.error(
+                        "[DICE_NOT_AVAILABLE] Player:{} Dice:{} Buffer:{}",
+                        userId,
+                        consumedDice,
+                        currentPlayer.getPendingDice()
+                );
+
+                throw new InvalidMoveException(
+                        INVALID_MOVE
+                );
+            }
+            log.info(
+                    "[DICE_VALIDATED] Player:{} Dice:{} Buffer:{}",
                     userId,
                     consumedDice,
                     currentPlayer.getPendingDice()
             );
-
-            throw new InvalidMoveException(
-                    INVALID_MOVE
-            );
         }
-    }
 
-    private void validateBaseExitRule(
-            GameStateDTO gameState,
-            Long userId,
-            Long tokenId,
-            Integer consumedDice
-    ) {
+        private void validateBaseExitRule(
+                GameStateDTO gameState,
+                Long userId,
+                Long tokenId,
+                Integer consumedDice
+        ) {
 
-        for (PlayerDTO player : gameState.getPlayers()) {
+            for (PlayerDTO player : gameState.getPlayers()) {
 
-            if (!player.getPlayerId().equals(userId)) {
-                continue;
-            }
-
-            for (TokenDTO token : player.getTokens()) {
-
-                if (!token.getTokenId().equals(tokenId)) {
+                if (!player.getPlayerId().equals(userId)) {
                     continue;
                 }
 
-                if (token.getState() == TokenStateEnum.BASE
-                        && consumedDice != 6) {
+                for (TokenDTO token : player.getTokens()) {
 
-                    log.error(
-                            "[BASE_EXIT_FAILED] Player:{} Token:{} Dice:{}",
+                    if (!token.getTokenId().equals(tokenId)) {
+                        continue;
+                    }
+                    log.info(
+                            "[BASE_EXIT_RULE] Player:{} Token:{} State:{} Dice:{}",
                             userId,
                             tokenId,
+                            token.getState(),
                             consumedDice
                     );
 
-                    throw new InvalidMoveException(
-                            INVALID_MOVE
-                    );
-                }
-            }
-        }
-
-        log.info(
-                "[BASE_EXIT_VALIDATED] Player:{} Token:{}",
-                userId,
-                tokenId
-        );
-    }
-
-    private void validateHomePathOvershoot(
-            GameStateDTO gameState,
-            Long userId,
-            Long tokenId,
-            Integer consumedDice
-    ) {
-
-        for (PlayerDTO player : gameState.getPlayers()) {
-
-            if (!player.getPlayerId().equals(userId)) {
-                continue;
-            }
-
-            for (TokenDTO token : player.getTokens()) {
-
-                if (!token.getTokenId().equals(tokenId)) {
-                    continue;
-                }
-
-                if (token.getState() == TokenStateEnum.HOME_PATH) {
-
-                    int newPos = token.getPosition() + consumedDice;
-
-                    if (newPos > BoardConstants.HOME_PATH_SIZE - 1) {
+                    if (token.getState() == TokenStateEnum.BASE
+                            && consumedDice != 6) {
 
                         log.error(
-                                "[HOME_PATH_OVERSHOOT] Player:{} Token:{} CurrentPos:{} Dice:{} NewPos:{}",
+                                "[BASE_EXIT_FAILED] Player:{} Token:{} Dice:{}",
                                 userId,
                                 tokenId,
-                                token.getPosition(),
-                                consumedDice,
-                                newPos
+                                consumedDice
                         );
 
                         throw new InvalidMoveException(
@@ -209,12 +182,106 @@ public class MoveValidationServiceImpl implements MoveValidationService {
                     }
                 }
             }
-        }
 
-        log.info(
-                "[HOME_PATH_VALIDATED] Player:{} Token:{}",
-                userId,
-                tokenId
-        );
+            log.info(
+                    "[BASE_EXIT_VALIDATED] Player:{} Token:{}",
+                    userId,
+                    tokenId
+            );
+        }
+        private void validatePathLimit(
+                GameStateDTO gameState,
+                Long userId,
+                Long tokenId,
+                Integer consumedDice
+        ) {
+
+            for (PlayerDTO player : gameState.getPlayers()) {
+
+                if (!player.getPlayerId().equals(userId)) {
+                    continue;
+                }
+
+                Integer pathOrder =
+                        pathOrderService.getPathOrder(
+                                gameState,
+                                userId
+                        );
+
+                List<Integer> path =
+                        boardService.getPath(pathOrder);
+                if (path == null || path.isEmpty()) {
+
+                    log.error(
+                            "[BOARD_PATH_NOT_FOUND] PathOrder:{}",
+                            pathOrder
+                    );
+                    throw new InvalidMoveException(INVALID_MOVE);
+                }
+
+                for (TokenDTO token : player.getTokens()) {
+
+                    if (!token.getTokenId().equals(tokenId)) {
+                        continue;
+                    }
+
+                    if (token.getState() == TokenStateEnum.BASE
+                            || token.getState() == TokenStateEnum.FINISHED) {
+
+                        log.info(
+                                "[PATH_LIMIT_SKIPPED] Player:{} Token:{} State:{}",
+                                userId,
+                                tokenId,
+                                token.getState()
+                        );
+
+                        return;
+                    }
+                    if (token.getPathIndex() == null
+                            || token.getPathIndex() < 0
+                            || token.getPathIndex() >= path.size()) {
+
+                        log.error(
+                                "[INVALID_PATH_INDEX] Player:{} Token:{} PathIndex:{}",
+                                userId,
+                                tokenId,
+                                token.getPathIndex()
+                        );
+
+                        throw new InvalidMoveException(INVALID_MOVE);
+                    }
+
+                    int newPathIndex = token.getPathIndex() + consumedDice;
+
+                    log.info(
+                            "[PATH_LIMIT_CHECK] Player:{} Token:{} Current:{} Dice:{} Target:{} Max:{}",
+                            userId,
+                            tokenId,
+                            token.getPathIndex(),
+                            consumedDice,
+                            newPathIndex,
+                            path.size() - 1
+                    );
+
+                    if (newPathIndex > path.size() - 1) {
+
+                        log.error(
+                                "[PATH_LIMIT_FAILED] Player:{} Token:{}",
+                                userId,
+                                tokenId
+                        );
+
+                        throw new InvalidMoveException(INVALID_MOVE);
+                    }
+
+                    log.info(
+                            "[PATH_LIMIT_VALIDATED] Player:{} Token:{}",
+                            userId,
+                            tokenId
+                    );
+
+                    return;
+                }
+            }
+        }
     }
-}

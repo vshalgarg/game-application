@@ -21,8 +21,9 @@ public class GameStateDTO {
     private PlayerTurnStageEnum playerTurnStage;
     // Winner information
     private Long winnerPlayerId;
+    private List<EventDTO> events;
 
     private Integer lastDice;
-
     private Long lastDicePlayerId;
+    private List<LegalMoveDTO> legalMoves;
 }
