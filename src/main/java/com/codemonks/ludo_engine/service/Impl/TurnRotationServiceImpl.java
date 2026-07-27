@@ -1,14 +1,15 @@
 package com.codemonks.ludo_engine.service.Impl;
 
-import com.codemonks.ludo_engine.constant.BoardConstants;
 import com.codemonks.ludo_engine.dto.common.GameStateDTO;
 import com.codemonks.ludo_engine.dto.common.PlayerDTO;
-import com.codemonks.ludo_engine.enums.PlayerColorEnum;
+import com.codemonks.ludo_engine.exception.InvalidMoveException;
 import com.codemonks.ludo_engine.service.TurnRotationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
+import static com.codemonks.ludo_engine.constant.ErrorCodesEnum.INVALID_MOVE;
 
 @Service
 @Slf4j
@@ -18,9 +19,11 @@ public class TurnRotationServiceImpl implements TurnRotationService {
     public GameStateDTO updateTurn(GameStateDTO gameState, Long currentPlayerId, boolean extraTurn)
     {
 
-       // log.info("Turn  started for playerId:{}", currentPlayerId);
-        log.debug("Turn service execution started for playerId:{}", currentPlayerId);
-
+        log.info(
+                "[TURN_ROTATION_STARTED] Player:{} ExtraTurn:{}",
+                currentPlayerId,
+                extraTurn
+        );
         //Find current player
         PlayerDTO currentPlayer = null;
         for (PlayerDTO player : gameState.getPlayers()) {
@@ -30,8 +33,14 @@ public class TurnRotationServiceImpl implements TurnRotationService {
             }
         }
 
-        if (currentPlayer == null) {log.error("Current player not found:{}", currentPlayerId);
-            return gameState;
+        if (currentPlayer == null) {
+
+            log.error(
+                    "[CURRENT_PLAYER_NOT_FOUND] Player:{}",
+                    currentPlayerId
+            );
+
+            throw new InvalidMoveException(INVALID_MOVE);
         }
 
          //If player still has pending dice,keep turn with same player.
@@ -51,35 +60,39 @@ public class TurnRotationServiceImpl implements TurnRotationService {
 
         List<PlayerDTO> players = gameState.getPlayers();
 
-        PlayerColorEnum currentColor = currentPlayer.getColor();
-        int currentColorIndex = BoardConstants.TURN_ORDER.indexOf(currentColor);
+        int currentPlayerIndex = -1;
 
-        if (currentColorIndex == -1) {
-            log.error("Current player's color not found in TURN_ORDER: {}", currentColor);
-            return gameState;
-        }
+        for (int i = 0; i < players.size(); i++) {
 
-        Long nextPlayerId = null;
-        int size = BoardConstants.TURN_ORDER.size();
-
-        for (int step = 1; step <= size; step++) {
-            PlayerColorEnum candidateColor = BoardConstants.TURN_ORDER.get((currentColorIndex + step) % size);
-
-            for (PlayerDTO player : players) {
-                if (player.getColor() == candidateColor) {
-                    nextPlayerId = player.getPlayerId();
-                    break;
-                }
-            }
-            if (nextPlayerId != null) {
+            if (players.get(i).getPlayerId().equals(currentPlayerId)) {
+                currentPlayerIndex = i;
                 break;
             }
         }
-        if (nextPlayerId == null) {
-            log.error("No next player found in clockwise rotation. CurrentColor:{}", currentColor);
-            return gameState;
+
+        if (currentPlayerIndex == -1) {
+
+            log.error(
+                    "[CURRENT_PLAYER_NOT_FOUND] Player:{}",
+                    currentPlayerId
+            );
+
+            throw new InvalidMoveException(INVALID_MOVE);
         }
+
+        int nextPlayerIndex =
+                (currentPlayerIndex + 1) % players.size();
+
+        Long nextPlayerId =
+                players.get(nextPlayerIndex).getPlayerId();
+
         gameState.setCurrentTurnPlayerId(nextPlayerId);
-        log.info("[TURN_ROTATED] From:{}({}) To:{}", currentPlayerId, currentColor, nextPlayerId);
+
+        log.info(
+                "[TURN_ROTATED] FromPlayer:{} ToPlayer:{}",
+                currentPlayerId,
+                nextPlayerId
+        );
+
         return gameState;
 }}

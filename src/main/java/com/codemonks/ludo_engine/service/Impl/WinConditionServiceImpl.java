@@ -1,63 +1,86 @@
 package com.codemonks.ludo_engine.service.Impl;
 
-
 import com.codemonks.ludo_engine.dto.common.GameStateDTO;
 import com.codemonks.ludo_engine.dto.common.PlayerDTO;
 import com.codemonks.ludo_engine.dto.common.TokenDTO;
 import com.codemonks.ludo_engine.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.ludo_engine.enums.GameStatusEnum;
 import com.codemonks.ludo_engine.enums.TokenStateEnum;
+import com.codemonks.ludo_engine.exception.InvalidMoveException;
+import com.codemonks.ludo_engine.service.BoardService;
 import com.codemonks.ludo_engine.service.WinConditionService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.stereotype.Service;
+
+import static com.codemonks.ludo_engine.constant.ErrorCodesEnum.INVALID_MOVE;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class WinConditionServiceImpl implements WinConditionService {
+
+    private final BoardService boardService;
 
     @Override
     public EngineGameStateResponseDTO checkWinner(GameStateDTO gameState, Long playerId) {
 
-        log.info("Winner checking started for Player:{}", playerId);
+        log.info("[WINNER_CHECK_STARTED] Player:{}", playerId);
 
         EngineGameStateResponseDTO response = new EngineGameStateResponseDTO();
 
-        for (PlayerDTO player : gameState.getPlayers()) {
+        // Default: game continues unless we prove otherwise below
+        response.setStatus(gameState.getGameStatus());
 
-            if (!player.getPlayerId().equals(playerId)) {
-                continue; // ✅ FIX: pehle sirf `break` tha jo pehli
-            }             //         iteration mein hi loop tod deta tha
-            //         chahe player match hua ya nahi.
-            //         Ab `continue` se sirf non-matching
-            //         players skip hote ha
+        PlayerDTO currentPlayer = gameState.getPlayers().stream()
+                .filter(player -> player.getPlayerId().equals(playerId))
+                .findFirst()
+                .orElseThrow(() -> {
+                    log.error("[PLAYER_NOT_FOUND] Player:{} not found in gameState", playerId);
+                    return new InvalidMoveException(INVALID_MOVE);
+                });
 
-            int finishedTokens = 0;
+        int tokensRequiredToWin = boardService
+                .getBoard()
+                .getMetadata()
+                .getTokensPerPlayer();
 
-            for (TokenDTO token : player.getTokens()) {
-                if (token.getState() == TokenStateEnum.FINISHED) {
-                    finishedTokens++;
-                }
-            }
+        long finishedTokenCount = currentPlayer.getTokens().stream()
+                .filter(token -> token.getState() == TokenStateEnum.FINISHED)
+                .count();
 
-            log.info("Player:{} FinishedTokens:{}", playerId, finishedTokens);
+        log.info(
+                "[FINISHED_TOKENS_CHECK] Player:{} Finished:{}/{}",
+                playerId,
+                finishedTokenCount,
+                tokensRequiredToWin
+        );
 
-            // Saare 4 tokens FINISHED → player wins
-            if (finishedTokens == 4) {
-                response.setWinnerUserId(playerId);
-                response.setStatus(GameStatusEnum.WIN);
+        if (finishedTokenCount >= tokensRequiredToWin) {
 
-                // GameState mein bhi winner set karo
-                gameState.setWinnerPlayerId(playerId);
-                gameState.setGameStatus(GameStatusEnum.FINISHED);
+            response.setWinnerUserId(playerId);
+            response.setStatus(GameStatusEnum.FINISHED);
 
-                log.info("[WINNER] Player:{} has won the game!", playerId);
-            }
+            gameState.setWinnerPlayerId(playerId);
+            gameState.setGameStatus(GameStatusEnum.FINISHED);
 
-            break; // ✅ player mil gaya — loop se bahar
+            log.info("[WINNER_DECLARED] Player:{} has won the game!", playerId);
+        }
+        else {
+            log.info(
+                    "[WINNER_CHECK_PENDING] Player:{} Finished:{}/{}",
+                    playerId,
+                    finishedTokenCount,
+                    tokensRequiredToWin
+            );
         }
 
-        log.info("Winner checking completed");
+        log.info(
+                "[WINNER_CHECK_COMPLETED] Player:{} Winner:{}",
+                playerId,
+                response.getWinnerUserId() != null
+        );
+
         return response;
     }
 }

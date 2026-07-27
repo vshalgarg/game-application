@@ -4,7 +4,7 @@ public enum TokenStateEnum {
 
     BASE,
     TRACK,
-    HOME_PATH,
+ //   HOME_PATH,
     FINISHED
 
     // I think there must be safe position or start position also if track does not include it

@@ -8,15 +8,14 @@ import com.codemonks.ludo_engine.dto.request.EngineMoveRequestDTO;
 import com.codemonks.ludo_engine.dto.request.EngineStartGameRequestDTO;
 import com.codemonks.ludo_engine.dto.response.DiceRollResponseDTO;
 import com.codemonks.ludo_engine.dto.response.EngineGameStateResponseDTO;
+import com.codemonks.ludo_engine.model.BoardLayout;
+import com.codemonks.ludo_engine.service.BoardService;
 import com.codemonks.ludo_engine.service.Impl.EngineServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static com.codemonks.ludo_engine.constant.ApiConstants.*;
 
@@ -27,6 +26,7 @@ import static com.codemonks.ludo_engine.constant.ApiConstants.*;
 public class LudoEngineController {
 
     private final EngineServiceImpl engineService;
+    private final BoardService boardService;
 
     @PostMapping(START_GAME)
     public ResponseEntity<EngineGameStateResponseDTO>startGame(@Valid @RequestBody EngineStartGameRequestDTO request){
@@ -36,6 +36,21 @@ public class LudoEngineController {
         return ResponseEntity.ok(engineService.startGame(request));
 
     }
+
+    @GetMapping(BOARD_LAYOUT)
+    public ResponseEntity<BoardLayout> getBoardLayout() {
+
+        BoardLayout boardLayout = boardService.getBoard();
+
+        log.info(
+                "[BOARD_LAYOUT_REQUEST] Grid:{} Paths:{}",
+                boardLayout.getGrid().size(),
+                boardLayout.getPaths().size()
+        );
+
+        return ResponseEntity.ok(boardLayout);
+    }
+
     @PostMapping(PROCESS_MOVE)
     public ResponseEntity<EngineGameStateResponseDTO> processmove(
             @Valid @RequestBody EngineMoveRequestDTO request

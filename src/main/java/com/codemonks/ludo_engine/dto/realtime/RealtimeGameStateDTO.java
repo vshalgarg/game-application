@@ -37,8 +37,8 @@ public class RealtimeGameStateDTO {
     @JsonProperty("winner_user_id")
     private Long winnerUserId;
 
-    @JsonProperty("version")
-    private Long version;
+//    @JsonProperty("version")
+//    private Long version;
 
     @JsonProperty("bot_difficulty")
     private String botDifficulty;

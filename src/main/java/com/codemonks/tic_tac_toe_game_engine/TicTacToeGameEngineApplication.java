@@ -2,7 +2,6 @@ package com.codemonks.tic_tac_toe_game_engine;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication(scanBasePackages = {
 		"com.codemonks.tic_tac_toe_game_engine",

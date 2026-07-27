@@ -1,20 +1,27 @@
 package com.codemonks.ludo_engine.service.Impl;
-
-import com.codemonks.ludo_engine.constant.BoardConstants;
 import com.codemonks.ludo_engine.dto.common.GameStateDTO;
 import com.codemonks.ludo_engine.dto.common.PlayerDTO;
 import com.codemonks.ludo_engine.dto.common.TokenDTO;
 import com.codemonks.ludo_engine.enums.TokenStateEnum;
 import com.codemonks.ludo_engine.exception.InvalidMoveException;
+import com.codemonks.ludo_engine.service.BoardService;
+import com.codemonks.ludo_engine.service.PathOrderService;
 import com.codemonks.ludo_engine.service.TokenMovementService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 import static com.codemonks.ludo_engine.constant.ErrorCodesEnum.INVALID_MOVE;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class TokenMovementServiceImpl implements TokenMovementService {
+
+    private final BoardService boardService;
+    private final PathOrderService pathOrderService;
 
     @Override
     public GameStateDTO moveToken(
@@ -25,7 +32,7 @@ public class TokenMovementServiceImpl implements TokenMovementService {
     ) {
 
         log.info(
-                "[TOKEN_MOVEMENT_STARTED] Player:{} Token:{} DiceIndex:{}",
+                "[TOKEN_MOVEMENT_STARTED] Player:{} Token:{} Dice:{}",
                 playerId,
                 tokenId,
                 consumedDice
@@ -58,120 +65,88 @@ public class TokenMovementServiceImpl implements TokenMovementService {
                 }
 
                 // BASE -> TRACK
+                // BASE -> TRACK
                 if (token.getState() == TokenStateEnum.BASE) {
 
-                    int trackStart =
-                            BoardConstants.TRACK_START.get(token.getColor());
-
-                    token.setState(TokenStateEnum.TRACK);
-                    token.setPosition(trackStart);
-
-                    consumePendingDiceByIndex(
-                            player,
-                            consumedDice
-                    );
-
-                    log.info(
-                            "[BASE_TO_TRACK] Player:{} Token:{} Color:{} Position:{}",
-                            playerId,
-                            tokenId,
-                            token.getColor(),
-                            trackStart
-                    );
-
-                    return gameState;
-                }
-
-                // HOME_PATH movement
-                if (token.getState() == TokenStateEnum.HOME_PATH) {
-
-                    int currentPos = token.getPosition();
-                    int newPos = currentPos + consumedDice;
-
-                    if (newPos > BoardConstants.HOME_PATH_SIZE - 1) {
-
-                        throw new InvalidMoveException(
-                                INVALID_MOVE
-                        );
+                    if (consumedDice != 6) {
+                        throw new InvalidMoveException(INVALID_MOVE);
                     }
 
-                    token.setPosition(newPos);
+                    token.setState(TokenStateEnum.TRACK);
+                    token.setPathIndex(0);
 
-                    consumePendingDiceByIndex(
-                            player,
-                            consumedDice
-                    );
+                    consumePendingDiceByIndex(player, consumedDice);
 
                     log.info(
-                            "[HOME_PATH_MOVED] Player:{} Token:{} From:{} To:{}",
+                            "[BASE_TO_TRACK] Player:{} Token:{} PathIndex:{}",
                             playerId,
                             tokenId,
-                            currentPos,
-                            newPos
+                            token.getPathIndex()
                     );
 
                     return gameState;
                 }
-
                 // TRACK movement
                 if (token.getState() == TokenStateEnum.TRACK) {
 
-                    int currentPosition = token.getPosition();
+                    if (token.getPathIndex() == null) {
+                        throw new InvalidMoveException(INVALID_MOVE);
+                    }
 
-                    int trackStart =
-                            BoardConstants.TRACK_START.get(token.getColor());
+                    Integer pathOrder =
+                            pathOrderService.getPathOrder(
+                                    gameState,
+                                    player.getPlayerId()
+                            );
 
-                    int effectiveDistance =
-                            (currentPosition
-                                    - trackStart
-                                    + BoardConstants.BOARD_SIZE)
-                                    % BoardConstants.BOARD_SIZE;
+                    List<Integer> path =
+                            boardService.getPath(pathOrder);
+                    log.info(
+                            "[TRACK_MOVE_STARTED] Player:{} Token:{} CurrentPathIndex:{} Dice:{}",
+                            playerId,
+                            tokenId,
+                            token.getPathIndex(),
+                            consumedDice
+                    );
 
-                    int newEffectiveDistance =
-                            effectiveDistance + consumedDice;
+                    if (path == null || path.isEmpty()) {
+                        throw new InvalidMoveException(INVALID_MOVE);
+                    }
+                    int currentPathIndex = token.getPathIndex();
+                    int newPathIndex = currentPathIndex + consumedDice;
 
-                    if (newEffectiveDistance
-                            >= BoardConstants.HOME_PATH_ENTRY_DISTANCE) {
+                    // Exact dice required to finish
+                    if (newPathIndex > path.size() - 1) {
+                        throw new InvalidMoveException(INVALID_MOVE);
+                    }
 
-                        int homePathPosition =
-                                newEffectiveDistance
-                                        - BoardConstants.HOME_PATH_ENTRY_DISTANCE;
-
-                        token.setState(TokenStateEnum.HOME_PATH);
-                        token.setPosition(homePathPosition);
-
-                        consumePendingDiceByIndex(
-                                player,
-                                consumedDice
-                        );
+                    // Token reached goal
+                    if (newPathIndex == path.size() - 1) {
+                        token.setPathIndex(newPathIndex);
+                        token.setState(TokenStateEnum.FINISHED);
+                        consumePendingDiceByIndex(player, consumedDice);
 
                         log.info(
-                                "[TRACK_TO_HOME_PATH] Player:{} Token:{} HomePos:{}",
+                                "[TOKEN_FINISHED] Player:{} Token:{} PathIndex:{}",
                                 playerId,
                                 tokenId,
-                                homePathPosition
+                                newPathIndex
                         );
 
                         return gameState;
                     }
 
-                    int newPosition =
-                            (currentPosition + consumedDice)
-                                    % BoardConstants.BOARD_SIZE;
+                    // Normal movement
+                    token.setPathIndex(newPathIndex);
 
-                    token.setPosition(newPosition);
-
-                    consumePendingDiceByIndex(
-                            player,
-                            consumedDice
-                    );
+                    consumePendingDiceByIndex(player, consumedDice);
 
                     log.info(
-                            "[TRACK_MOVED] Player:{} Token:{} From:{} To:{}",
+                            "[TRACK_MOVED] Player:{} Token:{} FromPathIndex:{} ToPathIndex:{}",
                             playerId,
                             tokenId,
-                            currentPosition,
-                            newPosition
+                            currentPathIndex,
+                            newPathIndex
                     );
 
                     return gameState;
@@ -185,7 +160,12 @@ public class TokenMovementServiceImpl implements TokenMovementService {
                 }
             }
         }
-
+        log.error(
+                "[TOKEN_MOVEMENT_FAILED] Player:{} Token:{} Dice:{}",
+                playerId,
+                tokenId,
+                consumedDice
+        );
         throw new InvalidMoveException(
                 INVALID_MOVE
         );
@@ -207,4 +187,5 @@ public class TokenMovementServiceImpl implements TokenMovementService {
                 player.getPendingDice()
         );
     }
+
 }
