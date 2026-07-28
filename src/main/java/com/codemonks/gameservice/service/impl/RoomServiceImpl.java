@@ -8,6 +8,7 @@ import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeLobbyDTO;
 import com.codemonks.gameservice.engineModule.dto.realtime.enums.RoomRealtimeStatusEnum;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.gameservice.engineModule.factory.GameEngineFactory;
+import com.codemonks.gameservice.engineModule.model.BoardLayout;
 import com.codemonks.gameservice.entity.GameConfigEntity;
 import com.codemonks.gameservice.entity.PlayerEntity;
 import com.codemonks.gameservice.entity.RoomEntity;
@@ -124,6 +125,24 @@ public class RoomServiceImpl implements RoomService {
                 room.getId(), request.getUserId(), status);
 
         return RoomMapper.toRoomResponse(room, player);
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public BoardLayout getBoardLayout(String roomCode) {
+
+        log.info("Fetching board layout for roomCode={}", roomCode);
+
+        RoomEntity room = roomRepository
+                .findByRoomCode(roomCode)
+                .orElseThrow(() -> new ResourceNotFoundException(ROOM_NOT_FOUND));
+
+        log.info("Board layout requested. roomCode={}, gameType={}",
+                roomCode,
+                room.getGameType());
+
+        return gameEngineFactory
+                .getStrategy(room.getGameType())
+                .getBoardLayout();
     }
     @Transactional
     @Override

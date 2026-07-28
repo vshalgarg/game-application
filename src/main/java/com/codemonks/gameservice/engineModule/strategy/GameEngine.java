@@ -4,8 +4,10 @@ import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeLobbyDTO;
 import com.codemonks.gameservice.engineModule.dto.request.DiceRollRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineMoveRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequestDTO;
+import com.codemonks.gameservice.engineModule.dto.response.BoardLayoutResponseDTO;
 import com.codemonks.gameservice.engineModule.dto.response.DiceRollResponseDTO;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
+import com.codemonks.gameservice.engineModule.model.BoardLayout;
 import com.codemonks.gameservice.enums.GameTypeEnum;
 
 public interface GameEngine {
@@ -18,6 +20,10 @@ public interface GameEngine {
    }
     default void publishLobbyState(RealtimeLobbyDTO lobbyDTO) {
         throw new UnsupportedOperationException(supports().name() + " does not support lobby publish");
+    }
+    default BoardLayout getBoardLayout() {
+        throw new UnsupportedOperationException(
+                supports().name() + " does not support board layout");
     }
 
 }

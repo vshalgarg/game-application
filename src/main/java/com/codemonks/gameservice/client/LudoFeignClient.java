@@ -11,6 +11,8 @@ import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateRespon
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import com.codemonks.gameservice.engineModule.model.BoardLayout;
+import org.springframework.web.bind.annotation.GetMapping;
 
 @FeignClient(
         name = "ludo-game-engine",
@@ -29,5 +31,8 @@ public interface LudoFeignClient {
 
     @PostMapping("${services.ludo-engine.endpoints.lobby}")
     void publishLobby(@RequestBody RealtimeLobbyDTO request);
+
+    @GetMapping("${services.ludo-engine.endpoints.board-layout}")
+    BoardLayout getBoardLayout();
 
 }

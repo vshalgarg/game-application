@@ -31,4 +31,5 @@ services:
       move: /make-move
       roll-dice: /roll-dice
       lobby: /lobby
+      board-layout: /board-layout
 

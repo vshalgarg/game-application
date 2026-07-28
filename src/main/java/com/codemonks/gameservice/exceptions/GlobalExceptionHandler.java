@@ -18,10 +18,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception ex) {
 
         log.error("Unhandled exception occurred", ex);
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.failure(
-                        500,
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.failure(500,
                         INTERNAL_SERVER_ERROR.toString()
                 ));
     }
@@ -42,8 +40,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException ex){
 
         ResponseErrorCodes errorCode = ex.getErrorCode();
-        return ResponseEntity
-                .ok()
+        return ResponseEntity.ok()
                 .body(ApiResponse.failure(
                         errorCode.getCode(),
                         errorCode.getMessage()
@@ -56,17 +53,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleExternalServiceException(ExternalServiceException ex
     ) {
 
-        log.error(
-                "External service exception occurred",
-                ex
+        log.warn(
+                "External service returned business error. code={}, message={}",
+                ex.getExternalStatusCode(),
+                ex.getMessage()
         );
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(
-                        ApiResponse.failure(
+        return ResponseEntity.ok(ApiResponse.failure(
                                 ex.getExternalStatusCode(),
-                                ex.getMessage()
-                        )
+                                ex.getMessage())
                 );
     }
 }
