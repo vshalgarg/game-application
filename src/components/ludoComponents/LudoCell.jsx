@@ -1,59 +1,60 @@
-const LudoCell = ({ type }) => {
-  let background = type;
+const LudoCell = ({ type, color, arrowDirection, arrowColor }) => {
+  const renderSymbol = () => {
+    switch (type) {
+      case "SC":
+        return (
+          <span className="text-gray-600 text-xs font-bold">
+            ★
+          </span>
+        );
 
-  if (
-    type === "safe" ||
-    (typeof type === "string" && type.includes("arrow"))
-  ) {
-    background = "#ffffff";
-  }
+      case "SS":
+        return (
+          <span className="text-xs font-bold">
+            ★
+          </span>
+        );
+
+      case "GP":
+        return 
+
+      case "GE":
+        return (
+          <span className="text-xl font-bold leading-none select-none"
+            style={{ color: arrowColor }}
+          >
+            {{
+              up: "↑",
+              down: "↓",
+              left: "←",
+              right: "→",
+            }[arrowDirection]}
+          </span>
+        );
+
+      case "G":
+        return 
+
+      case "S":
+        return null
+
+      case "N":
+        return null;
+
+      case null:
+      default:
+        return null;
+    }
+  };
 
   return (
     <div
-      className="
-        w-full
-        h-full
-        border
-        border-gray-400
-        flex
-        items-center
-        justify-center
-        relative
-        box-border
-      "
+      className="border border-gray-400 flex items-center justify-center box-border w-full h-full"
       style={{
-        backgroundColor: background,
+        backgroundColor: color,
       }}
     >
-      {type === "safe" && (
-        <span className="text-[11px] text-gray-500 leading-none select-none">
-          ★
-        </span>
-      )}
-
-      {type === "red-arrow" && (
-        <span className="text-red-500 text-[14px] leading-none select-none">
-          →
-        </span>
-      )}
-
-      {type === "green-arrow" && (
-        <span className="text-green-500 text-[14px] leading-none select-none">
-          ↓
-        </span>
-      )}
-
-      {type === "blue-arrow" && (
-        <span className="text-blue-500 text-[14px] leading-none select-none">
-          ↑
-        </span>
-      )}
-
-      {type === "yellow-arrow" && (
-        <span className="text-yellow-500 text-[14px] leading-none select-none">
-          ←
-        </span>
-      )}
+      {renderSymbol()}
     </div>
   );
 };

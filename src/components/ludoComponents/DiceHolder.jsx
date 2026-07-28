@@ -1,14 +1,16 @@
+import boardData from "../../data/board.json";
 import Dice from "./Dice";
 import TurnIndicator from "./TurnIndicator";
 
-const colors = {
-  red: "#ef4444",
-  green: "#22c55e",
-  yellow: "#facc15",
-  blue: "#3b82f6",
-};
+const DiceHolder = ({turnColorIndex, diceValue, onRoll, rolling,}) => {
 
-const DiceHolder = ({ turn, diceValue, onRoll, rolling,}) => {
+  const colors = boardData.metadata.colors;
+
+  const turnColor =
+    turnColorIndex != null
+      ? colors[turnColorIndex]
+      : "white";
+
   return (
     <div
       className="
@@ -24,11 +26,12 @@ const DiceHolder = ({ turn, diceValue, onRoll, rolling,}) => {
         shadow-xl
       "
     >
-      <TurnIndicator color={colors[turn]} />
+      <TurnIndicator color={turnColor} />
 
-      <Dice value={diceValue} 
-      onRoll={onRoll} 
-      rolling={rolling}
+      <Dice
+        value={diceValue}
+        onRoll={onRoll}
+        rolling={rolling}
       />
     </div>
   );

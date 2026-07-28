@@ -12,9 +12,20 @@ const TurnIndicator = ({ color }) => {
         items-center
         justify-center
       "
-      style={{ backgroundColor: color, }}
+      style={{
+        backgroundColor: color || "white",
+      }}
     >
-      <div className=" w-6 h-6 rounded-full bg-white/30 " />
+      <div
+        className="
+          w-6
+          h-6
+          rounded-full
+          bg-white/30
+          border
+          border-white/40
+        "
+      />
     </div>
   );
 };

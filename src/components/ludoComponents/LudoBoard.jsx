@@ -1,178 +1,129 @@
-import { boardLayout } from "../../data/boardLayout";
-import { ludoPath } from "../../data/ludoPath";
+import Token from "./Token";
 import LudoCell from "./LudoCell";
 import CenterHome from "./CenterHome";
-import HomeArea from "./HomeArea";
-import Token from "./Token";
 
-const LudoBoard = ({gameState, selectedToken, setSelectedToken, handleTokenClick}) => {
-  const getTokenAtCell = (row, col) => {
-  if (!gameState?.board?.players) return null;
+const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, handleTokenClick,}) => {
+  if (!boardData) 
+    return null;
+
+  const { metadata, centerArea, grid } = boardData;
+  const colors = metadata?.colors ?? [];
+
+  // Convert object of cells into array
+  const cells = Object.entries(grid?.[0] ?? {})
+    .map(([cellId, cell]) => ({
+      cellId: Number(cellId),
+      ...cell,
+    }))
+    .sort((a, b) => a.cellId - b.cellId);
+
+  // Temporary: Show BASE tokens on Slot cells
+ const getTokenAtCell = (cell) => {
+  if (!gameState?.board?.players) 
+    return null;
+
+  if (cell.type !== "S") 
+    return null;
+
+  if (cell.tokenColorIndex == null) 
+    return null;
 
   for (const player of gameState.board.players) {
-    const color = player.color.toLowerCase();
 
-    for (const token of player.tokens) {
-      if (token.state === "BASE") continue;
+    if (player.colorIndex !== cell.tokenColorIndex) 
+      continue;
 
-      const realIndex =
-        (token.position + START_INDEX[color]) %
-        ludoPath.length;
+    const token = player.tokens.find((token) => token.state === "BASE");
 
-      const currentCell = ludoPath[realIndex];
+    if (!token) 
+      continue;
 
-      if (
-        currentCell.row === row &&
-        currentCell.col === col
-      ) {
-        return {
-          color,
-          token,
-        };
-      }
-    }
+    return {
+      token,
+      color: colors[player.colorIndex],
+    };
   }
 
   return null;
 };
 
-const redPlayer = gameState?.board?.players?.find(
-  (player) => player.color === "RED"
-);
-
-const greenPlayer = gameState?.board?.players?.find(
-  (player) => player.color === "GREEN"
-);
-
-const bluePlayer = gameState?.board?.players?.find(
-  (player) => player.color === "BLUE"
-);
-
-const yellowPlayer = gameState?.board?.players?.find(
-  (player) => player.color === "YELLOW"
-);
-
   return (
     <div className="relative w-[450px] h-[450px]">
-      
       {/* Board */}
-      <div className="absolute inset-0 grid grid-cols-15 grid-rows-15">
-        {boardLayout.map((row, rowIndex) =>
-          row.map((cell, colIndex) => {
-            const tokenData = getTokenAtCell(
-              rowIndex,
-              colIndex
-            );
-
-            return (
-              <div
-                key={`${rowIndex}-${colIndex}`}
-                className="relative"
-              >
-                <LudoCell type={cell} />
-
-                {tokenData && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Token
-                      color={tokenData.color}
-                      selected={selectedToken === tokenData.token.tokenId}
-                      onHandleClick={() => {
-                        console.log("handleTokenClick called")
-                        setSelectedToken(tokenData.token.tokenId);
-                        handleTokenClick(tokenData.token.tokenId);
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-            );
-          })
-        )}
-      </div>
-
       <div
-        className="absolute"
+        className="grid w-full h-full"
         style={{
-          left: "40%",
-          top: "40%",
-          width: "20%",
-          height: "20%",
+          gridTemplateColumns: `repeat(${metadata.boardSize.columns}, 1fr)`,
+          gridTemplateRows: `repeat(${metadata.boardSize.rows}, 1fr)`,
         }}
       >
-        <CenterHome />
+        {cells.map((cell) => {
+          const tokenData = getTokenAtCell(cell);
+
+          return (
+            <div
+              key={cell.cellId}
+              className="relative w-full h-full"
+            >
+              <LudoCell
+                type={cell.type}
+                color={
+                  cell.colorIndex != null
+                    ? colors[cell.colorIndex]
+                    : undefined
+                }
+                arrowDirection={cell.arrowDirection}
+                arrowColor={
+                  cell.arrowColorIndex != null
+                    ? colors[cell.arrowColorIndex]
+                    : undefined
+                }
+              />
+
+              {tokenData && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Token
+                    color={tokenData.color}
+                    selected={
+                      selectedToken === tokenData.token.tokenId
+                    }
+                    onHandleClick={() => {
+                      setSelectedToken(tokenData.token.tokenId);
+                      handleTokenClick(tokenData.token.tokenId);
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
-      <div
-        className="absolute"
-        style={{
-          left: "6.66%",
-          top: "6.66%",
-          width: "26.66%",
-          height: "26.66%",
-        }}
-      >
-        <HomeArea
-          color="red"
-          tokens={redPlayer?.tokens ?? []}
-          selectedToken={selectedToken}
-          setSelectedToken={setSelectedToken}
-          handleTokenClick={handleTokenClick}
+      {/* Center Area */}
+      {centerArea && (
+        <div
+          className="absolute"
+          style={{
+            left: `${
+              (centerArea.startCol / metadata.boardSize.columns) * 100
+            }%`,
+            top: `${
+              (centerArea.startRow / metadata.boardSize.rows) * 100
+            }%`,
+            width: `${
+              (centerArea.cols / metadata.boardSize.columns) * 100
+            }%`,
+            height: `${
+              (centerArea.rows / metadata.boardSize.rows) * 100
+            }%`,
+          }}
+        >
+          <CenterHome
+            centerArea={centerArea}
+            colors={colors}
           />
-      </div>
-
-      <div
-        className="absolute"
-        style={{
-          right: "6.66%",
-          top: "6.66%",
-          width: "26.66%",
-          height: "26.66%",
-        }}
-      >
-        <HomeArea
-          color="green"
-          tokens={greenPlayer?.tokens ?? []}
-          selectedToken={selectedToken}
-          setSelectedToken={setSelectedToken}
-          handleTokenClick={handleTokenClick}
-          />
-      </div>
-
-      <div
-        className="absolute"
-        style={{
-          left: "6.66%",
-          bottom: "6.66%",
-          width: "26.66%",
-          height: "26.66%",
-        }}
-      >
-        <HomeArea
-          color="blue"
-          tokens={bluePlayer?.tokens ?? []}
-          selectedToken={selectedToken}
-          setSelectedToken={setSelectedToken}
-          handleTokenClick={handleTokenClick}
-        />
-      </div>
-
-      <div
-        className="absolute"
-        style={{
-          right: "6.66%",
-          bottom: "6.66%",
-          width: "26.66%",
-          height: "26.66%",
-        }}
-      >
-        <HomeArea
-          color="yellow"
-          tokens={yellowPlayer?.tokens ?? []}
-          selectedToken={selectedToken}
-          setSelectedToken={setSelectedToken}
-          handleTokenClick={handleTokenClick}
-          />
-      </div>
+        </div>
+      )}
     </div>
   );
 };
