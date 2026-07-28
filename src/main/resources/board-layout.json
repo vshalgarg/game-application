@@ -6,9 +6,9 @@
       "columns": 15
     },
     "maxPlayers": 4,
-    "tokensPerPlayer": 4
+    "tokensPerPlayer": 4,
+    "colors": ["white", "yellow", "blue", "red", "green"]
   },
-  "colors": ["white", "yellow", "blue", "red", "green"],
 
   "grid": [
     {

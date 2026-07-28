@@ -6,7 +6,7 @@ import com.codemonks.ludo_engine.service.TurnValidationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import static com.codemonks.ludo_engine.constant.ErrorCodesEnum.INVALID_MOVE;
+import static com.codemonks.ludo_engine.constant.LudoErrorCodesEnum.INVALID_MOVE;
 
 @Service
 @Slf4j
