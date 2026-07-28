@@ -1,6 +1,6 @@
 package com.codemonks.ludo_engine.service.Impl;
 
-import com.codemonks.ludo_engine.constant.ErrorCodesEnum;
+import com.codemonks.ludo_engine.constant.LudoErrorCodesEnum;
 import com.codemonks.ludo_engine.dto.common.*;
 import com.codemonks.ludo_engine.dto.realtime.RealtimeGameStateDTO;
 import com.codemonks.ludo_engine.dto.realtime.RealtimeLobbyDTO;
@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static com.codemonks.ludo_engine.constant.ErrorCodesEnum.INVALID_MOVE;
+import static com.codemonks.ludo_engine.constant.LudoErrorCodesEnum.INVALID_MOVE;
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -119,36 +119,28 @@ public class EngineServiceImpl implements EngineService {
         Object boardObj = rawState.get("board");
         Map<String, Object> gameStateMap = boardObj instanceof Map ? (Map<String, Object>) boardObj : rawState;
         GameStateDTO gameState = objectMapper.convertValue(gameStateMap, GameStateDTO.class);
-
-
         Long tokenId = getTokenId(request);
         // NEW - Extract consumed dice from request once
-        Integer consumedDice =
-                ((Number) request.getMoveData()
+        Integer consumedDice = ((Number) request.getMoveData()
                         .get("consumedDice"))
                         .intValue();
-        log.info(
-                "[MOVE_REQUEST] Room:{} Player:{} Token:{}",
+        log.info("[MOVE_REQUEST] Room:{} Player:{} Token:{}",
                 request.getRoomId(),
                 request.getUserId(),
                 tokenId
         );
-
         // Turn Validation
         turnValidationService.validateTurn(gameState, request.getUserId());
         if (gameState.getPlayerTurnStage() != PlayerTurnStageEnum.TOKEN_MOVE) {
             log.warn("[INVALID_TURN] RoomId:{} | PlayerID:{} attempted action during wrong stage",
                     request.getRoomId(), request.getUserId());
-            throw new InvalidMoveException(INVALID_MOVE);
+            throw new InvalidMoveException(LudoErrorCodesEnum.DICE_NOT_ROLLED);
         }
 
         // Move Validation
-        moveValidationService.validateMove(
-                gameState,
-                request.getUserId(),
+        moveValidationService.validateMove(gameState, request.getUserId(),
                 tokenId,
-                consumedDice
-        );
+                consumedDice);
 
         log.info(
                 "[MOVE_VALIDATED] Player:{} Token:{}",
@@ -157,19 +149,11 @@ public class EngineServiceImpl implements EngineService {
         );
         // ── Token Movement
         // CHANGED - new service signature
-        GameStateDTO updatedGameState =
-                tokenMovementService.moveToken(
-                        gameState,
-                        request.getUserId(),
-                        tokenId,
+        GameStateDTO updatedGameState = tokenMovementService.moveToken(gameState,
+                        request.getUserId(), tokenId,
                         consumedDice
                 );
-
-        log.info(
-                "[TOKEN_MOVED] Player:{} Token:{}",
-                request.getUserId(),
-                tokenId
-        );
+        log.info("[TOKEN_MOVED] Player:{} Token:{}", request.getUserId(), tokenId);
 
         List<EventDTO> events = new ArrayList<>();
         events.add(eventService.createEvent(EventTypeEnum.TOKEN_MOVED,
@@ -212,9 +196,7 @@ public class EngineServiceImpl implements EngineService {
 
         if (tokenFinished) {
 
-            events.add(
-                    eventService.createEvent(
-                            EventTypeEnum.TOKEN_REACHED_HOME,
+            events.add(eventService.createEvent(EventTypeEnum.TOKEN_REACHED_HOME,
                             "Player " + request.getUserId() + " reached home"
                     )
             );
@@ -366,7 +348,7 @@ public class EngineServiceImpl implements EngineService {
                     gameState.getCurrentTurnPlayerId(),
                     request.getPlayerId()
             );
-            throw new InvalidMoveException(ErrorCodesEnum.INVALID_TURN);
+            throw new InvalidMoveException(LudoErrorCodesEnum.INVALID_TURN);
         }
 
         // Stage validation
@@ -379,7 +361,7 @@ public class EngineServiceImpl implements EngineService {
                     gameState.getPlayerTurnStage()
             );
 
-            throw new InvalidMoveException(ErrorCodesEnum.DICE_ALREADY_ROLLED);
+            throw new InvalidMoveException(LudoErrorCodesEnum.DICE_ALREADY_ROLLED);
 
         }
 
@@ -394,7 +376,7 @@ public class EngineServiceImpl implements EngineService {
         }
 
         if (currentPlayer == null) {
-            throw new ResourceNotFoundException(ErrorCodesEnum.PLAYER_NOT_FOUND);
+            throw new ResourceNotFoundException(LudoErrorCodesEnum.PLAYER_NOT_FOUND);
         }
 
         // Roll dice

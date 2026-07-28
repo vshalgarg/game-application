@@ -2,7 +2,6 @@ package com.codemonks.ludo_engine.service.Impl;
 
 import com.codemonks.ludo_engine.dto.common.GameStateDTO;
 import com.codemonks.ludo_engine.dto.common.PlayerDTO;
-import com.codemonks.ludo_engine.dto.common.TokenDTO;
 import com.codemonks.ludo_engine.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.ludo_engine.enums.GameStatusEnum;
 import com.codemonks.ludo_engine.enums.TokenStateEnum;
@@ -13,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import static com.codemonks.ludo_engine.constant.ErrorCodesEnum.INVALID_MOVE;
+import static com.codemonks.ludo_engine.constant.LudoErrorCodesEnum.INVALID_MOVE;
 
 @Service
 @Slf4j

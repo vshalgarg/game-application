@@ -1,14 +1,14 @@
 package com.codemonks.ludo_engine.exception;
 
-import com.codemonks.ludo_engine.constant.ErrorCodesEnum;
+import com.codemonks.ludo_engine.constant.LudoErrorCodesEnum;
 import lombok.Getter;
 
 @Getter
 public class ResourceNotFoundException extends RuntimeException {
 
-    private final ErrorCodesEnum errorCode;
+    private final LudoErrorCodesEnum errorCode;
 
-    public ResourceNotFoundException(ErrorCodesEnum errorCode) {
+    public ResourceNotFoundException(LudoErrorCodesEnum errorCode) {
         super(errorCode.getMessage());
         this.errorCode = errorCode;
     }

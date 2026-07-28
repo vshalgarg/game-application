@@ -42,6 +42,7 @@
         public List<String> getColors() {
             return boardLoader
                     .getBoardLayout()
+                    .getMetadata()
                     .getColors();
         }
 

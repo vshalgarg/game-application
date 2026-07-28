@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-import static com.codemonks.ludo_engine.constant.ErrorCodesEnum.INVALID_MOVE;
+import static com.codemonks.ludo_engine.constant.LudoErrorCodesEnum.INVALID_MOVE;
 
 @Service
 @Slf4j
@@ -24,9 +24,7 @@ public class PathOrderServiceImpl implements PathOrderService {
         List<PlayerDTO> players = gameState.getPlayers();
 
         for (int i = 0; i < players.size(); i++) {
-
             PlayerDTO player = players.get(i);
-
             if (player.getPlayerId().equals(playerId)) {
 
                 log.debug(

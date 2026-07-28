@@ -49,7 +49,6 @@ public class BoardLoaderImpl implements BoardLoader {
             // Step 3: build the clean BoardLayout your services use
             boardLayout = new BoardLayout();
             boardLayout.setMetadata(raw.getMetadata());
-            boardLayout.setColors(raw.getColors());
             boardLayout.setCenterArea(raw.getCenterArea());
             boardLayout.setGrid(flatGrid);
             boardLayout.setPaths(raw.getPaths());

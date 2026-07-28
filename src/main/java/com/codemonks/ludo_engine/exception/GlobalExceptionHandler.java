@@ -1,6 +1,6 @@
 package com.codemonks.ludo_engine.exception;
 
-import com.codemonks.ludo_engine.constant.ErrorCodesEnum;
+import com.codemonks.ludo_engine.constant.LudoErrorCodesEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,20 +19,20 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInvalidMove(InvalidMoveException exception) {
         log.warn("[INVALID_MOVE] {}", exception.getMessage());
         ErrorResponse errorResponse = new ErrorResponse(
-                exception.getErrorCodesEnum().getCode(),
+                exception.getLudoErrorCodesEnum().getCode(),
                 exception.getMessage()
         );
-        return ResponseEntity.status(HttpStatus.OK).body(errorResponse);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler(GameRuleException.class)
     public ResponseEntity<ErrorResponse> handleGameRule(GameRuleException exception) {
         log.warn("[GAME_RULE_VIOLATION] {}", exception.getMessage());
         ErrorResponse errorResponse = new ErrorResponse(
-                exception.getErrorCodesEnum().getCode(),
+                exception.getLudoErrorCodesEnum().getCode(),
                 exception.getMessage()
         );
-        return ResponseEntity.status(HttpStatus.OK).body(errorResponse);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -50,7 +50,9 @@ public class GlobalExceptionHandler {
                 .errorMessage(validationMessage)
                 .build();
 
-        return ResponseEntity.ok().body(response);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(response);
     }
 
     @ExceptionHandler(Exception.class)
@@ -69,13 +71,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException exception) {
 
-        ErrorCodesEnum error = exception.getErrorCode();
+        LudoErrorCodesEnum error = exception.getErrorCode();
 
         log.error("Resource not found: {}", error.getMessage());
         ErrorResponse response = ErrorResponse.builder()
                 .errorCode(error.getCode())
                 .errorMessage(error.getMessage())
                 .build();
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 }

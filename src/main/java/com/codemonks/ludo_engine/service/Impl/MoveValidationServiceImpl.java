@@ -1,5 +1,6 @@
     package com.codemonks.ludo_engine.service.Impl;
 
+    import com.codemonks.ludo_engine.constant.LudoErrorCodesEnum;
     import com.codemonks.ludo_engine.dto.common.GameStateDTO;
     import com.codemonks.ludo_engine.dto.common.PlayerDTO;
     import com.codemonks.ludo_engine.dto.common.TokenDTO;
@@ -11,10 +12,9 @@
     import lombok.RequiredArgsConstructor;
     import lombok.extern.slf4j.Slf4j;
     import org.springframework.stereotype.Service;
-
+    import com.codemonks.ludo_engine.constant.LudoErrorCodesEnum;
     import java.util.List;
 
-    import static com.codemonks.ludo_engine.constant.ErrorCodesEnum.INVALID_MOVE;
 
     @Service
     @Slf4j
@@ -57,15 +57,11 @@
                 Long userId,
                 Long tokenId
         ) {
-
             for (PlayerDTO player : gameState.getPlayers()) {
-
                 if (!player.getPlayerId().equals(userId)) {
                     continue;
                 }
-
                 for (TokenDTO token : player.getTokens()) {
-
                     if (token.getTokenId().equals(tokenId)) {
                         log.info("[TOKEN_VALIDATED] Player:{} Token:{}",
                                 userId,
@@ -74,14 +70,12 @@
                     }
                 }
             }
-
             log.error(
                     "[TOKEN_NOT_FOUND] Player:{} Token:{}",
                     userId,
                     tokenId
             );
-
-            throw new InvalidMoveException(INVALID_MOVE);
+            throw new InvalidMoveException(LudoErrorCodesEnum.TOKEN_NOT_FOUND);
         }
 
         private void validateConsumedDice(
@@ -98,7 +92,7 @@
                         consumedDice
                 );
 
-                throw new InvalidMoveException(INVALID_MOVE);
+                throw new InvalidMoveException(LudoErrorCodesEnum.INVALID_DICE_VALUE_CONSUMPTION);
             }
 
             PlayerDTO currentPlayer = null;
@@ -115,11 +109,16 @@
 
                 log.error("[PLAYER_NOT_FOUND] Player:{}", userId);
 
-                throw new InvalidMoveException(INVALID_MOVE);
+                throw new InvalidMoveException(LudoErrorCodesEnum.PLAYER_NOT_FOUND);
             }
 
             if (currentPlayer.getPendingDice() == null
-                    || !currentPlayer.getPendingDice().contains(consumedDice)) {
+                    || currentPlayer.getPendingDice().isEmpty()) {
+
+                throw new InvalidMoveException(
+                        LudoErrorCodesEnum.NO_PENDING_DICE);
+            }
+            if (!currentPlayer.getPendingDice().contains(consumedDice)) {
 
                 log.error(
                         "[DICE_NOT_AVAILABLE] Player:{} Dice:{} Buffer:{}",
@@ -127,10 +126,7 @@
                         consumedDice,
                         currentPlayer.getPendingDice()
                 );
-
-                throw new InvalidMoveException(
-                        INVALID_MOVE
-                );
+                throw new InvalidMoveException(LudoErrorCodesEnum.INVALID_DICE_VALUE_CONSUMPTION);
             }
             log.info(
                     "[DICE_VALIDATED] Player:{} Dice:{} Buffer:{}",
@@ -176,9 +172,7 @@
                                 consumedDice
                         );
 
-                        throw new InvalidMoveException(
-                                INVALID_MOVE
-                        );
+                        throw new InvalidMoveException(LudoErrorCodesEnum.SIX_REQUIRED_TO_EXIT_HOME);
                     }
                 }
             }
@@ -216,7 +210,7 @@
                             "[BOARD_PATH_NOT_FOUND] PathOrder:{}",
                             pathOrder
                     );
-                    throw new InvalidMoveException(INVALID_MOVE);
+                    throw new InvalidMoveException(LudoErrorCodesEnum.INVALID_PATH_INDEX);
                 }
 
                 for (TokenDTO token : player.getTokens()) {
@@ -248,7 +242,7 @@
                                 token.getPathIndex()
                         );
 
-                        throw new InvalidMoveException(INVALID_MOVE);
+                        throw new InvalidMoveException(LudoErrorCodesEnum.INVALID_PATH_INDEX);
                     }
 
                     int newPathIndex = token.getPathIndex() + consumedDice;
@@ -271,7 +265,7 @@
                                 tokenId
                         );
 
-                        throw new InvalidMoveException(INVALID_MOVE);
+                        throw new InvalidMoveException(LudoErrorCodesEnum.INVALID_PATH_INDEX);
                     }
 
                     log.info(
