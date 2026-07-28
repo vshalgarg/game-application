@@ -8,6 +8,7 @@ import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequest
 import com.codemonks.gameservice.engineModule.dto.response.DiceRollResponseDTO;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.gameservice.engineModule.strategy.GameEngine;
+import com.codemonks.gameservice.engineModule.model.BoardLayout;
 import com.codemonks.gameservice.enums.GameTypeEnum;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -43,4 +44,8 @@ public class LudoEngineImpl implements GameEngine {
         return feignClient.rollDice(request);
     }
 
+    @Override
+    public BoardLayout getBoardLayout() {
+        return feignClient.getBoardLayout();
+    }
 }
