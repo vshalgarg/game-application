@@ -58,9 +58,9 @@
                 Long tokenId
         ) {
             for (PlayerDTO player : gameState.getPlayers()) {
-                if (!player.getPlayerId().equals(userId)) {
-                    continue;
-                }
+
+                if (!player.getPlayerId().equals(userId)) {continue;}
+
                 for (TokenDTO token : player.getTokens()) {
                     if (token.getTokenId().equals(tokenId)) {
                         log.info("[TOKEN_VALIDATED] Player:{} Token:{}",
@@ -86,8 +86,7 @@
 
             if (consumedDice == null || consumedDice < 1 || consumedDice > 6) {
 
-                log.error(
-                        "[INVALID_DICE] Player:{} Dice:{}",
+                log.error("[INVALID_DICE] Player:{} Dice:{}",
                         userId,
                         consumedDice
                 );
@@ -148,7 +147,6 @@
                 if (!player.getPlayerId().equals(userId)) {
                     continue;
                 }
-
                 for (TokenDTO token : player.getTokens()) {
 
                     if (!token.getTokenId().equals(tokenId)) {
@@ -165,18 +163,15 @@
                     if (token.getState() == TokenStateEnum.BASE
                             && consumedDice != 6) {
 
-                        log.error(
-                                "[BASE_EXIT_FAILED] Player:{} Token:{} Dice:{}",
+                        log.error("[BASE_EXIT_FAILED] Player:{} Token:{} Dice:{}",
                                 userId,
                                 tokenId,
                                 consumedDice
                         );
-
                         throw new InvalidMoveException(LudoErrorCodesEnum.SIX_REQUIRED_TO_EXIT_HOME);
                     }
                 }
             }
-
             log.info(
                     "[BASE_EXIT_VALIDATED] Player:{} Token:{}",
                     userId,
@@ -196,20 +191,16 @@
                     continue;
                 }
 
-                Integer pathOrder =
-                        pathOrderService.getPathOrder(
+                Integer pathOrder = pathOrderService.getPathOrder(
                                 gameState,
                                 userId
                         );
+                List<Integer> path = boardService.getPath(pathOrder);
 
-                List<Integer> path =
-                        boardService.getPath(pathOrder);
                 if (path == null || path.isEmpty()) {
 
-                    log.error(
-                            "[BOARD_PATH_NOT_FOUND] PathOrder:{}",
-                            pathOrder
-                    );
+                    log.error("[BOARD_PATH_NOT_FOUND] PathOrder:{}", pathOrder);
+
                     throw new InvalidMoveException(LudoErrorCodesEnum.INVALID_PATH_INDEX);
                 }
 

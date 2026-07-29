@@ -32,10 +32,10 @@ public class BoardLoaderImpl implements BoardLoader {
         try {
             ClassPathResource resource = new ClassPathResource(boardProperties.getLayoutFile());
 
-            // Step 1: parse the JSON as-is into the raw DTO
+            // Step 1: parse the JSON
             RawBoardLayout raw = objectMapper.readValue(resource.getInputStream(), RawBoardLayout.class);
 
-            // Step 2: flatten grid's List<Map<String, Grid>> into a clean List<Grid>
+            // Step 2: flatten grid
             List<Grid> flatGrid = raw.getGrid().stream()
                     .flatMap(map -> map.entrySet().stream())
                     .sorted(Comparator.comparingInt(e -> Integer.parseInt(e.getKey())))
@@ -67,11 +67,7 @@ public class BoardLoaderImpl implements BoardLoader {
     @Override
     public BoardLayout getBoardLayout() {
 
-        log.info(
-                "[BOARD_FROM_MEMORY] Hash:{}",
-                System.identityHashCode(boardLayout)
-        );
+        log.info("[BOARD_FROM_MEMORY] Hash:{}", System.identityHashCode(boardLayout));
         return boardLayout;
     }
-
 }
