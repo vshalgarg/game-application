@@ -38,14 +38,14 @@ public class KillRuleServiceImpl implements KillRuleService {
             if (!player.getPlayerId().equals(playerId)) {
                 continue;}
 
-            Integer pathOrder =
+            Integer colorIndex =
                     pathOrderService.getPathOrder(
                             gameState,
                             player.getPlayerId()
                     );
 
             List<Integer> path =
-                    boardService.getPath(pathOrder);
+                    boardService.getPath(colorIndex);
 
 
             if (path == null || path.isEmpty()) {

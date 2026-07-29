@@ -93,14 +93,14 @@ public class TokenMovementServiceImpl implements TokenMovementService {
                         throw new InvalidMoveException(INVALID_MOVE);
                     }
 
-                    Integer pathOrder =
+                    Integer colorIndex =
                             pathOrderService.getPathOrder(
                                     gameState,
                                     player.getPlayerId()
                             );
 
                     List<Integer> path =
-                            boardService.getPath(pathOrder);
+                            boardService.getPath(colorIndex);
                     log.info(
                             "[TRACK_MOVE_STARTED] Player:{} Token:{} CurrentPathIndex:{} Dice:{}",
                             playerId,
