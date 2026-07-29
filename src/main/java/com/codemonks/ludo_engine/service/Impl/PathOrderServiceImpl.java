@@ -16,24 +16,20 @@ import static com.codemonks.ludo_engine.constant.LudoErrorCodesEnum.INVALID_MOVE
 public class PathOrderServiceImpl implements PathOrderService {
 
     @Override
-    public Integer getPathOrder(
-            GameStateDTO gameState,
-            Long playerId
+    public Integer getPathOrder(GameStateDTO gameState, Long playerId
     ) {
 
         List<PlayerDTO> players = gameState.getPlayers();
 
-        for (int i = 0; i < players.size(); i++) {
-            PlayerDTO player = players.get(i);
+        for (PlayerDTO player : players) {
+
             if (player.getPlayerId().equals(playerId)) {
 
-                log.debug(
-                        "[PATH_ORDER] Player:{} PathOrder:{}",
+                log.debug("[PATH_ORDER] Player:{} PathOrder:{}",
                         playerId,
-                        i
-                );
+                        player.getColorIndex());
 
-                return i;
+                return player.getColorIndex();
             }
         }
 
