@@ -94,7 +94,6 @@ public class GameSetupServiceImpl implements GameSetupService {
 
         List<TokenDTO> tokenList = new ArrayList<>();
 
-
         int tokensPerPlayer = boardService
                 .getBoard()
                 .getMetadata()
@@ -122,15 +121,28 @@ public class GameSetupServiceImpl implements GameSetupService {
     }
     private List<Integer> selectColorIndexes(int playerCount) {
 
-        int totalColors = boardService.getColors().size();
+      //  int totalColors = boardService.getColors().size();
+        int playableColors = boardService.getColors().size() - 1;
 
-        if (playerCount > totalColors) {
+        if (playerCount > playableColors) {
             throw new IllegalArgumentException("Not enough colors defined in board-layout.json");
         }
 
         List<Integer> colorIndexes = new ArrayList<>();
 
-        for (int i = 0; i < totalColors; i++) {
+        if (playerCount == 2) {
+
+            List<List<Integer>> oppositePairs = List.of(
+                    List.of(1, 3), // Yellow - red
+                    List.of(2, 4)  // Blue - green
+            );
+
+            int randomPair = ThreadLocalRandom.current().nextInt(oppositePairs.size());
+
+            return new ArrayList<>(oppositePairs.get(randomPair));
+        }
+
+        for (int i = 1; i <= playableColors; i++) {
             colorIndexes.add(i);
         }
 
