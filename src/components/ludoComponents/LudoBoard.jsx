@@ -2,11 +2,11 @@ import Token from "./Token";
 import LudoCell from "./LudoCell";
 import CenterHome from "./CenterHome";
 
-const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, handleTokenClick,}) => {
+const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, handleTokenClick, legalMoves}) => {
   if (!boardData) 
     return null;
 
-  const { metadata, centerArea, grid } = boardData;
+  const { metadata, centerArea, grid, paths } = boardData;
   const colors = metadata?.colors ?? [];
 
   // Convert object of cells into array
@@ -19,34 +19,88 @@ const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, hand
 
   // Temporary: Show BASE tokens on Slot cells
  const getTokenAtCell = (cell) => {
-  if (!gameState?.board?.players) 
+  if (!gameState?.board?.players)
     return null;
 
-  if (cell.type !== "S") 
-    return null;
+  // BASE SLOT TOKENS
+  if (cell.type === "S") {
+      console.log(cell);
+    if (cell.tokenColorIndex == null)
+      return null;
 
-  if (cell.tokenColorIndex == null) 
+    const player = gameState.board.players.find(player => player.colorIndex === cell.tokenColorIndex);
+    console.log("color index",cell.colorIndex); 
+    console.log("cell tokencolorindex",cell.tokenColorIndex);
+    console.log("player:",player);
+
+    if (!player)
+      return null;
+
+    const token = player.tokens.find(token => token.state === "BASE" && token.baseSlotId === cell.cellId);
+    console.log("slot:",cell.slotIndex);
+    console.log("token:",token);
+
+    if (!token)
+      return null;
+
+    return {
+      token,
+      color: colors[player.colorIndex]
+    };
+  }
+  return null;
+};
+
+//   const getTrackTokenAtCell = (cell) => {
+
+//   if (!gameState?.board?.players)
+//     return null;
+
+//   for (const player of gameState.board.players) {
+
+//     const playerPath = paths?.[player.colorIndex];
+//     if (!playerPath)
+//       continue;
+
+//     const token = player.tokens.find((token) => {
+
+//       if (token.state !== "TRACK")
+//         return false;
+
+//       const actualCellId = playerPath[token.pathIndex];
+//       return actualCellId === cell.cellId;
+//     });
+
+//     if (token) {
+
+//       return {
+//         token,
+//         color: colors[player.colorIndex]
+//       };
+//     }
+//   }
+//   return null;
+// };
+
+    const getTrackTokenAtCell = (cell) => {
+
+  if (!gameState?.board?.players)
     return null;
 
   for (const player of gameState.board.players) {
 
-    if (player.colorIndex !== cell.tokenColorIndex) 
-      continue;
+    const token = player.tokens.find(token => token.state === "TRACK" && token.pathId === cell.cellId);
 
-    const token = player.tokens.find((token) => token.state === "BASE");
-
-    if (!token) 
-      continue;
-
-    return {
-      token,
-      color: colors[player.colorIndex],
-    };
+    if (token) {
+      return {
+        token,
+        color: colors[player.colorIndex]
+      };
+    }
   }
 
   return null;
 };
-
   return (
     <div className="relative w-[450px] h-[450px]">
       {/* Board */}
@@ -58,8 +112,9 @@ const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, hand
         }}
       >
         {cells.map((cell) => {
-          const tokenData = getTokenAtCell(cell);
-
+          const tokenData = getTokenAtCell(cell) || getTrackTokenAtCell(cell);
+          const canMove = tokenData?.token ? legalMoves?.some( move => move.tokenId === tokenData.token.tokenId) : false;
+          // const canMove = legalMoves?.some( move => move.tokenId === tokenData.token.tokenId);
           return (
             <div
               key={cell.cellId}
@@ -84,10 +139,10 @@ const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, hand
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Token
                     color={tokenData.color}
-                    selected={
-                      selectedToken === tokenData.token.tokenId
-                    }
+                    selected={selectedToken === tokenData.token.tokenId}
                     onHandleClick={() => {
+                      if(!canMove) 
+                        return;
                       setSelectedToken(tokenData.token.tokenId);
                       handleTokenClick(tokenData.token.tokenId);
                     }}
@@ -129,3 +184,6 @@ const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, hand
 };
 
 export default LudoBoard;
+
+
+

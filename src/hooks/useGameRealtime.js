@@ -5,7 +5,7 @@ const useGameRealtime = ({ roomCode, onGameUpdate }) => {
   useEffect(() => {
     if (!roomCode) return;
 
-    // let channel;
+    let channel;
 
     const initializeRealtime = async () => {
       // STEP 1: Fetch current game state

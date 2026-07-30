@@ -1,11 +1,13 @@
-import boardData from "../../data/board.json";
 import Dice from "./Dice";
 import TurnIndicator from "./TurnIndicator";
 
-const DiceHolder = ({turnColorIndex, diceValue, onRoll, rolling,}) => {
-
-  const colors = boardData.metadata.colors;
-
+const DiceHolder = ({
+  colors,
+  turnColorIndex,
+  diceValue,
+  onRoll,
+  rolling,
+}) => {
   const turnColor =
     turnColorIndex != null
       ? colors[turnColorIndex]
