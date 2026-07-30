@@ -1,18 +1,17 @@
-package com.codemonks.tic_tac_toe_game_engine.config;
-
+package com.codemonks.ludo_engine.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
-@Configuration("ticTacToeSupabaseConfig")
+@Configuration("ludoSupabaseConfig")
 @RequiredArgsConstructor
 public class SupabaseConfig {
 
     private final SupabaseProperties properties;
 
-    @Bean
+    @Bean("ludoSupabaseRestClient")
     public RestClient supabaseRestClient() {
 
         return RestClient.builder()

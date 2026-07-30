@@ -1,4 +1,4 @@
-package com.codemonks.tic_tac_toe_game_engine.config;
+package com.codemonks.ludo_engine.config;
 
 
 import lombok.Getter;
@@ -6,7 +6,7 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-@Configuration("tictactoeSupabaseProperties")
+@Configuration("ludoSupabaseProperties")
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "supabase")
@@ -20,8 +20,8 @@ public class SupabaseProperties {
     @Getter
     @Setter
     public static class Tables {
-        private String realtimeRoomLobby;
         private String realtimeGameState;
         private String realtimeGameMoves;
+        private String realtimeRoomLobby;
     }
 }

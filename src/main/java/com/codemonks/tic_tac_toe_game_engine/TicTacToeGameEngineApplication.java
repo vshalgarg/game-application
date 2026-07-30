@@ -3,7 +3,10 @@ package com.codemonks.tic_tac_toe_game_engine;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {
+		"com.codemonks.tic_tac_toe_game_engine",
+		"com.codemonks.ludo_engine"
+})
 public class TicTacToeGameEngineApplication {
 
 	public static void main(String[] args) {
