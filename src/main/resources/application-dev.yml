@@ -15,9 +15,9 @@ server:
 
 services:
   tic-tac-toe-engine:
-    base-url:  http://localhost:8081/game-engine/tic-tac-toe-engine/api/v1
+    base-url:  http://192.168.1.100/game-engine/tic-tac-toe-engine/api/v1
   ludo-engine:
-    base-url: http://localhost:8081/game-engine/ludo-engine/api/v1
+    base-url: http://192.168.1.100/game-engine/ludo-engine/api/v1
 
 supabase:
   url: https://urbbdsdaamsxtxthqxbm.supabase.co
