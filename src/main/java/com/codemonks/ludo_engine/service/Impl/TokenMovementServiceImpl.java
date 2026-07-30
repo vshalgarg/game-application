@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.codemonks.ludo_engine.constant.LudoErrorCodesEnum.INVALID_MOVE;
@@ -82,13 +83,21 @@ public class TokenMovementServiceImpl implements TokenMovementService {
                     List<Integer> path = boardService.getPath(colorIndex);
                     token.setPathId(path.get(0)); // NEW
 
+                    List<Integer> journey = new ArrayList<>();
+                    if (token.getBaseSlotId() != null) {
+                        journey.add(token.getBaseSlotId());
+                    }
+                    journey.add(path.get(0));
+                    token.setTokenJourney(journey);
+
                     consumePendingDiceByIndex(player, consumedDice);
 
                     log.info(
-                            "[BASE_TO_TRACK] Player:{} Token:{} PathIndex:{}",
+                            "[BASE_TO_TRACK] Player:{} Token:{} PathIndex:{}  Journey:{}",
                             playerId,
                             tokenId,
-                            token.getPathIndex()
+                            token.getPathIndex(),
+                            token.getTokenJourney()
                     );
 
                     return gameState;
@@ -108,11 +117,12 @@ public class TokenMovementServiceImpl implements TokenMovementService {
                     List<Integer> path = boardService.getPath(colorIndex);
 
                     log.info(
-                            "[TRACK_MOVE_STARTED] Player:{} Token:{} CurrentPathIndex:{} Dice:{}",
+                            "[TRACK_MOVE_STARTED] Player:{} Token:{} CurrentPathIndex:{} Dice:{} Journey:{}",
                             playerId,
                             tokenId,
                             token.getPathIndex(),
-                            consumedDice
+                            consumedDice,
+                            token.getTokenJourney()
                     );
 
                     if (path == null || path.isEmpty()) {
@@ -125,6 +135,15 @@ public class TokenMovementServiceImpl implements TokenMovementService {
                     if (newPathIndex > path.size() - 1) {
                         throw new InvalidMoveException(INVALID_MOVE);
                     }
+                    // Append every intermediate cell crossed this move — THE FIX
+                    List<Integer> journey = token.getTokenJourney();
+                    if (journey == null) {
+                        journey = new ArrayList<>();
+                    }
+                    for (int i = currentPathIndex + 1; i <= newPathIndex; i++) {
+                        journey.add(path.get(i));
+                    }
+                    token.setTokenJourney(journey);
 
                     // Token reached goal
                     if (newPathIndex == path.size() - 1) {
@@ -133,11 +152,12 @@ public class TokenMovementServiceImpl implements TokenMovementService {
                         consumePendingDiceByIndex(player, consumedDice);
 
                         log.info(
-                                "[TOKEN_FINISHED] Player:{} Token:{} PathIndex:{}  PathId:{} ",
+                                "[TOKEN_FINISHED] Player:{} Token:{} PathIndex:{}  PathId:{} Journey:{}",
                                 playerId,
                                 tokenId,
                                 newPathIndex,
-                                token.getPathId()
+                                token.getPathId(),
+                                token.getTokenJourney()
                         );
 
                         return gameState;

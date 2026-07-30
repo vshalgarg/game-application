@@ -3,6 +3,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -12,5 +14,6 @@ public class KillRuleResultDTO {
         private boolean tokenKilled;
         private Long killedPlayerId;
         private Long killedTokenId;
+        private List<Integer> killedTokenJourney;
 
 }

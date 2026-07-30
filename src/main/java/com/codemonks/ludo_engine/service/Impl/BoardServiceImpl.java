@@ -55,8 +55,8 @@
                     .getGrid()
                     .stream()
                     .filter(cell ->
-                            "SAFE".equalsIgnoreCase(cell.getType())
-                                    || "START".equalsIgnoreCase(cell.getType()))
+                            "SC".equalsIgnoreCase(cell.getType())
+                                    || "SS".equalsIgnoreCase(cell.getType()))
                     .map(Grid::getId)
                     .collect(Collectors.toSet());
         }
