@@ -89,10 +89,8 @@ public class RoomController {
     public ResponseEntity<ApiResponse<RoomDetailsResponseDTO>> getRoomDetails(
             @PathVariable String roomCode
     ) {
-
         RoomDetailsResponseDTO response =
                 roomService.getRoomDetails(roomCode);
-
         return ResponseEntity.ok(
                 ApiResponse.success(response,ResponseMessages.ROOM_DETAILS_FETCHED)
         );

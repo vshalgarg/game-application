@@ -20,11 +20,14 @@ public class FeignErrorDecoder implements ErrorDecoder {
     private final ObjectMapper objectMapper;
 
     @Override
-    public Exception decode(
-            String methodKey,
-            Response response
-    ) {
-        try {String body = Util.toString(response.body().asReader());
+    public Exception decode(String methodKey, Response response) {
+
+        try {
+            String body = "";
+
+            if (response.body() != null) {
+                body = Util.toString(response.body().asReader());
+            }
 
             log.error("External service call failed");
             log.error(
@@ -34,26 +37,19 @@ public class FeignErrorDecoder implements ErrorDecoder {
                     body
             );
 
-            ExternalServiceErrorResponse error =
-                    objectMapper.readValue(
-                            body,
+            ExternalServiceErrorResponse error = objectMapper.readValue(body,
                             ExternalServiceErrorResponse.class
                     );
 
-            Integer errorCode =
-                    error.getErrorCode() != null
+            Integer errorCode = error.getErrorCode() != null
                             ? error.getErrorCode()
                             : response.status();
 
-            String errorMessage =
-                    error.getErrorMessage() != null
+            String errorMessage = error.getErrorMessage() != null
                             ? error.getErrorMessage()
                             : String.valueOf(EXTERNAL_SERVICE_ERROR);
 
-            return new ExternalServiceException(
-                    errorCode,
-                    errorMessage
-            );
+            return new ExternalServiceException(errorCode, errorMessage);
 
         } catch (Exception e) {
             log.error(
