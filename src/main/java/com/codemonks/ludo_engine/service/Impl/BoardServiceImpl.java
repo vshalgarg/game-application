@@ -7,6 +7,7 @@
     import org.springframework.stereotype.Service;
 
     import java.util.List;
+    import java.util.Map;
     import java.util.Set;
     import java.util.stream.Collectors;
 
@@ -58,6 +59,15 @@
                                     || "START".equalsIgnoreCase(cell.getType()))
                     .map(Grid::getId)
                     .collect(Collectors.toSet());
+        }
+
+        @Override
+        public Integer getBaseSlotId(Integer colorIndex, Integer baseSlot) {
+            Map<Integer, List<Integer>> baseCells = boardLoader.getBoardLayout().getBaseCells();
+            if (baseCells == null) return null;
+            List<Integer> slots = baseCells.get(colorIndex);
+            if (slots == null || baseSlot == null || baseSlot >= slots.size()) return null;
+            return slots.get(baseSlot);
         }
 
 }

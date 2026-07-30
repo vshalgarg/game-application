@@ -76,7 +76,7 @@ public class GameSetupServiceImpl implements GameSetupService {
             player.setPlayerId(playerId);
             player.setColorIndex(colorIndex);
             long startingTokenId = (playerIndex * 4L) + 1;
-            player.setTokens(createTokens(startingTokenId));
+            player.setTokens(createTokens(startingTokenId, colorIndex));
 
             //initialize dice buffer
             player.setPendingDice(new ArrayList<>());
@@ -90,7 +90,7 @@ public class GameSetupServiceImpl implements GameSetupService {
     }
 
     //Create 4 tokens for each player
-    private List<TokenDTO> createTokens(long startingTokenId) {
+    private List<TokenDTO> createTokens(long startingTokenId,Integer colorIndex) {
 
         List<TokenDTO> tokenList = new ArrayList<>();
 
@@ -106,6 +106,7 @@ public class GameSetupServiceImpl implements GameSetupService {
             token.setState(TokenStateEnum.BASE);
             token.setPathIndex(null);
             token.setBaseSlot(i);
+            token.setBaseSlotId(boardService.getBaseSlotId(colorIndex, i));
             tokenList.add(token);
         }
 
