@@ -97,7 +97,7 @@ for (let row = 10; row <= 13; row++) {
   }
 }
 
-// safe colored places 
+// start cell colored places 
 layout[6][1] = "#ef4444";
 layout[1][8] = "#22c55e";
 layout[8][13] = "#facc15";

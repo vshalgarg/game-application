@@ -1,66 +1,23 @@
-const CenterHome = () => {
+const clipPaths = {
+  top: "polygon(50% 50%, 0 0, 100% 0)",
+  right: "polygon(50% 50%, 100% 0, 100% 100%)",
+  bottom: "polygon(50% 50%, 0 100%, 100% 100%)",
+  left: "polygon(50% 50%, 0 0, 0 100%)",
+};
+
+const CenterHome = ({ centerArea, colors }) => {
   return (
     <div className="relative w-full h-full">
-
-      {/* Top Green Triangle */}
-      <div
-        className="
-          absolute
-          top-0
-          left-0
-          w-full
-          h-full
-          bg-green-500
-        "
-        style={{
-          clipPath: "polygon(50% 50%, 0 0, 100% 0)",
-        }}
-      />
-
-      {/* Right Yellow Triangle */}
-      <div
-        className="
-          absolute
-          top-0
-          left-0
-          w-full
-          h-full
-          bg-yellow-400
-        "
-        style={{
-          clipPath: "polygon(50% 50%, 100% 0, 100% 100%)",
-        }}
-      />
-
-      {/* Bottom Blue Triangle */}
-      <div
-        className="
-          absolute
-          top-0
-          left-0
-          w-full
-          h-full
-          bg-blue-500
-        "
-        style={{
-          clipPath: "polygon(50% 50%, 0 100%, 100% 100%)",
-        }}
-      />
-
-      {/* Left Red Triangle */}
-      <div
-        className="
-          absolute
-          top-0
-          left-0
-          w-full
-          h-full
-          bg-red-500
-        "
-        style={{
-          clipPath: "polygon(50% 50%, 0 0, 0 100%)",
-        }}
-      />
+      {centerArea.triangles.map((triangle, index) => (
+        <div
+          key={index}
+          className="absolute inset-0"
+          style={{
+            backgroundColor: colors[triangle.colorIndex],
+            clipPath: clipPaths[triangle.clip],
+          }}
+        />
+      ))}
     </div>
   );
 };

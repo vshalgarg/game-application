@@ -7,53 +7,36 @@ import { useState } from "react";
 const Home = () => {
   const navigate = useNavigate();
   const { showSnackbar } = useSnackbar();
-  // const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // const handleCreateRoom = async () => {
-  //   if (loading) return;
+  const handleCreateRoom = async () => {
+    if (loading) return;
 
-  //   setLoading(true);
+    setLoading(true);
 
-  //   try {
-  //     const storedAuth = JSON.parse(localStorage.getItem("user"));
-  //     const hostUserId = storedAuth?.userId;
+    try {
+      const storedAuth = JSON.parse(localStorage.getItem("user"));
+      const hostUserId = storedAuth?.userId;
 
-  //     const res = await createRoom({
-  //       tenantId: "test-1",
-  //       userId: hostUserId,
-  //       gameType: "LUDO",
-  //       matchType: "PVP",
-  //     });
+      const res = await createRoom({
+        tenantId: "test-1",
+        userId: hostUserId,
+        gameType: "LUDO",
+        matchType: "PVP",
+      });
 
-  //     showSnackbar(res.message, "success");
+      showSnackbar(res.message, "success");
 
-  //     const roomCode = res.data.roomCode;
+      const roomCode = res.data.roomCode;
 
-  //     navigate(`/ludowaiting-room/${roomCode}`);
-  //   } catch (error) {
-  //     console.error("Failed to create room:", error);
-  //     showSnackbar(error.message || "Failed to create room", "error");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  const [roomCode, setRoomCode] = useState("");
-
-const handleCreateRoom = () => {
-  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let code = "";
-
-  for (let i = 0; i < 6; i++) {
-    code += characters.charAt(
-      Math.floor(Math.random() * characters.length)
-    );
-  }
-navigate(`/ludowaiting-room/${roomCode}`);
-  setRoomCode(code);
-};
-
-
+      navigate(`/ludowaiting-room/${roomCode}`);
+    } catch (error) {
+      console.error("Failed to create room:", error);
+      showSnackbar(error.message || "Failed to create room", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div
@@ -111,8 +94,7 @@ navigate(`/ludowaiting-room/${roomCode}`);
         <div className="flex flex-col gap-5">
           {/* Create Room Button */}
           <GameButton
-            // title={loading ? "Creating..." : "Create Room"}
-            title = "Create Room"
+            title={loading ? "Creating..." : "Create Room"}
             color="
               bg-blue-500
               hover:bg-blue-600
@@ -129,7 +111,7 @@ navigate(`/ludowaiting-room/${roomCode}`);
               hover:bg-purple-600
               shadow-purple-500/40
             "
-            onClick={() => navigate("/join-room")}
+            onClick={() => navigate("/ludojoin-room")}
           />
         </div>
       </div>

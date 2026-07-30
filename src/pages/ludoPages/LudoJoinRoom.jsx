@@ -32,10 +32,10 @@ const JoinRoom = () => {
           showSnackbar(res.message, "success");
           console.log("Joined room:", res);   // res stores the response of the join api 
 
-          navigate(`/waiting-room/${roomCode}`);
-          } catch (err) {
-            showSnackbar(err.res?.message || "Failed to join room.","error");
-            console.error("Failed to join room:", err);
+          navigate(`/ludowaiting-room/${roomCode}`);
+          } catch (error) {
+            showSnackbar(error.res?.message || "Failed to join room.","error");
+            console.error("Failed to join room:", error);
           }
 };
 
@@ -44,7 +44,6 @@ const handleSubmit = async (e) => {
   e.preventDefault();
   await handleJoinRoom();
 };
-
 
   return (
     <div className="
@@ -89,6 +88,7 @@ const handleSubmit = async (e) => {
           Enter room ID to join the game
         </p>
 
+        <form onSubmit={handleSubmit}>
         <input
           type="text"
           placeholder="Enter Room ID"
@@ -118,8 +118,9 @@ const handleSubmit = async (e) => {
             hover:bg-blue-600
             shadow-blue-500/40
           "
-          onClick={handleJoinRoom}
+          type="submit"
         />
+        </form>
 
       </div>
 

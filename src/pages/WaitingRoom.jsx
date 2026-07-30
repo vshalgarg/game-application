@@ -48,7 +48,7 @@ const currentUserId = storedAuth?.userId;
         roomCode,
         userId : currentUserId,
       });
-
+      
       showSnackbar(result.message, "success");
       
     } catch (error) {
@@ -59,7 +59,7 @@ const currentUserId = storedAuth?.userId;
 
   const currentPlayer = players.find((player) => player.user_id === currentUserId);
 
-console.log("currentPlayer ", currentPlayer)
+  console.log("currentPlayer ", currentPlayer)
 
   const isHost = currentPlayer?.role === "HOST";  // host can start game only (currentPlayer == HOST)
   console.log("isHost ", isHost)

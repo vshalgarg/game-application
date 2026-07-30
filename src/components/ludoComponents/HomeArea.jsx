@@ -1,38 +1,39 @@
-const HomeArea = ({ color }) => {
-  return (
+import Token from "./Token";
+
+const HomeArea = ({ color, tokens = [], selectedToken, setSelectedToken, handleTokenClick,}) => {
+  return ( 
     <div
       className="
         w-full
         h-full
         bg-white
-        border-1
+        rounded-lg
+        border
         border-gray-500
-        rounded-sm
-        p-4
         grid
         grid-cols-2
-        gap-4
+        grid-rows-2
+        place-items-center
       "
     >
-      <div
-        className="rounded-full border-1"
-        style={{ backgroundColor: color }}
-      />
-
-      <div
-        className="rounded-full border-1"
-        style={{ backgroundColor: color }}
-      />
-
-      <div
-        className="rounded-full border-1"
-        style={{ backgroundColor: color }}
-      />
-
-      <div
-        className="rounded-full border-1"
-        style={{ backgroundColor: color }}
-      />
+      {tokens.map((token) => (
+        <div
+          key={token.tokenId}
+          className="w-full h-full flex items-center justify-center"
+        >
+          {token.state === "BASE" && (
+            <Token
+              color={color}
+              selected={selectedToken === token.tokenId}
+              onHandleClick={() => {
+               console.log("Base token clicked");
+                setSelectedToken(token.tokenId);
+                handleTokenClick(token.tokenId);
+  }}
+/>
+          )}
+        </div>
+      ))}
     </div>
   );
 };
