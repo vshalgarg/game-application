@@ -12,8 +12,10 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -46,12 +48,21 @@ public class BoardLoaderImpl implements BoardLoader {
                     })
                     .collect(Collectors.toList());
 
+            Map<Integer, List<Integer>> baseCells = flatGrid.stream()
+                    .filter(cell -> "S".equals(cell.getType()) && cell.getTokenColorIndex() != null)
+                    .collect(Collectors.groupingBy(
+                            Grid::getTokenColorIndex,
+                            Collectors.mapping(Grid::getId, Collectors.toList())
+                    ));
+            baseCells.values().forEach(Collections::sort);
+
             // Step 3: build the clean BoardLayout your services use
             boardLayout = new BoardLayout();
             boardLayout.setMetadata(raw.getMetadata());
             boardLayout.setCenterArea(raw.getCenterArea());
             boardLayout.setGrid(flatGrid);
             boardLayout.setPaths(raw.getPaths());
+            boardLayout.setBaseCells(baseCells); // NEW
 
             log.info(
                     "[BOARD_LOADED] File:{} Grid:{} Paths:{}",

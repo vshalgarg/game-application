@@ -14,4 +14,5 @@ public class TokenDTO {
     private TokenStateEnum state;
     private Integer pathIndex;
     private Integer baseSlot;
+    private Integer baseSlotId;
 }

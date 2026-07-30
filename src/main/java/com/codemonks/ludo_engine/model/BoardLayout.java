@@ -10,4 +10,5 @@ public class BoardLayout {
     private CenterArea centerArea;
     private List<Grid> grid;
     private Map<Integer, List<Integer>> paths;
+    private Map<Integer, List<Integer>> baseCells; // NEW
 }
