@@ -9,10 +9,10 @@ import java.util.Set;
 public interface BoardService {
 
     BoardLayout getBoard();
-
     List<String> getColors();
     Grid getCell(Integer cellId);
     List<Integer> getPath(Integer colorIndex);
     Set<Integer> getSafeCells();
     Integer getBaseSlotId(Integer colorIndex, Integer baseSlot);
+    Integer getPathCellId(Integer colorIndex, Integer pathIndex);
 }

@@ -13,6 +13,8 @@ public class TokenDTO {
     private Long tokenId;
     private TokenStateEnum state;
     private Integer pathIndex;
+    private Integer pathId;
     private Integer baseSlot;
     private Integer baseSlotId;
+
 }

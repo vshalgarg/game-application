@@ -65,7 +65,6 @@ public class TokenMovementServiceImpl implements TokenMovementService {
                 }
 
                 // BASE -> TRACK
-                // BASE -> TRACK
                 if (token.getState() == TokenStateEnum.BASE) {
 
                     if (consumedDice != 6) {
@@ -74,6 +73,14 @@ public class TokenMovementServiceImpl implements TokenMovementService {
 
                     token.setState(TokenStateEnum.TRACK);
                     token.setPathIndex(0);
+                   // consumePendingDiceByIndex(player, consumedDice);
+                    Integer colorIndex = pathOrderService.getPathOrder(
+                            gameState,
+                            player.getPlayerId()
+                    );
+
+                    List<Integer> path = boardService.getPath(colorIndex);
+                    token.setPathId(path.get(0)); // NEW
 
                     consumePendingDiceByIndex(player, consumedDice);
 
@@ -93,14 +100,13 @@ public class TokenMovementServiceImpl implements TokenMovementService {
                         throw new InvalidMoveException(INVALID_MOVE);
                     }
 
-                    Integer colorIndex =
-                            pathOrderService.getPathOrder(
+                    Integer colorIndex = pathOrderService.getPathOrder(
                                     gameState,
                                     player.getPlayerId()
                             );
 
-                    List<Integer> path =
-                            boardService.getPath(colorIndex);
+                    List<Integer> path = boardService.getPath(colorIndex);
+
                     log.info(
                             "[TRACK_MOVE_STARTED] Player:{} Token:{} CurrentPathIndex:{} Dice:{}",
                             playerId,
@@ -127,10 +133,11 @@ public class TokenMovementServiceImpl implements TokenMovementService {
                         consumePendingDiceByIndex(player, consumedDice);
 
                         log.info(
-                                "[TOKEN_FINISHED] Player:{} Token:{} PathIndex:{}",
+                                "[TOKEN_FINISHED] Player:{} Token:{} PathIndex:{}  PathId:{} ",
                                 playerId,
                                 tokenId,
-                                newPathIndex
+                                newPathIndex,
+                                token.getPathId()
                         );
 
                         return gameState;
@@ -138,15 +145,16 @@ public class TokenMovementServiceImpl implements TokenMovementService {
 
                     // Normal movement
                     token.setPathIndex(newPathIndex);
-
+                    token.setPathId(path.get(newPathIndex));
                     consumePendingDiceByIndex(player, consumedDice);
 
                     log.info(
-                            "[TRACK_MOVED] Player:{} Token:{} FromPathIndex:{} ToPathIndex:{}",
+                            "[TRACK_MOVED] Player:{} Token:{} FromPathIndex:{} ToPathIndex:{} PathId:{}",
                             playerId,
                             tokenId,
                             currentPathIndex,
-                            newPathIndex
+                            newPathIndex,
+                            token.getPathId()
                     );
 
                     return gameState;
@@ -176,16 +184,13 @@ public class TokenMovementServiceImpl implements TokenMovementService {
             Integer consumedDice
     ) {
 
-        boolean removed =
-                player.getPendingDice()
+        boolean removed = player.getPendingDice()
                         .remove(consumedDice);
 
-        log.info(
-                "[BUFFER_UPDATED] RemovedDice:{} Success:{} Remaining:{}",
+        log.info("[BUFFER_UPDATED] RemovedDice:{} Success:{} Remaining:{}",
                 consumedDice,
                 removed,
                 player.getPendingDice()
         );
     }
-
 }

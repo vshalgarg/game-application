@@ -60,7 +60,6 @@
                     .map(Grid::getId)
                     .collect(Collectors.toSet());
         }
-
         @Override
         public Integer getBaseSlotId(Integer colorIndex, Integer baseSlot) {
             Map<Integer, List<Integer>> baseCells = boardLoader.getBoardLayout().getBaseCells();
@@ -68,6 +67,14 @@
             List<Integer> slots = baseCells.get(colorIndex);
             if (slots == null || baseSlot == null || baseSlot >= slots.size()) return null;
             return slots.get(baseSlot);
+        }
+        @Override
+        public Integer getPathCellId(Integer colorIndex, Integer pathIndex) {
+            List<Integer> path = getPath(colorIndex);
+            if (path == null || pathIndex == null || pathIndex < 0 || pathIndex >= path.size()) {
+                return null;
+            }
+            return path.get(pathIndex);
         }
 
 }
