@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -108,7 +109,6 @@ public class KillRuleServiceImpl implements KillRuleService {
             result.setGameState(gameState);
             return result;
         }
-
         for (PlayerDTO player : gameState.getPlayers()) {
             if (player.getPlayerId().equals(playerId)) {
                 continue;
@@ -117,37 +117,56 @@ public class KillRuleServiceImpl implements KillRuleService {
             List<Integer> victimPath = boardService.getPath(player.getColorIndex());
 
             if (victimPath == null || victimPath.isEmpty()) {
-
                 log.error("[BOARD_PATH_NOT_FOUND] ColorIndex:{}", player.getColorIndex());
                 result.setGameState(gameState);
                 return result;
             }
+
+            // Collect all of this player's tokens sitting on currentCellId
+            List<TokenDTO> tokensOnCell = new ArrayList<>();
             for (TokenDTO token : player.getTokens()) {
-                if (token.getState() != TokenStateEnum.TRACK
-                        || token.getPathIndex() == null) {
+                if (token.getState() != TokenStateEnum.TRACK || token.getPathIndex() == null) {
                     continue;
                 }
                 if (token.getPathIndex() >= victimPath.size()) {
                     continue;
                 }
-
                 Integer victimCellId = victimPath.get(token.getPathIndex());
-                if (!victimCellId.equals(currentCellId)) {
-                    continue;
+                if (victimCellId.equals(currentCellId)) {
+                    tokensOnCell.add(token);
                 }
+            }
+
+            // Blocked — 2+ same-color tokens stacked = safe, no kill
+            if (tokensOnCell.size() >= 2) {
+                log.info(
+                        "[BLOCKED_CELL] Cell:{} Player:{} TokenCount:{} — kill not allowed",
+                        currentCellId, player.getPlayerId(), tokensOnCell.size()
+                );
+                continue;
+            }
+
+            if (tokensOnCell.size() == 1) {
+                TokenDTO token = tokensOnCell.get(0);
+
+                // NEW: snapshot journey before reset
+                List<Integer> journeySnapshot = token.getTokenJourney() != null
+                        ? new ArrayList<>(token.getTokenJourney())
+                        : new ArrayList<>();
+                result.setKilledTokenJourney(journeySnapshot);
 
                 token.setState(TokenStateEnum.BASE);
                 token.setPathIndex(null);
+                token.setPathId(null);
+                token.setTokenJourney(new ArrayList<>()); // reset for next run
 
                 result.setTokenKilled(true);
                 result.setKilledPlayerId(player.getPlayerId());
                 result.setKilledTokenId(token.getTokenId());
 
                 log.info(
-                        "[TOKEN_KILLED] VictimPlayer:{} VictimToken:{} Cell:{}",
-                        player.getPlayerId(),
-                        token.getTokenId(),
-                        currentCellId
+                        "[TOKEN_KILLED] VictimPlayer:{} VictimToken:{} Cell:{} Journey:{}",
+                        player.getPlayerId(), token.getTokenId(), currentCellId, journeySnapshot
                 );
 
                 result.setGameState(gameState);
