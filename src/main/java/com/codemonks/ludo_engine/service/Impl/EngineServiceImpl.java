@@ -207,6 +207,37 @@ public class EngineServiceImpl implements EngineService {
                         tokenFinished
                 );
 
+        // ── Recheck remaining pendingDice for legal moves before deciding turn rotation
+        PlayerDTO moverPlayer = null;
+        for (PlayerDTO player : updatedGameState.getPlayers()) {
+            if (player.getPlayerId().equals(request.getUserId())) {
+                moverPlayer = player;
+                break;
+            }
+        }
+
+        if (moverPlayer != null
+                && moverPlayer.getPendingDice() != null
+                && !moverPlayer.getPendingDice().isEmpty()) {
+
+            List<LegalMoveDTO> remainingLegalMoves = computeLegalMoves(
+                    updatedGameState,
+                    moverPlayer,
+                    moverPlayer.getPendingDice()
+            );
+
+            if (remainingLegalMoves.isEmpty()) {
+                log.info(
+                        "[NO_LEGAL_MOVE_FOR_PENDING_DICE] Player:{} PendingDice:{} — clearing dice buffer",
+                        request.getUserId(),
+                        moverPlayer.getPendingDice()
+                );
+                moverPlayer.getPendingDice().clear();
+            }
+        }
+
+
+
         updatedGameState = turnRotationService.updateTurn(
                         updatedGameState,
                         request.getUserId(),
