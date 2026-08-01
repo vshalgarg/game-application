@@ -284,6 +284,16 @@ public class EngineServiceImpl implements EngineService {
         // ── Wrap game state in "board" for frontend, persist to Supabase
         Map<String, Object> moveBoardWrapped = new HashMap<>();
         moveBoardWrapped.put("board", persistedStateMap);
+        // Only attach killInfo when a kill actually happened this move
+        if (killResult.isTokenKilled()) {
+            Map<String, Object> killInfo = new HashMap<>();
+            killInfo.put("tokenKilled", true);
+            killInfo.put("killedPlayerId", killResult.getKilledPlayerId());
+            killInfo.put("killedTokenId", killResult.getKilledTokenId());
+            killInfo.put("killedTokenJourney", killResult.getKilledTokenJourney());
+            moveBoardWrapped.put("killInfo", killInfo);
+        }
+
         RealtimeGameStateDTO updatedRealtimeState = RealtimeGameStateDTO.builder()
                 .roomId(request.getRoomId())
                 .roomCode(request.getRoomCode())
