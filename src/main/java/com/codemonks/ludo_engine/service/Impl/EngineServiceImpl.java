@@ -119,6 +119,15 @@ public class EngineServiceImpl implements EngineService {
         Object boardObj = rawState.get("board");
         Map<String, Object> gameStateMap = boardObj instanceof Map ? (Map<String, Object>) boardObj : rawState;
         GameStateDTO gameState = objectMapper.convertValue(gameStateMap, GameStateDTO.class);
+
+        for (PlayerDTO player : gameState.getPlayers()) {
+            for (TokenDTO token : player.getTokens()) {
+                if (Boolean.TRUE.equals(token.getTokenKilled())) {
+                    token.setTokenKilled(false);
+                    token.setBackwardJourney(new ArrayList<>());
+                }
+            }
+        }
         Long tokenId = getTokenId(request);
         // NEW - Extract consumed dice from request once
         Integer consumedDice = ((Number) request.getMoveData()
@@ -365,6 +374,14 @@ public class EngineServiceImpl implements EngineService {
 
         GameStateDTO gameState = objectMapper.convertValue(gameStateMap, GameStateDTO.class);
 
+        for (PlayerDTO player : gameState.getPlayers()) {
+            for (TokenDTO token : player.getTokens()) {
+                if (Boolean.TRUE.equals(token.getTokenKilled())) {
+                    token.setTokenKilled(false);
+                    token.setBackwardJourney(new ArrayList<>());
+                }
+            }
+        }
         log.info(
                 "[STATE_LOADED] Room:{} Turn:{} Stage:{}",
                 realtimeState.getRoomId(),
