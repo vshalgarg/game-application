@@ -88,7 +88,7 @@ public class TokenMovementServiceImpl implements TokenMovementService {
                         journey.add(token.getBaseSlotId());
                     }
                     journey.add(path.get(0));
-                    token.setTokenJourney(journey);
+                    token.setForwardJourney(journey);
 
                     consumePendingDiceByIndex(player, consumedDice);
 
@@ -97,7 +97,7 @@ public class TokenMovementServiceImpl implements TokenMovementService {
                             playerId,
                             tokenId,
                             token.getPathIndex(),
-                            token.getTokenJourney()
+                            token.getForwardJourney()
                     );
 
                     return gameState;
@@ -122,7 +122,7 @@ public class TokenMovementServiceImpl implements TokenMovementService {
                             tokenId,
                             token.getPathIndex(),
                             consumedDice,
-                            token.getTokenJourney()
+                            token.getForwardJourney()
                     );
 
                     if (path == null || path.isEmpty()) {
@@ -136,14 +136,14 @@ public class TokenMovementServiceImpl implements TokenMovementService {
                         throw new InvalidMoveException(INVALID_MOVE);
                     }
                     // Append every intermediate cell crossed this move — THE FIX
-                    List<Integer> journey = token.getTokenJourney();
+                    List<Integer> journey = token.getForwardJourney();
                     if (journey == null) {
                         journey = new ArrayList<>();
                     }
                     for (int i = currentPathIndex + 1; i <= newPathIndex; i++) {
                         journey.add(path.get(i));
                     }
-                    token.setTokenJourney(journey);
+                    token.setForwardJourney(journey);
 
                     // Token reached goal
                     if (newPathIndex == path.size() - 1) {
@@ -158,7 +158,7 @@ public class TokenMovementServiceImpl implements TokenMovementService {
                                 tokenId,
                                 newPathIndex,
                                 token.getPathId(),
-                                token.getTokenJourney()
+                                token.getForwardJourney()
                         );
 
                         return gameState;
