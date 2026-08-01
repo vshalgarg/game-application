@@ -18,5 +18,7 @@ public class TokenDTO {
     private Integer pathId;
     private Integer baseSlot;
     private Integer baseSlotId;
-    private List<Integer> tokenJourney;
+    private Boolean tokenKilled;
+    private List<Integer> forwardJourney;
+    private List<Integer> backwardJourney;
 }

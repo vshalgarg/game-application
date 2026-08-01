@@ -150,22 +150,25 @@ public class KillRuleServiceImpl implements KillRuleService {
                 TokenDTO token = tokensOnCell.get(0);
 
                 // NEW: snapshot journey before reset
-                List<Integer> journeySnapshot = token.getTokenJourney() != null
-                        ? new ArrayList<>(token.getTokenJourney())
+                List<Integer> journeySnapshot = token.getForwardJourney() != null
+                        ? new ArrayList<>(token.getForwardJourney())
                         : new ArrayList<>();
-                result.setKilledTokenJourney(journeySnapshot);
+
+                token.setTokenKilled(true);
+                token.setBackwardJourney(journeySnapshot);
+
 
                 token.setState(TokenStateEnum.BASE);
                 token.setPathIndex(null);
                 token.setPathId(null);
-                token.setTokenJourney(new ArrayList<>()); // reset for next run
+                token.setForwardJourney(new ArrayList<>()); // reset for next run
 
                 result.setTokenKilled(true);
                 result.setKilledPlayerId(player.getPlayerId());
                 result.setKilledTokenId(token.getTokenId());
 
                 log.info(
-                        "[TOKEN_KILLED] VictimPlayer:{} VictimToken:{} Cell:{} Journey:{}",
+                        "[TOKEN_KILLED] VictimPlayer:{} VictimToken:{} Cell:{} backwardJourney:{}",
                         player.getPlayerId(), token.getTokenId(), currentCellId, journeySnapshot
                 );
 

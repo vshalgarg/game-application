@@ -107,8 +107,10 @@ public class GameSetupServiceImpl implements GameSetupService {
             token.setPathIndex(null);
             token.setBaseSlot(i);
             token.setBaseSlotId(boardService.getBaseSlotId(colorIndex, i));
-            token.setTokenJourney(new ArrayList<>());
+            token.setForwardJourney(new ArrayList<>());
+            token.setTokenKilled(false);
             tokenList.add(token);
+            token.setBackwardJourney(new ArrayList<>());
         }
 
         return tokenList;
