@@ -148,6 +148,7 @@ public class TokenMovementServiceImpl implements TokenMovementService {
                     // Token reached goal
                     if (newPathIndex == path.size() - 1) {
                         token.setPathIndex(newPathIndex);
+                        token.setPathId(path.get(newPathIndex));
                         token.setState(TokenStateEnum.FINISHED);
                         consumePendingDiceByIndex(player, consumedDice);
 
