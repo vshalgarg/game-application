@@ -2,7 +2,7 @@ import Token from "./Token";
 import LudoCell from "./LudoCell";
 import CenterHome from "./CenterHome";
 
-const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, handleTokenClick, legalMoves}) => {
+const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, handleTokenClick, legalMoves, movableTokenIds,}) => {
   if (!boardData) 
     return null;
 
@@ -51,37 +51,6 @@ const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, hand
   return null;
 };
 
-//   const getTrackTokenAtCell = (cell) => {
-
-//   if (!gameState?.board?.players)
-//     return null;
-
-//   for (const player of gameState.board.players) {
-
-//     const playerPath = paths?.[player.colorIndex];
-//     if (!playerPath)
-//       continue;
-
-//     const token = player.tokens.find((token) => {
-
-//       if (token.state !== "TRACK")
-//         return false;
-
-//       const actualCellId = playerPath[token.pathIndex];
-//       return actualCellId === cell.cellId;
-//     });
-
-//     if (token) {
-
-//       return {
-//         token,
-//         color: colors[player.colorIndex]
-//       };
-//     }
-//   }
-//   return null;
-// };
-
     const getTrackTokenAtCell = (cell) => {
 
   if (!gameState?.board?.players)
@@ -113,8 +82,7 @@ const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, hand
       >
         {cells.map((cell) => {
           const tokenData = getTokenAtCell(cell) || getTrackTokenAtCell(cell);
-          const canMove = tokenData?.token ? legalMoves?.some( move => move.tokenId === tokenData.token.tokenId) : false;
-          // const canMove = legalMoves?.some( move => move.tokenId === tokenData.token.tokenId);
+          const isMovable = tokenData?.token? movableTokenIds.includes(tokenData.token.tokenId): false;
           return (
             <div
               key={cell.cellId}
@@ -122,17 +90,9 @@ const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, hand
             >
               <LudoCell
                 type={cell.type}
-                color={
-                  cell.colorIndex != null
-                    ? colors[cell.colorIndex]
-                    : undefined
-                }
+                color={cell.colorIndex != null ? colors[cell.colorIndex] : undefined}
                 arrowDirection={cell.arrowDirection}
-                arrowColor={
-                  cell.arrowColorIndex != null
-                    ? colors[cell.arrowColorIndex]
-                    : undefined
-                }
+                arrowColor={cell.arrowColorIndex != null ? colors[cell.arrowColorIndex] : undefined}
               />
 
               {tokenData && (
@@ -140,12 +100,15 @@ const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, hand
                   <Token
                     color={tokenData.color}
                     selected={selectedToken === tokenData.token.tokenId}
-                    onHandleClick={() => {
-                      if(!canMove) 
-                        return;
-                      setSelectedToken(tokenData.token.tokenId);
-                      handleTokenClick(tokenData.token.tokenId);
-                    }}
+                    isMovable={isMovable}
+                    onHandleClick={
+                      isMovable
+                        ? () => {
+                            setSelectedToken(tokenData.token.tokenId);
+                            handleTokenClick(tokenData.token.tokenId);
+                          }
+                        : undefined
+                    }
                   />
                 </div>
               )}
