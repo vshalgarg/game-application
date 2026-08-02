@@ -58,7 +58,7 @@ const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, hand
 
   for (const player of gameState.board.players) {
 
-    const token = player.tokens.find(token => token.state === "TRACK" && token.pathId === cell.cellId);
+    const token = player.tokens.find(token =>(token.state === "TRACK" || token.state === "FINISHED") && token.pathId === cell.cellId);
 
     if (token) {
       return {
@@ -147,6 +147,3 @@ const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, hand
 };
 
 export default LudoBoard;
-
-
-

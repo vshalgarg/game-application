@@ -184,7 +184,7 @@ const LudoGameRoom = () => {
       }
       
       // FORWARD ANIMATION 
-      if (currentToken.state === "TRACK" && latestToken.state === "TRACK" && !latestToken.tokenKilled) {
+      if (currentToken.state === "TRACK" && (latestToken.state === "TRACK" || latestToken.state === "FINISHED") && !latestToken.tokenKilled) {
 
         const previousLength = currentToken.forwardJourney?.length ?? 0;
         const journey = latestToken.forwardJourney ?? [];

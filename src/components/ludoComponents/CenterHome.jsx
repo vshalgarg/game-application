@@ -11,7 +11,8 @@ const CenterHome = ({ centerArea, colors }) => {
       {centerArea.triangles.map((triangle, index) => (
         <div
           key={index}
-          className="absolute -z-10"
+          // className="absolute -z-10"
+          className="absolute inset-0"
           style={{
             backgroundColor: colors[triangle.colorIndex],
             clipPath: clipPaths[triangle.clip],
