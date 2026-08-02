@@ -2,9 +2,10 @@
 FROM node:24-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN npm ci 
 COPY . .
-RUN npm run build:dev
+ARG BUILD_MODE=production
+RUN npm run build -- --mode=$BUILD_MODE
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
