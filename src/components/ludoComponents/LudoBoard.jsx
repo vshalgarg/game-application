@@ -18,23 +18,23 @@ const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, hand
     .sort((a, b) => a.cellId - b.cellId);
 
   // Temporary: Show BASE tokens on Slot cells
- const getTokenAtCell = (cell) => {
-  if (!gameState?.board?.players)
-    return null;
-
-  // BASE SLOT TOKENS
-  if (cell.type === "S") {
-      console.log(cell);
-    if (cell.tokenColorIndex == null)
+  const getTokenAtCell = (cell) => {
+    if (!gameState?.board?.players)
       return null;
 
-    const player = gameState.board.players.find(player => player.colorIndex === cell.tokenColorIndex);
-    console.log("color index",cell.colorIndex); 
-    console.log("cell tokencolorindex",cell.tokenColorIndex);
-    console.log("player:",player);
+    // BASE SLOT TOKENS
+    if (cell.type === "S") {
+        console.log(cell);
+      if (cell.tokenColorIndex == null)
+        return null;
 
-    if (!player)
-      return null;
+      const player = gameState.board.players.find(player => player.colorIndex === cell.tokenColorIndex);
+      console.log("color index",cell.colorIndex); 
+      console.log("cell tokencolorindex",cell.tokenColorIndex);
+      console.log("player:",player);
+
+      if (!player)
+        return null;
 
     const token = player.tokens.find(token => token.state === "BASE" && token.baseSlotId === cell.cellId);
     console.log("slot:",cell.slotIndex);
@@ -84,9 +84,14 @@ const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, hand
         }}
       >
         {cells.map((cell) => {
+          
           const baseToken = getTokenAtCell(cell);
           const trackTokens = getTrackTokenAtCell(cell);
+          if (cell.cellId === 113) {
+            console.log("trackTokens:", trackTokens);
+          }
           const tokensToRender = baseToken ? [baseToken] : trackTokens;
+          
           return (
             <div
               key={cell.cellId}
@@ -102,8 +107,10 @@ const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, hand
               {tokensToRender.length > 0 && (
           <div className="absolute inset-0 flex items-center justify-center">
             {tokensToRender.map((tokenData, index) => {
+              console.log("Rendering", tokenData.token.pathId);
 
               const isMovable = movableTokenIds.includes(tokenData.token.tokenId);
+              const isOverlapping = tokensToRender.length > 1;
 
               const offsets = [
                 { x: 0, y: 0 },
@@ -118,15 +125,14 @@ const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, hand
               return (
                 <div
                   key={`${tokenData.token.tokenId}-${index}`}
-                  style={{
-                    position: "absolute",
-                    transform: `translate(${offset.x}px, ${offset.y}px)`,
-                  }}
+                  className="absolute z-[999]"
+                  style={{transform: `translate(${offset.x}px, ${offset.y}px)`,}}
                 >
                   <Token
                     color={tokenData.color}
                     selected={selectedToken === tokenData.token.tokenId}
                     isMovable={isMovable}
+                    isOverlapping={isOverlapping}
                     onHandleClick={
                       isMovable
                         ? () => {

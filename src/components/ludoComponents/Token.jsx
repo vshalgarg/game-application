@@ -1,4 +1,4 @@
-const Token = ({color, selected = false, onHandleClick, isMovable = false,}) => {
+const Token = ({color, selected = false, onHandleClick, isMovable = false, isOverlapping = false,}) => {
 
   return (
   <div
@@ -6,13 +6,16 @@ const Token = ({color, selected = false, onHandleClick, isMovable = false,}) => 
     className={`
       relative
       z-[100]
-      w-5
-      h-6
       flex
       items-center
       justify-center
       transition-all
       duration-200
+      ${
+    isOverlapping
+      ? "w-4 h-5"
+      : "w-5 h-6"
+  }
       ${
         isMovable
           ? "cursor-pointer scale-110"
