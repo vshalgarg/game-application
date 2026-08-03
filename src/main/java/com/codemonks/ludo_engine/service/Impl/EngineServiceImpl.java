@@ -218,11 +218,18 @@ public class EngineServiceImpl implements EngineService {
 
         // ── Recheck remaining pendingDice for legal moves before deciding turn rotation
         PlayerDTO moverPlayer = null;
+
         for (PlayerDTO player : updatedGameState.getPlayers()) {
             if (player.getPlayerId().equals(request.getUserId())) {
                 moverPlayer = player;
                 break;
             }
+        }
+
+        if (extraTurn && moverPlayer != null) {
+            moverPlayer.setPendingExtraTurn(true);
+
+            log.info("[BONUS_STORED] Player:{} Bonus turn pending.", request.getUserId());
         }
 
         if (moverPlayer != null
