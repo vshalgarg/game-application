@@ -211,7 +211,7 @@ public class EngineServiceImpl implements EngineService {
             );
         }
         boolean extraTurn = extraTurnService.hasExtraTurn(
-                        consumedDice,
+
                         killResult.isTokenKilled(),
                         tokenFinished
                 );
@@ -226,10 +226,15 @@ public class EngineServiceImpl implements EngineService {
             }
         }
 
-        if (extraTurn && moverPlayer != null) {
+        if (moverPlayer != null
+                && (killResult.isTokenKilled() || tokenFinished)) {
+
             moverPlayer.setPendingExtraTurn(true);
 
-            log.info("[BONUS_STORED] Player:{} Bonus turn pending.", request.getUserId());
+            log.info(
+                    "[BONUS_STORED] Player:{} Bonus turn earned from kill/home.",
+                    request.getUserId()
+            );
         }
 
         if (moverPlayer != null
