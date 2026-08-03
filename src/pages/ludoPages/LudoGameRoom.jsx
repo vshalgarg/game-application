@@ -35,30 +35,22 @@ const LudoGameRoom = () => {
     if (!previousBoardRef.current) {
 
       previousBoardRef.current = structuredClone(board);
-
       setGameState(game.game_state_data);
 
     }
 
     else if (!animatingRef.current) {
-
-      await animateBoard(
-        previousBoardRef.current,
-        board
-      );
-
+      await animateBoard(previousBoardRef.current,board);
       previousBoardRef.current = structuredClone(board);
-
     }
 
     setCurrentTurnUserId(game.current_turn_user_id);
     setWinnerUserId(game.winner_user_id);
     setStatus(game.game_status);
     setDiceValue(board.lastDice);
-
   }
-
 });
+
   const board = gameState?.board;
   const legalMoves = board?.legalMoves ?? [];
   const playerTurnStage = board?.playerTurnStage;
@@ -66,6 +58,7 @@ const LudoGameRoom = () => {
   const pendingDice = currentPlayer?.pendingDice ?? [];
   const isMyTurn = currentTurnUserId === currentUserId;
   const canRoll = isMyTurn && playerTurnStage === "ROLL_DICE" && !rolling;
+  const movableTokenIds = isMyTurn && playerTurnStage === "TOKEN_MOVE" ? legalMoves.map(move => move.tokenId): [];
 
   // Dice position according to player color
   const dicePositions = {
@@ -154,7 +147,6 @@ const LudoGameRoom = () => {
   const animateBoard = async (oldBoard, newBoard) => {
 
   animatingRef.current = true;
-
   const board = structuredClone(oldBoard);
 
   for (const latestPlayer of newBoard.players) {
@@ -165,63 +157,104 @@ const LudoGameRoom = () => {
 
     for (const latestToken of latestPlayer.tokens) {
 
-      const currentToken = currentPlayer.tokens.find(
-        t => t.tokenId === latestToken.tokenId
-      );
+      const currentToken = currentPlayer.tokens.find(t => t.tokenId === latestToken.tokenId);
 
       if (!currentToken) continue;
 
-      // BASE -> TRACK
-      if (
-        currentToken.state === "BASE" &&
-        latestToken.state === "TRACK"
-      ) {
+      // BASE -> TRACK //
+      if (currentToken.state === "BASE" && latestToken.state === "TRACK") {
 
         currentToken.state = "TRACK";
         currentToken.pathId = latestToken.pathId;
-        currentToken.tokenJourney = latestToken.tokenJourney;
+        currentToken.pathIndex = latestToken.pathIndex;
+        currentToken.forwardJourney = latestToken.forwardJourney ?? [];
+        currentToken.backwardJourney = latestToken.backwardJourney ?? [];
+        currentToken.tokenKilled = latestToken.tokenKilled;
 
         setGameState(prev => ({
           ...prev,
           board: structuredClone(board)
         }));
 
-        await new Promise(r => setTimeout(r, 180));
+        await new Promise(resolve =>
+          setTimeout(resolve, 180)
+        );
 
         continue;
       }
+      
+      // FORWARD ANIMATION 
+      if (currentToken.state === "TRACK" && (latestToken.state === "TRACK" || latestToken.state === "FINISHED") && !latestToken.tokenKilled) {
 
-      // TRACK MOVEMENT
-
-      if (
-        currentToken.state === "TRACK" &&
-        latestToken.state === "TRACK"
-      ) {
-
-        const prevLength = currentToken.tokenJourney?.length ?? 0;
-        const fullJourney = latestToken.tokenJourney ?? [];
-        const newSteps = fullJourney.slice(prevLength);
+        const previousLength = currentToken.forwardJourney?.length ?? 0;
+        const journey = latestToken.forwardJourney ?? [];
+        const newSteps = journey.slice(previousLength);
 
         for (const cellId of newSteps) {
 
           currentToken.pathId = cellId;
-
           setGameState(prev => ({
             ...prev,
             board: structuredClone(board)
           }));
 
-          await new Promise(r => setTimeout(r, 150));
+          await new Promise(resolve =>
+            setTimeout(resolve, 150)
+          );
         }
 
-        currentToken.tokenJourney = fullJourney;
+        currentToken.forwardJourney = latestToken.forwardJourney;
+        currentToken.backwardJourney = latestToken.backwardJourney;
+        currentToken.pathIndex = latestToken.pathIndex;
+        currentToken.tokenKilled = latestToken.tokenKilled;
       }
 
-      // TRACK -> GOAL / KILLED / ANY FINAL STATE SYNC
+  // BACKWARD ANIMATION (Killed)
+      if (currentToken.state === "TRACK" && latestToken.state === "BASE" && latestToken.tokenKilled) {
+
+        const backwardJourney = latestToken.backwardJourney?.length ? latestToken.backwardJourney : currentToken.backwardJourney ?? [];
+
+      // Move from current position back to start
+      for (let i = backwardJourney.length - 1; i >= 0; i--) {
+
+          currentToken.pathId = backwardJourney[i];
+          currentToken.pathIndex = i;
+
+          setGameState(prev => ({
+              ...prev,
+              board: structuredClone(board)
+          }));
+
+          await new Promise(resolve =>
+              setTimeout(resolve, 70)
+          );
+      }
+
+      // Finally return to base
+      currentToken.state = "BASE";
+      currentToken.pathId = null;
+      currentToken.pathIndex = null;
+      currentToken.baseSlotId = latestToken.baseSlotId;
+      currentToken.forwardJourney = [];
+      currentToken.backwardJourney = [];
+      currentToken.tokenKilled = false;
+
+      setGameState(prev => ({
+          ...prev,
+          board: structuredClone(board)
+      }));
+
+      continue;
+  }
+
+      // FINAL SYNC
       currentToken.state = latestToken.state;
       currentToken.pathId = latestToken.pathId;
+      currentToken.pathIndex = latestToken.pathIndex;
       currentToken.baseSlotId = latestToken.baseSlotId;
-      currentToken.tokenJourney = latestToken.tokenJourney;
+      currentToken.forwardJourney = latestToken.forwardJourney ?? [];
+      currentToken.backwardJourney = latestToken.backwardJourney ?? [];
+      currentToken.tokenKilled = latestToken.tokenKilled;
     }
   }
 
@@ -229,9 +262,9 @@ const LudoGameRoom = () => {
     ...prev,
     board: structuredClone(newBoard)
   }));
-
   animatingRef.current = false;
 };
+  
   return (
 
     <div
@@ -266,6 +299,7 @@ const LudoGameRoom = () => {
             setSelectedToken={setSelectedToken}
             handleTokenClick={handleTokenClick}
             legalMoves={legalMoves}
+            movableTokenIds={movableTokenIds}
           />
         </div>
 
@@ -297,7 +331,6 @@ const LudoGameRoom = () => {
             onRoll={handleRollDice}
             colors={boardData.metadata.colors}
           />
-
         </div>
 
       </div>
@@ -307,3 +340,4 @@ const LudoGameRoom = () => {
 };
 
 export default LudoGameRoom;
+
