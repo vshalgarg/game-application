@@ -10,24 +10,17 @@ public class ExtraTurnServiceImpl implements ExtraTurnService {
 
     @Override
     public boolean hasExtraTurn(
-            Integer consumedDice,
             boolean tokenKilled,
             boolean tokenFinished
     ) {
 
         log.info(
-                "[EXTRA_TURN_CHECK] Dice:{} TokenKilled:{} TokenFinished:{}",
-                consumedDice,
+                "[EXTRA_TURN_CHECK]  TokenKilled:{} TokenFinished:{}",
                 tokenKilled,
                 tokenFinished
         );
 
-        if (consumedDice == 6) {
 
-            log.info("[EXTRA_TURN_GRANTED] Reason:DICE_SIX");
-
-            return true;
-        }
 
         if (tokenKilled) {
 
