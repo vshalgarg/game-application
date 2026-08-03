@@ -17,4 +17,5 @@ public class PlayerDTO {
     private List<Integer> pendingDice;
     private Boolean bot;
     private String botDifficulty;
+    private Boolean pendingExtraTurn;
 }
