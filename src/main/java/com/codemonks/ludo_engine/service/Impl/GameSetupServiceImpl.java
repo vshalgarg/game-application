@@ -80,6 +80,7 @@ public class GameSetupServiceImpl implements GameSetupService {
 
             //initialize dice buffer
             player.setPendingDice(new ArrayList<>());
+            player.setPendingExtraTurn(false);
             playerList.add(player);
         }
 

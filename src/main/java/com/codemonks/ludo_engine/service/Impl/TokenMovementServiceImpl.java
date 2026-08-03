@@ -90,14 +90,18 @@ public class TokenMovementServiceImpl implements TokenMovementService {
                     journey.add(path.get(0));
                     token.setForwardJourney(journey);
 
+                    token.setTokenKilled(false);
+                    token.setBackwardJourney(new ArrayList<>());
+
                     consumePendingDiceByIndex(player, consumedDice);
 
                     log.info(
-                            "[BASE_TO_TRACK] Player:{} Token:{} PathIndex:{}  Journey:{}",
+                            "[BASE_TO_TRACK] Player:{} Token:{} PathIndex:{}  Journey:{} TokenKilled:{}",
                             playerId,
                             tokenId,
                             token.getPathIndex(),
-                            token.getForwardJourney()
+                            token.getForwardJourney(),
+                            token.getTokenKilled()
                     );
 
                     return gameState;

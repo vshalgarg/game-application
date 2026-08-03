@@ -244,13 +244,22 @@ public class EngineServiceImpl implements EngineService {
                 moverPlayer.getPendingDice().clear();
             }
         }
+// ── Only actually grant the re-roll once pendingDice is truly empty
+        boolean effectiveExtraTurn = moverPlayer != null
+                && (moverPlayer.getPendingDice() == null || moverPlayer.getPendingDice().isEmpty())
+                && Boolean.TRUE.equals(moverPlayer.getPendingExtraTurn());
+
+        if (effectiveExtraTurn) {
+            moverPlayer.setPendingExtraTurn(false); // consumed — about to grant it
+            log.info("[BONUS_CONSUMED] Player:{} — granting fresh reroll", request.getUserId());
+        }
 
 
 
         updatedGameState = turnRotationService.updateTurn(
                         updatedGameState,
                         request.getUserId(),
-                        extraTurn
+                        effectiveExtraTurn
                 );
 
         PlayerDTO nextTurnPlayer = null;
