@@ -210,42 +210,42 @@ const LudoGameRoom = () => {
       }
 
   // BACKWARD ANIMATION (Killed)
-  if (currentToken.state === "TRACK" && latestToken.state === "BASE" && latestToken.tokenKilled) {
+      if (currentToken.state === "TRACK" && latestToken.state === "BASE" && latestToken.tokenKilled) {
 
-    const backwardJourney = latestToken.backwardJourney?.length ? latestToken.backwardJourney : currentToken.backwardJourney ?? [];
+        const backwardJourney = latestToken.backwardJourney?.length ? latestToken.backwardJourney : currentToken.backwardJourney ?? [];
 
-    // Move from current position back to start
-    for (let i = backwardJourney.length - 1; i >= 0; i--) {
+      // Move from current position back to start
+      for (let i = backwardJourney.length - 1; i >= 0; i--) {
 
-        currentToken.pathId = backwardJourney[i];
-        currentToken.pathIndex = i;
+          currentToken.pathId = backwardJourney[i];
+          currentToken.pathIndex = i;
 
-        setGameState(prev => ({
-            ...prev,
-            board: structuredClone(board)
-        }));
+          setGameState(prev => ({
+              ...prev,
+              board: structuredClone(board)
+          }));
 
-        await new Promise(resolve =>
-            setTimeout(resolve, 70)
-        );
-    }
+          await new Promise(resolve =>
+              setTimeout(resolve, 70)
+          );
+      }
 
-    // Finally return to base
-    currentToken.state = "BASE";
-    currentToken.pathId = null;
-    currentToken.pathIndex = null;
-    currentToken.baseSlotId = latestToken.baseSlotId;
-    currentToken.forwardJourney = [];
-    currentToken.backwardJourney = [];
-    currentToken.tokenKilled = false;
+      // Finally return to base
+      currentToken.state = "BASE";
+      currentToken.pathId = null;
+      currentToken.pathIndex = null;
+      currentToken.baseSlotId = latestToken.baseSlotId;
+      currentToken.forwardJourney = [];
+      currentToken.backwardJourney = [];
+      currentToken.tokenKilled = false;
 
-    setGameState(prev => ({
-        ...prev,
-        board: structuredClone(board)
-    }));
+      setGameState(prev => ({
+          ...prev,
+          board: structuredClone(board)
+      }));
 
-    continue;
-}
+      continue;
+  }
 
       // FINAL SYNC
       currentToken.state = latestToken.state;
