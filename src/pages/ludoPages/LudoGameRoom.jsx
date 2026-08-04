@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import LudoBoard from "../../components/ludoComponents/LudoBoard";
 import DiceHolder from "../../components/ludoComponents/DiceHolder";
@@ -16,12 +16,14 @@ const LudoGameRoom = () => {
   const [currentTurnUserId, setCurrentTurnUserId] = useState(null);
   const [winnerUserId, setWinnerUserId] = useState(null);
   const [status, setStatus] = useState(null);
+  const [diceOptions, setDiceOptions] = useState([]);
 
   const storedAuth = JSON.parse(localStorage.getItem("user"));
   const currentUserId = storedAuth?.userId;
 
   const previousBoardRef = useRef(null);
   const animatingRef = useRef(false);
+  const autoMovingRef = useRef(false);
 
   //REALTIME GAME UPDATE
   useGameRealtime({
@@ -59,6 +61,27 @@ const LudoGameRoom = () => {
   const isMyTurn = currentTurnUserId === currentUserId;
   const canRoll = isMyTurn && playerTurnStage === "ROLL_DICE" && !rolling;
   const movableTokenIds = isMyTurn && playerTurnStage === "TOKEN_MOVE" ? legalMoves.map(move => move.tokenId): [];
+
+  // for automatic move when single token is on track
+  useEffect(() => {
+
+  if (!isMyTurn) return;
+
+  if (playerTurnStage !== "TOKEN_MOVE") return;
+
+  if (legalMoves.length !== 1) {
+    autoMovingRef.current = false;
+    return;
+  }
+
+  // Already moving automatically
+  if (autoMovingRef.current) return;
+
+  autoMovingRef.current = true;
+
+  handleTokenClick(legalMoves[0].tokenId);
+
+}, [legalMoves, playerTurnStage, isMyTurn]);
 
   // Dice position according to player color
   const dicePositions = {
@@ -107,60 +130,77 @@ const LudoGameRoom = () => {
       setRolling(false);
     }
   };
+  
+  // Make move api
+  const moveToken = async (tokenId, consumedDice) => {
+  try {
+    await makeMove({
+      roomCode,
+      userId: currentUserId,
+      tokenId,
+      consumedDice,
+    });
 
-  //Move Token
-  const handleTokenClick = async(tokenId)=>{
-    //Only current player
-    if(currentTurnUserId !== currentUserId)
-      return;
+    setSelectedToken(null);
+    setDiceOptions([]);
+    autoMovingRef.current = false;
 
-    //Move stage only
-    if (playerTurnStage !== "TOKEN_MOVE")
+  } catch (error) {
+    console.error(error);
+    autoMovingRef.current = false;
+  }
+};
+  
+// make move api when token is clicked 
+  const handleTokenClick = async (tokenId, selectedDice = null) => {
+
+  if (currentTurnUserId !== currentUserId)
     return;
 
-    //Check backend legal moves
-    const legalMove = legalMoves.find((move) => move.tokenId === tokenId);
-
-    if (!legalMove) {
-    console.log("Illegal move");
+  if (playerTurnStage !== "TOKEN_MOVE")
     return;
-    }
 
-    try{
-      await makeMove({
-        roomCode,
-        userId:currentUserId,
-        tokenId,
-        consumedDice:legalMove.dice,
-      });
+  // All legal moves for this token
+  const tokenMoves = legalMoves.filter(move => move.tokenId === tokenId);
 
-      setSelectedToken(null);
-    }
-    catch(error){
-      console.error(error);
-    }
-  };
+  if (tokenMoves.length === 0)
+    return;
 
+  // Token can move using multiple dice
+  if (tokenMoves.length > 1 && selectedDice === null) {
+    setSelectedToken(tokenId);
+    setDiceOptions(tokenMoves);
+    return;
+  }
+
+  // Find which dice to consume
+  const consumedDice = selectedDice ?? tokenMoves[0].dice;
+  await moveToken(tokenId, consumedDice);
+};
+  // make move api when a number is clicked 
+  const handleDiceSelection = async (dice) => {
+    console.log("Selected Token:", selectedToken);
+    console.log("Selected Dice:", dice);
+
+  if (selectedToken === null)
+    return;
+  await moveToken(selectedToken, dice);
+};
   // Find current player's color
   const currentTurnColorIndex = currentPlayer?.colorIndex;
 
   const animateBoard = async (oldBoard, newBoard) => {
-
   animatingRef.current = true;
   const board = structuredClone(oldBoard);
 
   for (const latestPlayer of newBoard.players) {
-
     const currentPlayer = board.players.find(p => p.playerId === latestPlayer.playerId);
 
     if (!currentPlayer) continue;
-
     for (const latestToken of latestPlayer.tokens) {
-
       const currentToken = currentPlayer.tokens.find(t => t.tokenId === latestToken.tokenId);
 
       if (!currentToken) continue;
-
       // BASE -> TRACK //
       if (currentToken.state === "BASE" && latestToken.state === "TRACK") {
 
@@ -191,7 +231,6 @@ const LudoGameRoom = () => {
         const newSteps = journey.slice(previousLength);
 
         for (const cellId of newSteps) {
-
           currentToken.pathId = cellId;
           setGameState(prev => ({
             ...prev,
@@ -211,12 +250,10 @@ const LudoGameRoom = () => {
 
   // BACKWARD ANIMATION (Killed)
       if (currentToken.state === "TRACK" && latestToken.state === "BASE" && latestToken.tokenKilled) {
-
         const backwardJourney = latestToken.backwardJourney?.length ? latestToken.backwardJourney : currentToken.backwardJourney ?? [];
 
       // Move from current position back to start
       for (let i = backwardJourney.length - 1; i >= 0; i--) {
-
           currentToken.pathId = backwardJourney[i];
           currentToken.pathIndex = i;
 
@@ -246,7 +283,6 @@ const LudoGameRoom = () => {
 
       continue;
   }
-
       // FINAL SYNC
       currentToken.state = latestToken.state;
       currentToken.pathId = latestToken.pathId;
@@ -279,7 +315,6 @@ const LudoGameRoom = () => {
         justify-center
       "
     >
-  
       <div className="relative">
     
         <div
@@ -292,6 +327,13 @@ const LudoGameRoom = () => {
             p-6
           "
         >
+          <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-white text-center">
+            <div className="font-bold text-lg">
+              {isMyTurn ? "Your Turn" : "Other Player's Turn"}
+              <div className="text-sm">Your User ID: {currentUserId}</div>
+            </div>
+          </div>
+
           <LudoBoard
             boardData={boardData}
             gameState={gameState}
@@ -316,22 +358,63 @@ const LudoGameRoom = () => {
         </div>
   )}
         <div
-          className="
-            absolute
-            transition-all
-            duration-700
-            ease-in-out"
-          style={dicePositions[currentTurnColorIndex]}>
+  className="
+    absolute
+    transition-all
+    duration-700
+    ease-in-out
+  "
+  style={dicePositions[currentTurnColorIndex]}
+>
+  <div className="relative flex flex-col items-center">
 
+    <DiceHolder
+      turnColorIndex={currentTurnColorIndex}
+      diceValue={diceValue ?? 1}
+      rolling={rolling}
+      onRoll={handleRollDice}
+      colors={boardData.metadata.colors}
+    />
 
-          <DiceHolder
-            turnColorIndex={currentTurnColorIndex}
-            diceValue={diceValue ?? 1}
-            rolling={rolling}
-            onRoll={handleRollDice}
-            colors={boardData.metadata.colors}
-          />
-        </div>
+    {diceOptions.length > 0 && (
+      <div
+        className="
+          absolute
+          top-full
+          left-1/2
+          -translate-x-1/2
+          mt-2
+          flex
+          gap-2
+          bg-white
+          rounded-lg
+          shadow-lg
+          p-2
+          z-50
+        "
+      >
+        {diceOptions.map((move, index) => (
+          <button
+            key={index}
+            onClick={() => handleDiceSelection(move.dice)}
+            className="
+              w-9
+              h-9
+              rounded
+              bg-yellow-500
+              hover:bg-yellow-600
+              font-bold
+              text-black
+            "
+          >
+            {move.dice}
+          </button>
+        ))}
+      </div>
+    )}
+
+  </div>
+</div>
 
       </div>
     </div>
