@@ -13,16 +13,12 @@ import java.util.List;
 @AllArgsConstructor
 public class GameStateDTO {
 
-    private Long currentTurnPlayerId;//engine will validate move from current turn PlayerId
-    private GameStatusEnum gameStatus; //WAITING,RUNNING,FINISHED
-    private List<PlayerDTO>players; //Engine needs all players because:
-    // Kill rules ,Win checks,Safe zones,depend on everybody.
-
+    private Long currentTurnPlayerId;
+    private GameStatusEnum gameStatus;
+    private List<PlayerDTO>players;
     private PlayerTurnStageEnum playerTurnStage;
-    // Winner information
     private Long winnerPlayerId;
     private List<EventDTO> events;
-
     private Integer lastDice;
     private Long lastDicePlayerId;
     private List<LegalMoveDTO> legalMoves;

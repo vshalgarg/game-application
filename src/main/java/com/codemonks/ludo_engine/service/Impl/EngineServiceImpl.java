@@ -19,9 +19,11 @@ import com.codemonks.ludo_engine.exception.ResourceNotFoundException;
 import com.codemonks.ludo_engine.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,7 +49,7 @@ public class EngineServiceImpl implements EngineService {
     private final ExtraTurnService extraTurnService;
     private final BoardService boardService;
     private final PathOrderService pathOrderService;
-
+    private final TaskScheduler taskScheduler;
     @Override
     public EngineGameStateResponseDTO startGame(EngineStartGameRequestDTO request) {
 
@@ -211,7 +213,7 @@ public class EngineServiceImpl implements EngineService {
             );
         }
         boolean extraTurn = extraTurnService.hasExtraTurn(
-
+    
                         killResult.isTokenKilled(),
                         tokenFinished
                 );
@@ -463,6 +465,7 @@ public class EngineServiceImpl implements EngineService {
                 currentPlayer.getPendingDice()
         );
         List<Integer> pendingDice = currentPlayer.getPendingDice();
+        boolean autoSkipHandled = false;
 
         boolean tripleSixForfeited = false;
 
@@ -502,61 +505,130 @@ public class EngineServiceImpl implements EngineService {
                         request.getPlayerId(), diceNumber, pendingDice);
             } else {
                 currentPlayer.getPendingDice().clear();
+                autoSkipHandled = true;
+                // gameState.setPlayerTurnStage(PlayerTurnStageEnum.ROLL_DICE);
+//                turnRotationService.updateTurn(gameState, request.getPlayerId(), false);
+//                log.info("[NO_MOVE] PlayerId:{} Dice:{} No legal move. Next:{}",
+//                        request.getPlayerId(), diceNumber,
+//                     gameState.getCurrentTurnPlayerId());
+                Map<String, Object> immediateStateMap = objectMapper.convertValue(gameState, Map.class);
+                immediateStateMap.put("legalMoves", new ArrayList<LegalMoveDTO>());
+
+                Map<String, Object> immediateBoardWrapped = new HashMap<>();
+                immediateBoardWrapped.put("board", immediateStateMap);
+
+                RealtimeGameStateDTO immediateRealtimeState = RealtimeGameStateDTO.builder()
+                        .roomId(realtimeState.getRoomId())
+                        .roomCode(realtimeState.getRoomCode())
+                        .gameState(immediateBoardWrapped)
+                        .players(gameState.getPlayers())
+                        .currentTurnUserId(request.getPlayerId()) // stays with roller for now
+                        .gameStatus(realtimeState.getGameStatus())
+                        .winnerUserId(realtimeState.getWinnerUserId())
+                        .build();
+                supabaseRealtimeService.upsertGameState(immediateRealtimeState);
+                log.info("[NO_MOVE_IMMEDIATE_PERSISTED] Room:{} Player:{} Dice:{} — turn switch delayed",
+                        request.getRoomId(), request.getPlayerId(), diceNumber);
+
+                // Phase 2: rotate the turn on a scheduled background task, non-blocking
+                GameStateDTO gameStateForDelay = gameState;
+                Long rollerId = request.getPlayerId();
+                taskScheduler.schedule(() -> {
+                    try {
+                        turnRotationService.updateTurn(gameStateForDelay, rollerId, false);
+
+                        Map<String, Object> delayedStateMap = objectMapper.convertValue(gameStateForDelay, Map.class);
+                        delayedStateMap.put("legalMoves", new ArrayList<LegalMoveDTO>());
+
+                        Map<String, Object> delayedBoardWrapped = new HashMap<>();
+                        delayedBoardWrapped.put("board", delayedStateMap);
+
+                        RealtimeGameStateDTO delayedRealtimeState = RealtimeGameStateDTO.builder()
+                                .roomId(realtimeState.getRoomId())
+                                .roomCode(realtimeState.getRoomCode())
+                                .gameState(delayedBoardWrapped)
+                                .players(gameStateForDelay.getPlayers())
+                                .currentTurnUserId(gameStateForDelay.getCurrentTurnPlayerId())
+                                .gameStatus(realtimeState.getGameStatus())
+                                .winnerUserId(realtimeState.getWinnerUserId())
+                                .build();
+                        supabaseRealtimeService.upsertGameState(delayedRealtimeState);
+                        log.info("[NO_MOVE_TURN_ROTATED] Room:{} NextTurn:{}",
+                                realtimeState.getRoomId(), gameStateForDelay.getCurrentTurnPlayerId());
+
+                    } catch (Exception e) {
+                        log.error(
+                                "[SCHEDULED_TURN_ROTATION_FAILED] Room:{} Player:{} — turn did not rotate, game may be stuck",
+                                realtimeState.getRoomId(),
+                                rollerId,
+                                e
+                        );
+                    }
+                }, Instant.now().plusMillis(900));
+
                 gameState.setPlayerTurnStage(PlayerTurnStageEnum.ROLL_DICE);
-                turnRotationService.updateTurn(gameState, request.getPlayerId(), false);
-                log.info("[NO_MOVE] PlayerId:{} Dice:{} No legal move. Next:{}",
-                        request.getPlayerId(), diceNumber,
-                        gameState.getCurrentTurnPlayerId());
+                log.info("[NO_MOVE] PlayerId:{} Dice:{} No legal move. Rotation scheduled +900ms.",
+                        request.getPlayerId(), diceNumber);
+
             }
         }
 
         // ── Wrap game state in "board" for frontend, persist to Supabase
-        List<LegalMoveDTO> legalMoves =
-                computeLegalMoves(
-                        gameState,
-                        currentPlayer,
-                        currentPlayer.getPendingDice()
-                );
-        Map<String, Object> diceStateMap = objectMapper.convertValue(gameState, Map.class);
+        Map<String, Object> diceStateMap;
+        if (!autoSkipHandled) {
+            List<LegalMoveDTO> legalMoves =
+                    computeLegalMoves(
+                            gameState,
+                            currentPlayer,
+                            currentPlayer.getPendingDice()
+                    );
+            diceStateMap = objectMapper.convertValue(gameState, Map.class);
 
-        diceStateMap.put("legalMoves", legalMoves);
+            diceStateMap.put("legalMoves", legalMoves);
 
-        Map<String, Object> diceBoardWrapped = new HashMap<>();
-        diceBoardWrapped.put("board", diceStateMap);
-        RealtimeGameStateDTO updatedRealtimeState = RealtimeGameStateDTO.builder()
-                .roomId(realtimeState.getRoomId())
-                .roomCode(realtimeState.getRoomCode())
-                .gameState(diceBoardWrapped)
-                .players(gameState.getPlayers())
-                .currentTurnUserId(gameState.getCurrentTurnPlayerId())
-                .gameStatus(realtimeState.getGameStatus())
-                .winnerUserId(realtimeState.getWinnerUserId())
-                .build();
-        supabaseRealtimeService.upsertGameState(updatedRealtimeState);
-        log.info(
-                "[DICE_STATE_PERSISTED] Room:{}",
-                request.getRoomId()
-        );
-        // ── Build Response
-        DiceRollResponseDTO response = new DiceRollResponseDTO();
-        response.setRoomId(request.getRoomId());
-        response.setPlayerId(request.getPlayerId());
-        response.setDice(diceNumber);
-        response.setPendingDice(currentPlayer.getPendingDice());
-        response.setGameState(diceStateMap);
-        response.setCurrentTurnPlayerId(gameState.getCurrentTurnPlayerId());
-        response.setPlayerTurnStage(gameState.getPlayerTurnStage());
-        response.setTripleSixForfeited(tripleSixForfeited);
+            Map<String, Object> diceBoardWrapped = new HashMap<>();
+            diceBoardWrapped.put("board", diceStateMap);
+            RealtimeGameStateDTO updatedRealtimeState = RealtimeGameStateDTO.builder()
+                    .roomId(realtimeState.getRoomId())
+                    .roomCode(realtimeState.getRoomCode())
+                    .gameState(diceBoardWrapped)
+                    .players(gameState.getPlayers())
+                    .currentTurnUserId(gameState.getCurrentTurnPlayerId())
+                    .gameStatus(realtimeState.getGameStatus())
+                    .winnerUserId(realtimeState.getWinnerUserId())
+                    .build();
+            supabaseRealtimeService.upsertGameState(updatedRealtimeState);
+            log.info(
+                    "[DICE_STATE_PERSISTED] Room:{}",
+                    request.getRoomId()
+            );
+        }
+        else {
+            // Auto-skip path already persisted (Phase 1) and scheduled (Phase 2) above.
+            // Still need diceStateMap populated for the HTTP response below.
+            diceStateMap = objectMapper.convertValue(gameState, Map.class);
+            diceStateMap.put("legalMoves", new ArrayList<LegalMoveDTO>());
+        }
+            // ── Build Response
+            DiceRollResponseDTO response = new DiceRollResponseDTO();
+            response.setRoomId(request.getRoomId());
+            response.setPlayerId(request.getPlayerId());
+            response.setDice(diceNumber);
+            response.setPendingDice(currentPlayer.getPendingDice());
+            response.setGameState(diceStateMap);
+            response.setCurrentTurnPlayerId(gameState.getCurrentTurnPlayerId());
+            response.setPlayerTurnStage(gameState.getPlayerTurnStage());
+            response.setTripleSixForfeited(tripleSixForfeited);
 
-        log.info(
-                "[ROLL_COMPLETED] Player:{} Dice:{} NextTurn:{} Stage:{}",
-                request.getPlayerId(),
-                diceNumber,
-                gameState.getCurrentTurnPlayerId(),
-                gameState.getPlayerTurnStage()
-        );
-        return response;
-    }
+            log.info(
+                    "[ROLL_COMPLETED] Player:{} Dice:{} NextTurn:{} Stage:{}",
+                    request.getPlayerId(),
+                    diceNumber,
+                    gameState.getCurrentTurnPlayerId(),
+                    gameState.getPlayerTurnStage()
+            );
+            return response;
+        }
 
     private List<LegalMoveDTO> computeLegalMoves(
             GameStateDTO gameState,
@@ -570,7 +642,6 @@ public class EngineServiceImpl implements EngineService {
             return legal;
         }
 
-        //List<Integer> path = boardService.getPath(player.getColorIndex());
         Integer pathOrder =
                 pathOrderService.getPathOrder(
                         gameState,
