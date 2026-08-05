@@ -50,6 +50,7 @@ public class EngineServiceImpl implements EngineService {
     private final BoardService boardService;
     private final PathOrderService pathOrderService;
     private final TaskScheduler taskScheduler;
+
     @Override
     public EngineGameStateResponseDTO startGame(EngineStartGameRequestDTO request) {
 
@@ -74,7 +75,7 @@ public class EngineServiceImpl implements EngineService {
         response.setPlayers(initializedGameState.getPlayers());
         response.setBotDifficulty(request.getBotDifficulty());
 
-        // ── Wrap game state in "board" for frontend, persist to Supabase
+        //Wrap game state in "board" for frontend, persist to Supabase
         Map<String, Object> startBoardWrapped = new HashMap<>();
         startBoardWrapped.put("board", response.getGameState());
         RealtimeGameStateDTO initialRealtimeState = RealtimeGameStateDTO.builder()
@@ -131,7 +132,6 @@ public class EngineServiceImpl implements EngineService {
             }
         }
         Long tokenId = getTokenId(request);
-        // NEW - Extract consumed dice from request once
         Integer consumedDice = ((Number) request.getMoveData()
                         .get("consumedDice"))
                         .intValue();
@@ -158,8 +158,6 @@ public class EngineServiceImpl implements EngineService {
                 request.getUserId(),
                 tokenId
         );
-        // ── Token Movement
-        // CHANGED - new service signature
         GameStateDTO updatedGameState = tokenMovementService.moveToken(gameState,
                         request.getUserId(), tokenId,
                         consumedDice
@@ -218,7 +216,6 @@ public class EngineServiceImpl implements EngineService {
                         tokenFinished
                 );
 
-        // ── Recheck remaining pendingDice for legal moves before deciding turn rotation
         PlayerDTO moverPlayer = null;
 
         for (PlayerDTO player : updatedGameState.getPlayers()) {
@@ -258,7 +255,6 @@ public class EngineServiceImpl implements EngineService {
                 moverPlayer.getPendingDice().clear();
             }
         }
-// ── Only actually grant the re-roll once pendingDice is truly empty
         boolean effectiveExtraTurn = moverPlayer != null
                 && (moverPlayer.getPendingDice() == null || moverPlayer.getPendingDice().isEmpty())
                 && Boolean.TRUE.equals(moverPlayer.getPendingExtraTurn());
@@ -267,9 +263,6 @@ public class EngineServiceImpl implements EngineService {
             moverPlayer.setPendingExtraTurn(false); // consumed — about to grant it
             log.info("[BONUS_CONSUMED] Player:{} — granting fresh reroll", request.getUserId());
         }
-
-
-
         updatedGameState = turnRotationService.updateTurn(
                         updatedGameState,
                         request.getUserId(),
@@ -323,7 +316,6 @@ public class EngineServiceImpl implements EngineService {
                         nextTurnPlayer.getPendingDice())
                         : new ArrayList<>();
 
-// ── Build Response — events + legalMoves now part of the persisted state, replaced fresh every move
         log.info("[BEFORE_PERSIST] Turn:{} Stage:{}",
                 updatedGameState.getCurrentTurnPlayerId(),
                 updatedGameState.getPlayerTurnStage());
@@ -343,8 +335,7 @@ public class EngineServiceImpl implements EngineService {
         } else {
             response.setStatus(GameStatusEnum.RUNNING);
         }
-
-        // ── Wrap game state in "board" for frontend, persist to Supabase
+        //  Wrap game state in "board" for frontend, persist to Supabase
         Map<String, Object> moveBoardWrapped = new HashMap<>();
         moveBoardWrapped.put("board", persistedStateMap);
         RealtimeGameStateDTO updatedRealtimeState = RealtimeGameStateDTO.builder()
@@ -378,7 +369,6 @@ public class EngineServiceImpl implements EngineService {
         return response;
     }
 
-    //Roll dice
     @Override
     public DiceRollResponseDTO rollDice(DiceRollRequestDTO request) {
         log.info(
@@ -387,7 +377,7 @@ public class EngineServiceImpl implements EngineService {
                 request.getPlayerId()
         );
 
-        // ── Fetch authoritative state from Supabase
+        //  Fetch authoritative state from Supabase
         RealtimeGameStateDTO realtimeState = supabaseRealtimeService.getGameState(request.getRoomId());
         Map<String, Object> rawState = realtimeState.getGameState();
         Object boardObj = rawState.get("board");
@@ -454,7 +444,7 @@ public class EngineServiceImpl implements EngineService {
         int diceNumber = ThreadLocalRandom.current().nextInt(1, 7);
         log.info("[DICE_GENERATED] DiceNumber:{}", diceNumber);
 
-        // NEW
+
         gameState.setLastDice(diceNumber);
         gameState.setLastDicePlayerId(request.getPlayerId());
 
@@ -506,11 +496,7 @@ public class EngineServiceImpl implements EngineService {
             } else {
                 currentPlayer.getPendingDice().clear();
                 autoSkipHandled = true;
-                // gameState.setPlayerTurnStage(PlayerTurnStageEnum.ROLL_DICE);
-//                turnRotationService.updateTurn(gameState, request.getPlayerId(), false);
-//                log.info("[NO_MOVE] PlayerId:{} Dice:{} No legal move. Next:{}",
-//                        request.getPlayerId(), diceNumber,
-//                     gameState.getCurrentTurnPlayerId());
+
                 Map<String, Object> immediateStateMap = objectMapper.convertValue(gameState, Map.class);
                 immediateStateMap.put("legalMoves", new ArrayList<LegalMoveDTO>());
 
@@ -522,7 +508,7 @@ public class EngineServiceImpl implements EngineService {
                         .roomCode(realtimeState.getRoomCode())
                         .gameState(immediateBoardWrapped)
                         .players(gameState.getPlayers())
-                        .currentTurnUserId(request.getPlayerId()) // stays with roller for now
+                        .currentTurnUserId(request.getPlayerId())
                         .gameStatus(realtimeState.getGameStatus())
                         .winnerUserId(realtimeState.getWinnerUserId())
                         .build();
@@ -564,7 +550,7 @@ public class EngineServiceImpl implements EngineService {
                                 e
                         );
                     }
-                }, Instant.now().plusMillis(900));
+                }, Instant.now().plusMillis(1500));
 
                 gameState.setPlayerTurnStage(PlayerTurnStageEnum.ROLL_DICE);
                 log.info("[NO_MOVE] PlayerId:{} Dice:{} No legal move. Rotation scheduled +900ms.",
@@ -573,7 +559,7 @@ public class EngineServiceImpl implements EngineService {
             }
         }
 
-        // ── Wrap game state in "board" for frontend, persist to Supabase
+        //  Wrap game state in "board" for frontend, persist to Supabase
         Map<String, Object> diceStateMap;
         if (!autoSkipHandled) {
             List<LegalMoveDTO> legalMoves =
@@ -604,8 +590,6 @@ public class EngineServiceImpl implements EngineService {
             );
         }
         else {
-            // Auto-skip path already persisted (Phase 1) and scheduled (Phase 2) above.
-            // Still need diceStateMap populated for the HTTP response below.
             diceStateMap = objectMapper.convertValue(gameState, Map.class);
             diceStateMap.put("legalMoves", new ArrayList<LegalMoveDTO>());
         }
@@ -679,8 +663,6 @@ public class EngineServiceImpl implements EngineService {
     }
 
     private boolean hasAnyLegalMove(  GameStateDTO gameState,PlayerDTO player, int diceNumber) {
-
-        //List<Integer> path = boardService.getPath(player.getColorIndex());
         Integer pathOrder =
                 pathOrderService.getPathOrder(
                         gameState,
@@ -699,17 +681,14 @@ public class EngineServiceImpl implements EngineService {
             return false;
         }
 
-
         for (TokenDTO token : player.getTokens()) {
 
             if (isTokenMovable(token, diceNumber, path)) {
                 return true;
             }
         }
-
         return false;
     }
-
     private boolean isTokenMovable(
             TokenDTO token,
             int diceNumber,
@@ -720,12 +699,10 @@ public class EngineServiceImpl implements EngineService {
         if (token.getState() == TokenStateEnum.FINISHED) {
             return false;
         }
-
         // Token in base
         if (token.getState() == TokenStateEnum.BASE) {
             return diceNumber == 6;
         }
-
         // Token already on the board
         if (token.getState() == TokenStateEnum.TRACK) {
 
@@ -744,10 +721,7 @@ public class EngineServiceImpl implements EngineService {
 
                 return false;
             }
-
             int newIndex = currentIndex + diceNumber;
-
-           // Exact dice required to reach goal
             return newIndex < path.size();
         }
 
