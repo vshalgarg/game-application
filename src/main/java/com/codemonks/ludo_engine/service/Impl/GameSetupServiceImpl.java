@@ -61,7 +61,8 @@ public class GameSetupServiceImpl implements GameSetupService {
         return gameState;
     }
 
-    private static final List<Integer> CORNER_ORDER = List.of(1, 2, 4, 3);
+    // 1=bottom-right, 2=bottom-left, 3=top-left, 4=top-right — true clockwise order
+    private static final List<Integer> CORNER_ORDER = List.of(1, 2, 3, 4);
 
     //Create player objects
     private List<PlayerDTO> createPlayers(List<Long> playerIds) {
