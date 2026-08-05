@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -60,6 +61,8 @@ public class GameSetupServiceImpl implements GameSetupService {
         return gameState;
     }
 
+    private static final List<Integer> CORNER_ORDER = List.of(1, 2, 4, 3);
+
     //Create player objects
     private List<PlayerDTO> createPlayers(List<Long> playerIds) {
 
@@ -83,10 +86,13 @@ public class GameSetupServiceImpl implements GameSetupService {
             player.setPendingExtraTurn(false);
             playerList.add(player);
         }
+        playerList.sort(Comparator.comparingInt(p -> CORNER_ORDER.indexOf(p.getColorIndex())));
 
-        log.info("[PLAYER_CREATED] Players:{} AssignedColorIndexes:{}",
+        log.info("[PLAYER_CREATED] Players:{} AssignedColorIndexes:{}  CornerOrdered:{}",
                 playerIds,
-                assignedColorIndexes);
+                assignedColorIndexes,
+                playerList.stream().map(PlayerDTO::getColorIndex).toList());
+
         return playerList;
     }
 
@@ -126,7 +132,6 @@ public class GameSetupServiceImpl implements GameSetupService {
     }
     private List<Integer> selectColorIndexes(int playerCount) {
 
-      //  int totalColors = boardService.getColors().size();
         int playableColors = boardService.getColors().size() - 1;
 
         if (playerCount > playableColors) {
