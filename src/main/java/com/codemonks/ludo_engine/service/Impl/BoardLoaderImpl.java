@@ -48,6 +48,12 @@ public class BoardLoaderImpl implements BoardLoader {
                     })
                     .collect(Collectors.toList());
 
+            Map<Integer, Grid> gridMap = flatGrid.stream()
+                    .collect(Collectors.toMap(
+                            Grid::getId,
+                            cell -> cell
+                    ));
+
             Map<Integer, List<Integer>> baseCells = flatGrid.stream()
                     .filter(cell -> "S".equals(cell.getType()) && cell.getTokenColorIndex() != null)
                     .collect(Collectors.groupingBy(
@@ -61,8 +67,9 @@ public class BoardLoaderImpl implements BoardLoader {
             boardLayout.setMetadata(raw.getMetadata());
             boardLayout.setCenterArea(raw.getCenterArea());
             boardLayout.setGrid(flatGrid);
+            boardLayout.setGridMap(gridMap);
             boardLayout.setPaths(raw.getPaths());
-            boardLayout.setBaseCells(baseCells); // NEW
+            boardLayout.setBaseCells(baseCells);
 
             log.info(
                     "[BOARD_LOADED] File:{} Grid:{} Paths:{}",

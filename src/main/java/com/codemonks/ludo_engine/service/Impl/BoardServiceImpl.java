@@ -26,7 +26,7 @@
         public Grid getCell(Integer cellId) {
             return boardLoader
                     .getBoardLayout()
-                    .getGrid()
+                    .getGridMap()
                     .get(cellId);
         }
 
