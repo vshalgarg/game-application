@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -18,9 +20,11 @@ public class BoardStartupValidator {
 
         log.info("Board Loaded");
 
+        long gridCells = boardService.getBoard().getGrid().stream().mapToLong(Map::size).sum();
+
         log.info(
                 "Grid Cells : {}",
-                boardService.getBoard().getGrid().size()
+                gridCells
         );
 
         log.info(

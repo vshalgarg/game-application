@@ -13,6 +13,7 @@ import com.codemonks.ludo_engine.service.BoardService;
 import com.codemonks.ludo_engine.service.Impl.EngineServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,9 +43,11 @@ public class LudoEngineController {
 
         BoardLayout boardLayout = boardService.getBoard();
 
+        long gridCells = boardLayout.getGrid().stream().mapToLong(Map::size).sum();
+
         log.info(
                 "[BOARD_LAYOUT_REQUEST] Grid:{} Paths:{}",
-                boardLayout.getGrid().size(),
+                gridCells,
                 boardLayout.getPaths().size()
         );
 
