@@ -1,7 +1,7 @@
 package com.codemonks.gameservice.service.impl;
 
-import com.codemonks.gameservice.dto.request.CreateRoomRequestDTO;
-import com.codemonks.gameservice.dto.request.JoinRoomRequestDTO;
+import com.codemonks.gameservice.dto.ResponseMessages;
+import com.codemonks.gameservice.dto.request.*;
 import com.codemonks.gameservice.dto.response.RoomDetailsResponseDTO;
 import com.codemonks.gameservice.dto.response.RoomResponseDTO;
 import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeLobbyDTO;
@@ -21,6 +21,7 @@ import com.codemonks.gameservice.mapper.RoomMapper;
 import com.codemonks.gameservice.repository.GameConfigEntityRepository;
 import com.codemonks.gameservice.repository.PlayerEntityRepository;
 import com.codemonks.gameservice.repository.RoomEntityRepository;
+import com.codemonks.gameservice.service.BotService;
 import com.codemonks.gameservice.service.GameService;
 import com.codemonks.gameservice.service.RoomService;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +47,7 @@ public class RoomServiceImpl implements RoomService {
     private final GameConfigEntityRepository gameConfigRepository;
     private final GameService gameService;
     private final GameEngineFactory gameEngineFactory;
+    private final BotService botService;
 
     @Transactional
     @Override
@@ -90,12 +92,14 @@ public class RoomServiceImpl implements RoomService {
 
         GameConfigEntity config = gameConfigRepository
                 .findByIdTenantIdAndIdGameType(room.getTenantId(), room.getGameType())
-                .orElseThrow(() -> {
-                    log.error("Config missing. tenantId={}, gameType={}",
-                            room.getTenantId(), room.getGameType());
-                    return new GameException(GAME_CONFIG_NOT_FOUND);
-                });
+                .orElseThrow(() -> new GameException(GAME_CONFIG_NOT_FOUND));
 
+        List<PlayerEntity> players =
+                playerRepository.findByRoom_Id(room.getId());
+
+        if (players.size() >= config.getMaxPlayers()) {
+            throw new GameException(ROOM_FULL);
+        }
 
 // ── Duplicate-join check
         boolean alreadyInRoom = playerRepository.existsByRoom_IdAndUserId(room.getId(), request.getUserId());
@@ -105,7 +109,7 @@ public class RoomServiceImpl implements RoomService {
         }
         PlayerEntity player = playerRepository.save(RoomMapper.toJoinPlayer(request, room));
 
-        List<PlayerEntity> players = playerRepository.findByRoom_Id(room.getId());
+        players = playerRepository.findByRoom_Id(room.getId());
 
         RoomRealtimeStatusEnum status =
                 players.size() >= config.getMaxPlayers()
@@ -125,6 +129,187 @@ public class RoomServiceImpl implements RoomService {
                 room.getId(), request.getUserId(), status);
 
         return RoomMapper.toRoomResponse(room, player);
+    }
+
+    @Transactional
+    @Override
+    public RoomActionResponseDTO addBot(String roomCode, AddBotRequestDTO request) {
+
+        log.info(
+                "Add bot request. roomCode={}, hostUserId={}",
+                roomCode,
+                request.getHostUserId()
+        );
+
+        RoomEntity room = roomRepository
+                .findByRoomCode(roomCode)
+                .orElseThrow(() -> new ResourceNotFoundException(ROOM_NOT_FOUND));
+
+        PlayerEntity host = playerRepository
+                .findByRoom_IdAndUserId(room.getId(), request.getHostUserId())
+                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
+
+        if (host.getRole() != RoomPlayerRole.HOST) {
+            throw new GameException(ONLY_HOST_CAN_START_GAME);
+        }
+
+        if (room.getStatus() != RoomStatusEnum.WAITING) {
+            throw new GameException(GAME_ALREADY_STARTED);
+        }
+
+        GameConfigEntity config = gameConfigRepository
+                .findByIdTenantIdAndIdGameType(room.getTenantId(), room.getGameType())
+                .orElseThrow(() -> {
+                    log.error("Config missing. tenantId={}, gameType={}",
+                            room.getTenantId(),
+                            room.getGameType());
+                    return new GameException(GAME_CONFIG_NOT_FOUND);
+                });
+        List<PlayerEntity> players = playerRepository.findByRoom_Id(room.getId());
+
+        if (players.size() >= config.getMaxPlayers()) {
+            throw new GameException(ROOM_FULL);
+        }
+        Long botUserId = botService.getNextBotUserId(players);
+        playerRepository.save(RoomMapper.toBotPlayer(room.getTenantId(), room, botUserId));
+
+        if (room.getBotDifficulty() == null) {
+
+            log.info(
+                    "Setting bot difficulty. roomId={}, difficulty={}",
+                    room.getId(),
+                    request.getBotDifficulty()
+            );
+
+            if (request.getBotDifficulty() == null) {
+                throw new GameException(INVALID_REQUEST);
+            }
+
+            room.setBotDifficulty(request.getBotDifficulty());
+            roomRepository.save(room);
+            log.info("Bot added. roomId={}, botUserId={}", room.getId(), botUserId);
+
+        }
+        players = playerRepository.findByRoom_Id(room.getId());
+        RoomRealtimeStatusEnum status =
+                players.size() >= config.getMaxPlayers()
+                        ? RoomRealtimeStatusEnum.READY
+                        : RoomRealtimeStatusEnum.WAITING;
+
+        RealtimeLobbyDTO lobbyDTO =
+                LobbyMapper.toLobbyDTO(room, players, status);
+
+        gameEngineFactory.getStrategy(room.getGameType()).publishLobbyState(lobbyDTO);
+        RoomDetailsResponseDTO roomDetails = RoomMapper.toRoomDetailsResponseDTO(
+                        room, players);
+
+        return RoomActionResponseDTO.builder()
+                .roomDetails(roomDetails)
+                .message(ResponseMessages.BOT_ADDED)
+                .build();
+
+    }
+
+    @Override
+    @Transactional
+    public RoomActionResponseDTO removePlayer(String roomCode, RemovePlayerRequestDTO request) {
+
+        log.info(
+                "Remove participant request. roomCode={}, hostUserId={}, userId={}",
+                roomCode,
+                request.getHostUserId(),
+                request.getUserId()
+        );
+
+        RoomEntity room = roomRepository
+                .findByRoomCode(roomCode)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(ROOM_NOT_FOUND));
+        PlayerEntity host = playerRepository
+                .findByRoom_IdAndUserId(
+                        room.getId(),
+                        request.getHostUserId()
+                )
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(USER_NOT_FOUND));
+        if (host.getRole() != RoomPlayerRole.HOST) {
+            throw new GameException(ONLY_HOST_CAN_START_GAME);
+        }
+
+        if (room.getStatus() != RoomStatusEnum.WAITING) {
+            throw new GameException(GAME_ALREADY_STARTED);
+        }
+
+        if (request.getHostUserId().equals(request.getUserId())) {
+            throw new GameException(HOST_CANNOT_REMOVE_SELF);
+        }
+        PlayerEntity participant = playerRepository
+                .findByRoom_IdAndUserId(
+                        room.getId(),
+                        request.getUserId()
+                )
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(USER_NOT_FOUND));
+        List<PlayerEntity> players =
+                playerRepository.findByRoom_Id(room.getId());
+
+        if (players.size() - 1 < 2) {
+            throw new GameException(MINIMUM_PLAYERS_REQUIRED);
+        }
+        playerRepository.delete(participant);
+
+        players = playerRepository.findByRoom_Id(room.getId());
+        boolean botExists = players.stream()
+                .anyMatch(player -> player.getRole() == RoomPlayerRole.BOT);
+
+        if (!botExists) {
+            room.setBotDifficulty(null);
+            roomRepository.save(room);
+        }
+
+        log.info("Bot difficulty cleared. roomId={}", room.getId());
+
+        GameConfigEntity config = gameConfigRepository
+                .findByIdTenantIdAndIdGameType(
+                        room.getTenantId(),
+                        room.getGameType()
+                )
+                .orElseThrow(() -> new GameException(GAME_CONFIG_NOT_FOUND));
+        RoomRealtimeStatusEnum status =
+                players.size() >= config.getMaxPlayers()
+                        ? RoomRealtimeStatusEnum.READY
+                        : RoomRealtimeStatusEnum.WAITING;
+
+        RealtimeLobbyDTO lobbyDTO =
+                LobbyMapper.toLobbyDTO(
+                        room,
+                        players,
+                        status
+                );
+
+        gameEngineFactory
+                .getStrategy(room.getGameType())
+                .publishLobbyState(lobbyDTO);
+
+        RoomDetailsResponseDTO roomDetails =
+                RoomMapper.toRoomDetailsResponseDTO(
+                        room,
+                        players
+                );
+        String message =
+                participant.getRole() == RoomPlayerRole.BOT
+                        ? ResponseMessages.BOT_REMOVED
+                        : ResponseMessages.PLAYER_REMOVED;
+        log.info(
+                "Remove participant completed. roomId={}, remainingPlayers={}",
+                room.getId(),
+                players.size()
+        );
+
+        return RoomActionResponseDTO.builder()
+                .roomDetails(roomDetails)
+                .message(message)
+                .build();
     }
     @Override
     @Transactional(readOnly = true)

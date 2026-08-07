@@ -89,4 +89,19 @@ public class RoomMapper {
                 )
                 .build();
     }
+    public static PlayerEntity toBotPlayer(
+            String tenantId,
+            RoomEntity room,
+            Long botUserId
+    ) {
+
+        PlayerEntity player = new PlayerEntity();
+        player.setTenantId(tenantId);
+        player.setRoom(room);
+        player.setUserId(botUserId);
+        player.setRole(RoomPlayerRole.BOT);
+        player.setStatus(RoomPlayerStatus.ACTIVE);
+
+        return player;
+    }
 }

@@ -2,5 +2,6 @@ package com.codemonks.gameservice.enums;
 
 public enum RoomPlayerRole {
     HOST,
-    PLAYER
+    PLAYER,
+    BOT
 }

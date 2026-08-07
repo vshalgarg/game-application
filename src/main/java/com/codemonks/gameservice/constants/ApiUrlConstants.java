@@ -13,6 +13,8 @@ public class ApiUrlConstants {
         public static final String RESTART_GAME = "/{roomCode}/restart";
         public static final String GET_ROOM_DETAILS = "/{roomCode}";
         public static final String ROLL_DICE = "/{roomCode}/roll-dice";
+        public static final String ADD_BOT = "/{roomCode}/bots";
+        public static final String REMOVE_PLAYER = "/{roomCode}/players";
     }
 
     public static class Game{

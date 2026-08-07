@@ -3,9 +3,7 @@ package com.codemonks.gameservice.controller;
 import com.codemonks.gameservice.constants.ApiUrlConstants;
 import com.codemonks.gameservice.dto.ApiResponse;
 import com.codemonks.gameservice.dto.ResponseMessages;
-import com.codemonks.gameservice.dto.request.CreateRoomRequestDTO;
-import com.codemonks.gameservice.dto.request.JoinRoomRequestDTO;
-import com.codemonks.gameservice.dto.request.RollDiceRequestDTO;
+import com.codemonks.gameservice.dto.request.*;
 import com.codemonks.gameservice.dto.response.RoomDetailsResponseDTO;
 import com.codemonks.gameservice.dto.response.RoomResponseDTO;
 import com.codemonks.gameservice.engineModule.dto.response.DiceRollResponseDTO;
@@ -104,5 +102,51 @@ public class RoomController {
         log.info("Roll dice request. roomCode={}, userId={}", roomCode, request.getUserId());
         DiceRollResponseDTO response = gameService.rollDice(roomCode, request.getUserId());
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @PostMapping(ADD_BOT)
+    public ResponseEntity<ApiResponse<RoomDetailsResponseDTO>> addBot(
+            @PathVariable String roomCode,
+            @RequestBody AddBotRequestDTO request
+    ) {
+
+        log.info(
+                "Add bot request received. roomCode={}, hostUserId={}",
+                roomCode,
+                request.getHostUserId()
+        );
+
+        RoomActionResponseDTO response =
+                roomService.addBot(roomCode, request);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        response.getRoomDetails(),
+                        response.getMessage()
+                )
+        );
+    }
+    @DeleteMapping(REMOVE_PLAYER)
+    public ResponseEntity<ApiResponse<RoomDetailsResponseDTO>> removePlayer(
+            @PathVariable String roomCode,
+            @RequestBody RemovePlayerRequestDTO request
+    ) {
+
+        log.info(
+                "Remove participant request received. roomCode={}, hostUserId={}, userId={}",
+                roomCode,
+                request.getHostUserId(),
+                request.getUserId()
+        );
+
+        RoomActionResponseDTO response =
+                roomService.removePlayer(roomCode, request);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        response.getRoomDetails(),
+                        response.getMessage()
+                )
+        );
     }
 }

@@ -24,7 +24,9 @@ public enum ResponseErrorCodes {
     REALTIME_STATE_UPDATE_FAILED(1011, "REALTIME_STATE_UPDATE_FAILED"),
     REALTIME_MOVE_SAVE_FAILED(1012, "REALTIME_MOVE_SAVE_FAILED"),
     REALTIME_STATE_FETCH_FAILED(1013, "REALTIME_STATE_FETCH_FAILED"),
-    PLAYER_NOT_IN_ROOM(1014, "You are not a player in this room");
+    PLAYER_NOT_IN_ROOM(1014, "You are not a player in this room"),
+    MINIMUM_PLAYERS_REQUIRED(1015, "At least two participants are required to play"),
+    HOST_CANNOT_REMOVE_SELF(1016, "Host cannot remove himself");
     private final int code;
     private final String message;
 
