@@ -1,131 +1,131 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import GameButton from "../../components/GameButton";
-import { joinRoom } from "../../services/roomService";
-import { useSnackbar } from "../../context/SnackbarContext";
+// import { useState } from "react";
+// import { useNavigate } from "react-router-dom";
+// import GameButton from "../../components/GameButton";
+// import { joinRoom } from "../../services/roomService";
+// import { useSnackbar } from "../../context/SnackbarContext";
 
-const JoinRoom = () => {
-  const navigate = useNavigate();
+// const JoinRoom = () => {
+//   const navigate = useNavigate();
 
-  // Store input value
-  const [roomCode, setRoomCode] = useState("");
-  const { showSnackbar } = useSnackbar();
+//   // Store input value
+//   const [roomCode, setRoomCode] = useState("");
+//   const { showSnackbar } = useSnackbar();
 
-  // Handle join room
-  const handleJoinRoom = async () => {
-    if (!roomCode) {
-      showSnackbar("Please enter room ID", "error");
-      return;
-    }
+//   // Handle join room
+//   const handleJoinRoom = async () => {
+//     if (!roomCode) {
+//       showSnackbar("Please enter room ID", "error");
+//       return;
+//     }
   
-    try {
-        const storedAuth = JSON.parse( localStorage.getItem("user") );
-        const joinUserId = storedAuth?.userId;
+//     try {
+//         const storedAuth = JSON.parse( localStorage.getItem("user") );
+//         const joinUserId = storedAuth?.userId;
 
-        console.log("Current User ID:", joinUserId);
+//         console.log("Current User ID:", joinUserId);
 
-          const res = await joinRoom({
-              roomCode,
-              tenantId: "test-1",
-              userId: joinUserId,
-  });
-          showSnackbar(res.message, "success");
-          console.log("Joined room:", res);   // res stores the response of the join api 
+//           const res = await joinRoom({
+//               roomCode,
+//               tenantId: "test-1",
+//               userId: joinUserId,
+//   });
+//           showSnackbar(res.message, "success");
+//           console.log("Joined room:", res);   // res stores the response of the join api 
 
-          navigate(`/ludowaiting-room/${roomCode}`);
-          } catch (error) {
-            showSnackbar(error.res?.message || "Failed to join room.","error");
-            console.error("Failed to join room:", error);
-          }
-};
+//           navigate(`/ludowaiting-room/${roomCode}`);
+//           } catch (error) {
+//             showSnackbar(error.res?.message || "Failed to join room.","error");
+//             console.error("Failed to join room:", error);
+//           }
+// };
 
-// for enter button click form submisison 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  await handleJoinRoom();
-};
+// // for enter button click form submisison 
+// const handleSubmit = async (e) => {
+//   e.preventDefault();
+//   await handleJoinRoom();
+// };
 
-  return (
-    <div className="
-      min-h-screen
-      bg-gradient-to-br
-      from-gray-900
-      via-black
-      to-gray-800
-      flex
-      items-center
-      justify-center
-      px-4
-    ">
+//   return (
+//     <div className="
+//       min-h-screen
+//       bg-gradient-to-br
+//       from-gray-900
+//       via-black
+//       to-gray-800
+//       flex
+//       items-center
+//       justify-center
+//       px-4
+//     ">
 
-      <div className="
-        w-full
-        max-w-md
-        bg-white/10
-        backdrop-blur-lg
-        border
-        border-white/20
-        rounded-3xl
-        shadow-2xl
-        p-8
-      ">
+//       <div className="
+//         w-full
+//         max-w-md
+//         bg-white/10
+//         backdrop-blur-lg
+//         border
+//         border-white/20
+//         rounded-3xl
+//         shadow-2xl
+//         p-8
+//       ">
 
-        <h1 className="
-          text-4xl
-          font-bold
-          text-white
-          text-center
-          mb-4
-        ">
-          Join Room
-        </h1>
+//         <h1 className="
+//           text-4xl
+//           font-bold
+//           text-white
+//           text-center
+//           mb-4
+//         ">
+//           Join Room
+//         </h1>
 
-        <p className="
-          text-gray-300
-          text-center
-          mb-8
-        ">
-          Enter room ID to join the game
-        </p>
+//         <p className="
+//           text-gray-300
+//           text-center
+//           mb-8
+//         ">
+//           Enter room ID to join the game
+//         </p>
 
-        <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Enter Room ID"
-          value={roomCode}
-          onChange={(e) => setRoomCode(e.target.value)}
-          className="
-            w-full
-            bg-black/30
-            border
-            border-blue-500/40
-            rounded-2xl
-            px-5
-            py-4
-            text-white
-            text-lg
-            outline-none
-            mb-8
-            focus:border-blue-500
-            transition
-          "
-        />
+//         <form onSubmit={handleSubmit}>
+//         <input
+//           type="text"
+//           placeholder="Enter Room ID"
+//           value={roomCode}
+//           onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+//           className="
+//             w-full
+//             bg-black/30
+//             border
+//             border-blue-500/40
+//             rounded-2xl
+//             px-5
+//             py-4
+//             text-white
+//             text-lg
+//             outline-none
+//             mb-8
+//             focus:border-blue-500
+//             transition
+//           "
+//         />
 
-        <GameButton
-          title="Join Waiting Room"
-          color="
-            bg-blue-500
-            hover:bg-blue-600
-            shadow-blue-500/40
-          "
-          type="submit"
-        />
-        </form>
+//         <GameButton
+//           title="Join Waiting Room"
+//           color="
+//             bg-blue-500
+//             hover:bg-blue-600
+//             shadow-blue-500/40
+//           "
+//           type="submit"
+//         />
+//         </form>
 
-      </div>
+//       </div>
 
-    </div>
-  );
-};
+//     </div>
+//   );
+// };
 
-export default JoinRoom;
+// export default JoinRoom;
