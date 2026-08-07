@@ -11,4 +11,8 @@ public class ResponseMessages {
     public static final String MOVE_PROCESSED = "Move played";
     public static final String ROOM_DETAILS_FETCHED = "Room details fetched";
     public static final String BOARD_LAYOUT_FETCHED = "Board layout fetched successfully.";
+    public static final String BOT_ADDED = "Bot added successfully";
+    public static final String BOT_REMOVED = "Bot removed successfully";
+    public static final String PLAYER_REMOVED = "Player removed successfully";
+
 }

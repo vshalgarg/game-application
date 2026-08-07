@@ -1,9 +1,11 @@
 package com.codemonks.gameservice.engineModule.model;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Data;
 
 import java.util.List;
 
+@JsonPropertyOrder({"startRow", "startCol", "rows", "cols", "triangles"})
 @Data
 public class CenterArea {
 
