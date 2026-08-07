@@ -26,7 +26,7 @@ const useGameRealtime = ({ roomCode, onGameUpdate }) => {
       }
 
       // STEP 2: Subscribe to realtime updates
-      const channel = supabase
+      channel = supabase
         .channel(`game-${roomCode}-${Date.now()}`) // useeffect runs this twice hence it shows duplicacy  
         // .channel(`game-${roomCode}`)  
         .on(

@@ -34,3 +34,16 @@ export const makeMove = async ({roomCode, userId, tokenId, consumedDice,}) => {
     throw new Error(handleApiError(error));
   }
 };
+
+// 3. Get Board api
+// export const getBoard = async (roomCode) => {
+//   try {
+//     const res = await api.get(
+//       `/rooms/${roomCode}/board-layout`
+//     );
+
+//     return checkLogicalError(res.data);
+//   } catch (error) {
+//     throw new Error(handleApiError(error));
+//   }
+// };

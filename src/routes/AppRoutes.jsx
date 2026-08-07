@@ -19,7 +19,7 @@ import LudoGameMode from "../pages/ludoPages/LudoGameMode";
 import LudoCreateJoinRoom from "../pages/ludoPages/LudoCreateJoinRoom";
 import LudoBotCreateRoom from "../pages/ludoPages/LudoBotCreateRoom";
 // import LudoCreateRoom from "../pages/ludoPages/LudoCreateRoom";
-import LudoJoinRoom from "../pages/ludoPages/LudoJoinRoom";
+// import LudoJoinRoom from "../pages/ludoPages/LudoJoinRoom";
 import LudoWaitingRoom from "../pages/ludoPages/LudoWaitingRoom";
 import LudoGameRoom from "../pages/ludoPages/LudoGameRoom";
 
@@ -66,7 +66,7 @@ const AppRoutes = () => {
                   <Route path="/createjoin-room" element={<LudoCreateJoinRoom/>} />     {/*create and join room button page */}
                   <Route path="/ludobotcreate-room" element={<LudoBotCreateRoom/>} />   {/* Play with computer room created and start game button page */}
                   {/* <Route path="/ludocreate-room" element={<LudoCreateRoom/>} />   Room created page for host only */}
-                  <Route path="/ludojoin-room" element={<LudoJoinRoom/>} />
+                  {/* <Route path="/ludojoin-room" element={<LudoJoinRoom/>} /> */}
                   <Route path="/ludowaiting-room/:roomCode" element={<LudoWaitingRoom/>} />
                   <Route path="/ludogame-room/:roomCode" element={<LudoGameRoom/>} /> 
 

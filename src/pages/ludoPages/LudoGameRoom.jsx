@@ -27,7 +27,6 @@ const LudoGameRoom = () => {
 
   //REALTIME GAME UPDATE
   useGameRealtime({
-
   roomCode,
 
   onGameUpdate: async (game) => {
@@ -35,10 +34,8 @@ const LudoGameRoom = () => {
     const board = game.game_state_data.board;
 
     if (!previousBoardRef.current) {
-
       previousBoardRef.current = structuredClone(board);
       setGameState(game.game_state_data);
-
     }
 
     else if (!animatingRef.current) {
@@ -66,9 +63,7 @@ const LudoGameRoom = () => {
   useEffect(() => {
 
   if (!isMyTurn) return;
-
   if (playerTurnStage !== "TOKEN_MOVE") return;
-
   if (legalMoves.length !== 1) {
     autoMovingRef.current = false;
     return;
@@ -76,36 +71,34 @@ const LudoGameRoom = () => {
 
   // Already moving automatically
   if (autoMovingRef.current) return;
-
   autoMovingRef.current = true;
 
+  // auto token clicked and moake move api call
   handleTokenClick(legalMoves[0].tokenId);
-
 }, [legalMoves, playerTurnStage, isMyTurn]);
 
   // Dice position according to player color
   const dicePositions = {
+  1: {
+    right: "-28%",
+    bottom: "3%",
+  },
 
-    1: {
-      right: "-125px",
-      bottom: "15px",
-    },
+  2: {
+    left: "-28%",
+    bottom: "3%",
+  },
 
-    2: {
-      left: "-125px",
-      bottom: "15px",
-    },
+  3: {
+    left: "-28%",
+    top: "3%",
+  },
 
-    3: {
-      left: "-125px",
-      top: "15px",
-    },
-
-    4: {
-      right: "-125px",
-      top: "15px",
-    },  
-  };
+  4: {
+    right: "-28%",
+    top: "3%",
+  },
+};
 
   // Roll Dice handler
   const handleRollDice = async()=>{
@@ -153,10 +146,8 @@ const LudoGameRoom = () => {
   
 // make move api when token is clicked 
   const handleTokenClick = async (tokenId, selectedDice = null) => {
-
   if (currentTurnUserId !== currentUserId)
     return;
-
   if (playerTurnStage !== "TOKEN_MOVE")
     return;
 
@@ -166,17 +157,31 @@ const LudoGameRoom = () => {
   if (tokenMoves.length === 0)
     return;
 
-  // Token can move using multiple dice
+  // Token can move using multiple dice number
   if (tokenMoves.length > 1 && selectedDice === null) {
     setSelectedToken(tokenId);
-    setDiceOptions(tokenMoves);
-    return;
+    // setDiceOptions(tokenMoves);
+    const uniqueDiceOptions = tokenMoves.filter(
+  (move, index, self) =>
+    index === self.findIndex((m) => m.dice === move.dice)
+);
+
+if (uniqueDiceOptions.length === 1 && selectedDice === null) {
+  await moveToken(tokenId, uniqueDiceOptions[0].dice);
+  return;
+}
+
+  setSelectedToken(tokenId);
+  setDiceOptions(uniqueDiceOptions);
+  return;
   }
 
   // Find which dice to consume
   const consumedDice = selectedDice ?? tokenMoves[0].dice;
   await moveToken(tokenId, consumedDice);
 };
+
+
   // make move api when a number is clicked 
   const handleDiceSelection = async (dice) => {
     console.log("Selected Token:", selectedToken);
@@ -185,7 +190,7 @@ const LudoGameRoom = () => {
   if (selectedToken === null)
     return;
   await moveToken(selectedToken, dice);
-};
+}; 
   // Find current player's color
   const currentTurnColorIndex = currentPlayer?.colorIndex;
 
@@ -302,38 +307,58 @@ const LudoGameRoom = () => {
 };
   
   return (
-
+  <div
+    className="
+      min-h-screen
+      w-full
+      bg-gradient-to-br
+      from-black
+      via-gray-900
+      to-black
+      flex
+      items-center
+      justify-center
+      p-2
+      sm:p-4
+      md:p-6
+    "
+  >
     <div
       className="
-        min-h-screen
-        bg-gradient-to-br
-        from-black
-        via-gray-900
-        to-black
         flex
+        flex-col
         items-center
-        justify-center
+        gap-4
+        w-full
       "
     >
+      {/* Turn Info */}
+      <div className="text-center text-white">
+        <h2 className="font-bold text-sm sm:text-base md:text-lg">
+          {isMyTurn ? "Your Turn" : "Other Player's Turn"}
+        </h2>
+
+        <p className="text-xs sm:text-sm break-all">
+          Your User ID: {currentUserId}
+        </p>
+      </div>
+
+      {/* Game Area */}
       <div className="relative">
-    
+
+        {/* Board */}
         <div
           className="
             bg-white/10
             backdrop-blur-lg
             border
             border-white/20
-            rounded-3xl
-            p-6
+            rounded-2xl
+            md:rounded-3xl
+            p-2
+            sm:p-4
           "
         >
-          <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-white text-center">
-            <div className="font-bold text-lg">
-              {isMyTurn ? "Your Turn" : "Other Player's Turn"}
-              <div className="text-sm">Your User ID: {currentUserId}</div>
-            </div>
-          </div>
-
           <LudoBoard
             boardData={boardData}
             gameState={gameState}
@@ -345,82 +370,105 @@ const LudoGameRoom = () => {
           />
         </div>
 
-        {/* Pending Dice */}
-      {pendingDice.length > 0 && (
-        <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex gap-2">
-          {pendingDice.map((dice, index) => (
-          <div
-            key={index}
-            className="w-8 h-8 rounded bg-yellow-500 text-black flex items-center justify-center font-bold">
-            {dice}
-          </div>
-          ))}
-        </div>
-  )}
+        {/* Dice */}
         <div
-  className="
-    absolute
-    transition-all
-    duration-700
-    ease-in-out
-  "
-  style={dicePositions[currentTurnColorIndex]}
->
-  <div className="relative flex flex-col items-center">
+          className="absolute z-30"
+          style={dicePositions[currentTurnColorIndex]}
+        >
+          <div className="relative">
 
-    <DiceHolder
-      turnColorIndex={currentTurnColorIndex}
-      diceValue={diceValue ?? 1}
-      rolling={rolling}
-      onRoll={handleRollDice}
-      colors={boardData.metadata.colors}
-    />
+            <DiceHolder
+              turnColorIndex={currentTurnColorIndex}
+              diceValue={diceValue ?? 1}
+              rolling={rolling}
+              onRoll={handleRollDice}
+              colors={boardData.metadata.colors}
+            />
 
-    {diceOptions.length > 0 && (
-      <div
-        className="
-          absolute
-          top-full
-          left-1/2
-          -translate-x-1/2
-          mt-2
-          flex
-          gap-2
-          bg-white
-          rounded-lg
-          shadow-lg
-          p-2
-          z-50
-        "
-      >
-        {diceOptions.map((move, index) => (
-          <button
-            key={index}
-            onClick={() => handleDiceSelection(move.dice)}
+            {diceOptions.length > 0 && (
+              <div
+                className="
+                  absolute
+                  top-full
+                  left-1/2
+                  -translate-x-1/2
+                  mt-2
+                  flex
+                  flex-wrap
+                  justify-center
+                  gap-2
+                  bg-white
+                  rounded-lg
+                  shadow-lg
+                  p-2
+                  max-w-[180px]
+                  z-50
+                "
+              >
+                {diceOptions.map((move, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleDiceSelection(move.dice)}
+                    className="
+                      w-8
+                      h-8
+                      sm:w-9
+                      sm:h-9
+                      rounded
+                      bg-yellow-500
+                      hover:bg-yellow-600
+                      font-bold
+                      text-black
+                    "
+                  >
+                    {move.dice}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Pending Dice */}
+        {pendingDice.length > 0 && (
+          <div
             className="
-              w-9
-              h-9
-              rounded
-              bg-yellow-500
-              hover:bg-yellow-600
-              font-bold
-              text-black
+              absolute
+              left-1/2
+              -translate-x-1/2
+              -bottom-12
+              flex
+              gap-2
             "
           >
-            {move.dice}
-          </button>
-        ))}
-      </div>
-    )}
-
-  </div>
-</div>
-
+            {pendingDice.map((dice, index) => (
+              <div
+                key={index}
+                className="
+                  w-7
+                  h-7
+                  sm:w-8
+                  sm:h-8
+                  rounded
+                  bg-yellow-500
+                  text-black
+                  flex
+                  items-center
+                  justify-center
+                  font-bold
+                  text-xs
+                "
+              >
+                {dice}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
-  );
+  </div>
+);
 
 };
 
 export default LudoGameRoom;
-

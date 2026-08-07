@@ -10,16 +10,13 @@ import useRoomRealtime from "../../hooks/useRoomRealtime";
 const WaitingRoom = () => {
   const navigate = useNavigate();
   const { roomCode } = useParams();
-
   const { showSnackbar } = useSnackbar();
   const [copied, setCopied] = useState(false);
-
   const storedAuth = JSON.parse(localStorage.getItem("user"));
   const currentUserId = storedAuth?.userId;
 
   // Supabase WaitingRealtime Hook
   const { players } = useWaitingRoomRealtime(roomCode);
-
   console.log("Players:", players);
 
   // Supabase RoomRealtime Hook
@@ -35,9 +32,10 @@ const WaitingRoom = () => {
   const handleStartGame = async () => {
     try {
       if (players.length < 2) {
-        showSnackbar("Waiting for another player...", "error");
-        return;
-      }
+      showSnackbar("Waiting for another player...", "error");
+      return;
+      } else if (players.length >= 2 && players.length <= 4) 
+
 
       console.log("Starting game for room:", roomCode);
 
@@ -58,9 +56,7 @@ const WaitingRoom = () => {
   );
 
   console.log("currentPlayer", currentPlayer);
-
   const isHost = currentPlayer?.role === "HOST";
-
   console.log("isHost", isHost);
 
   // Copy room code
@@ -158,22 +154,18 @@ const WaitingRoom = () => {
         </div>
 
         {/* Status */}
-        <p
-          className="
-            text-gray-300
-            mb-6
-          "
-        >
+        <p className="text-gray-300 mb-6">
           {players.length < 2
             ? "Waiting for players to join..."
+            : players.length < 4
+            ? "You can wait for other players or start the game."
             : "All players joined. Ready to start!"}
         </p>
 
         {/* Players List */}
         <div className="mb-8 space-y-3">
           {players.map((player) => (
-            <div
-              key={player.user_id}
+            <div key={player.user_id}
               className="
                 bg-black/30
                 border
@@ -183,15 +175,10 @@ const WaitingRoom = () => {
                 text-white
                 flex
                 justify-between
-                px-4
-              "
-            >
+                px-4">
               {/* Player Name */}
               <span
-                className={`${
-                  player.user_id === currentUserId ? "font-bold" : ""
-                }`}
-              >
+                className={`${player.user_id === currentUserId ? "font-bold" : ""}`}>
                 {player.user_id === currentUserId
                   ? `You (${player.user_id})`
                   : `Player ${player.user_id}`}
@@ -199,15 +186,11 @@ const WaitingRoom = () => {
 
               {/* Role */}
               <span
-                className={`
-                  text-sm
-                  ${
-                    player.role === "HOST"
+                className={`text-sm
+                  ${player.role === "HOST"
                       ? "text-green-400 font-semibold"
-                      : "text-gray-400"
-                  }
-                `}
-              >
+                      : "text-gray-400"}`}>
+                        
                 {player.role === "HOST" ? "Host" : "Player"}
               </span>
             </div>
