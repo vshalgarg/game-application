@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import LudoBoard from "../../components/ludoComponents/LudoBoard";
 import DiceHolder from "../../components/ludoComponents/DiceHolder";
-import { rollDice, makeMove, getBoard } from "../../services/ludoService.js";
+import { rollDice, makeMove } from "../../services/ludoService.js";
 import useGameRealtime from "../../hooks/useGameRealtime";
 import boardData from "../../data/board.json";
 
