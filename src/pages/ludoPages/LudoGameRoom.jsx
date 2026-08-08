@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import LudoBoard from "../../components/ludoComponents/LudoBoard";
 import DiceHolder from "../../components/ludoComponents/DiceHolder";
-import { rollDice, makeMove } from "../../services/ludoService.js";
+import { rollDice, makeMove, getBoard } from "../../services/ludoService.js";
 import useGameRealtime from "../../hooks/useGameRealtime";
 import boardData from "../../data/board.json";
 
@@ -17,6 +17,8 @@ const LudoGameRoom = () => {
   const [winnerUserId, setWinnerUserId] = useState(null);
   const [status, setStatus] = useState(null);
   const [diceOptions, setDiceOptions] = useState([]);
+  const [animationComplete, setAnimationComplete] = useState(true);
+  // const [boardData, setBoardData] = useState(null);
 
   const storedAuth = JSON.parse(localStorage.getItem("user"));
   const currentUserId = storedAuth?.userId;
@@ -24,6 +26,23 @@ const LudoGameRoom = () => {
   const previousBoardRef = useRef(null);
   const animatingRef = useRef(false);
   const autoMovingRef = useRef(false);
+  const autoMoveKeyRef = useRef(null);
+  const moveInProgressRef = useRef(false);
+  
+  // get board api when page loads
+//   const fetchBoard = async () => {
+//   try {
+//     const res = await getBoard(roomCode);
+//     console.log("Board API:", res);
+
+//     setBoardData(res.data);
+//   } catch (error) {
+//     console.error(error);
+//   }
+// };
+// useEffect(() => {
+//   fetchBoard();
+// }, [roomCode]);
 
   //REALTIME GAME UPDATE
   useGameRealtime({
@@ -39,14 +58,13 @@ const LudoGameRoom = () => {
     }
 
     else if (!animatingRef.current) {
+      setCurrentTurnUserId(game.current_turn_user_id);
+      setWinnerUserId(game.winner_user_id);
+      setStatus(game.game_status);
+      setDiceValue(board.lastDice);
       await animateBoard(previousBoardRef.current,board);
       previousBoardRef.current = structuredClone(board);
     }
-
-    setCurrentTurnUserId(game.current_turn_user_id);
-    setWinnerUserId(game.winner_user_id);
-    setStatus(game.game_status);
-    setDiceValue(board.lastDice);
   }
 });
 
@@ -62,20 +80,39 @@ const LudoGameRoom = () => {
   // for automatic move when single token is on track
   useEffect(() => {
 
-  if (!isMyTurn) return;
-  if (playerTurnStage !== "TOKEN_MOVE") return;
-  if (legalMoves.length !== 1) {
-    autoMovingRef.current = false;
+  // Don't auto move while animation is running
+  if (!animationComplete) return;
+
+  // Don't auto move while API call is running
+  if (moveInProgressRef.current) return;
+
+  if (!isMyTurn) {
+    autoMoveKeyRef.current = null;
     return;
   }
 
-  // Already moving automatically
-  if (autoMovingRef.current) return;
-  autoMovingRef.current = true;
+  if (playerTurnStage !== "TOKEN_MOVE") return;
 
-  // auto token clicked and moake move api call
-  handleTokenClick(legalMoves[0].tokenId);
-}, [legalMoves, playerTurnStage, isMyTurn]);
+  if (legalMoves.length !== 1) {
+    autoMoveKeyRef.current = null;
+    return;
+  }
+
+  const move = legalMoves[0];
+
+  const moveKey =
+    `${roomCode}-${currentTurnUserId}-${move.tokenId}-${move.dice}`;
+
+  // Already processed this exact move
+  if (autoMoveKeyRef.current === moveKey) return;
+
+  autoMoveKeyRef.current = moveKey;
+
+  (async () => {
+    await handleTokenClick(move.tokenId, move.dice);
+  })();
+
+  }, [legalMoves, playerTurnStage, isMyTurn, currentTurnUserId, roomCode, animationComplete]);
 
   // Dice position according to player color
   const dicePositions = {
@@ -126,6 +163,11 @@ const LudoGameRoom = () => {
   
   // Make move api
   const moveToken = async (tokenId, consumedDice) => {
+
+  // Prevent duplicate API calls
+  if (moveInProgressRef.current) return;
+  moveInProgressRef.current = true;
+
   try {
     await makeMove({
       roomCode,
@@ -140,7 +182,8 @@ const LudoGameRoom = () => {
 
   } catch (error) {
     console.error(error);
-    autoMovingRef.current = false;
+  } finally {
+    moveInProgressRef.current = false;
   }
 };
   
@@ -194,49 +237,50 @@ if (uniqueDiceOptions.length === 1 && selectedDice === null) {
   // Find current player's color
   const currentTurnColorIndex = currentPlayer?.colorIndex;
 
-  const animateBoard = async (oldBoard, newBoard) => {
+const animateBoard = async (oldBoard, newBoard) => {
   animatingRef.current = true;
+  setAnimationComplete(false);
+
   const board = structuredClone(oldBoard);
 
+  // Store killed tokens here
+  const killedAnimations = [];
+
   for (const latestPlayer of newBoard.players) {
-    const currentPlayer = board.players.find(p => p.playerId === latestPlayer.playerId);
+
+    const currentPlayer = board.players.find(
+      p => p.playerId === latestPlayer.playerId
+    );
 
     if (!currentPlayer) continue;
+
     for (const latestToken of latestPlayer.tokens) {
-      const currentToken = currentPlayer.tokens.find(t => t.tokenId === latestToken.tokenId);
+
+      const currentToken = currentPlayer.tokens.find(
+        t => t.tokenId === latestToken.tokenId
+      );
 
       if (!currentToken) continue;
-      // BASE -> TRACK //
-      if (currentToken.state === "BASE" && latestToken.state === "TRACK") {
 
-        currentToken.state = "TRACK";
-        currentToken.pathId = latestToken.pathId;
-        currentToken.pathIndex = latestToken.pathIndex;
-        currentToken.forwardJourney = latestToken.forwardJourney ?? [];
-        currentToken.backwardJourney = latestToken.backwardJourney ?? [];
-        currentToken.tokenKilled = latestToken.tokenKilled;
+      // FORWARD ANIMATION
+      if (
+        currentToken.state === "TRACK" &&
+        (latestToken.state === "TRACK" ||
+          latestToken.state === "FINISHED") &&
+        !latestToken.tokenKilled
+      ) {
 
-        setGameState(prev => ({
-          ...prev,
-          board: structuredClone(board)
-        }));
+        const previousLength =
+          currentToken.forwardJourney?.length ?? 0;
 
-        await new Promise(resolve =>
-          setTimeout(resolve, 180)
-        );
-
-        continue;
-      }
-      
-      // FORWARD ANIMATION 
-      if (currentToken.state === "TRACK" && (latestToken.state === "TRACK" || latestToken.state === "FINISHED") && !latestToken.tokenKilled) {
-
-        const previousLength = currentToken.forwardJourney?.length ?? 0;
         const journey = latestToken.forwardJourney ?? [];
+
         const newSteps = journey.slice(previousLength);
 
         for (const cellId of newSteps) {
+
           currentToken.pathId = cellId;
+
           setGameState(prev => ({
             ...prev,
             board: structuredClone(board)
@@ -253,59 +297,87 @@ if (uniqueDiceOptions.length === 1 && selectedDice === null) {
         currentToken.tokenKilled = latestToken.tokenKilled;
       }
 
-  // BACKWARD ANIMATION (Killed)
-      if (currentToken.state === "TRACK" && latestToken.state === "BASE" && latestToken.tokenKilled) {
-        const backwardJourney = latestToken.backwardJourney?.length ? latestToken.backwardJourney : currentToken.backwardJourney ?? [];
+      // TOKEN REACHED HOME
+      if (
+        currentToken.state !== "FINISHED" &&
+        latestToken.state === "FINISHED"
+      ) {
 
-      // Move from current position back to start
-      for (let i = backwardJourney.length - 1; i >= 0; i--) {
-          currentToken.pathId = backwardJourney[i];
-          currentToken.pathIndex = i;
+        currentToken.state = "FINISHED";
+        currentToken.pathId = latestToken.pathId;
+        currentToken.pathIndex = latestToken.pathIndex;
+        currentToken.forwardJourney = latestToken.forwardJourney;
+        currentToken.backwardJourney = latestToken.backwardJourney;
 
-          setGameState(prev => ({
-              ...prev,
-              board: structuredClone(board)
-          }));
-
-          await new Promise(resolve =>
-              setTimeout(resolve, 70)
-          );
-      }
-
-      // Finally return to base
-      currentToken.state = "BASE";
-      currentToken.pathId = null;
-      currentToken.pathIndex = null;
-      currentToken.baseSlotId = latestToken.baseSlotId;
-      currentToken.forwardJourney = [];
-      currentToken.backwardJourney = [];
-      currentToken.tokenKilled = false;
-
-      setGameState(prev => ({
+        setGameState(prev => ({
           ...prev,
           board: structuredClone(board)
-      }));
+        }));
+      }
 
-      continue;
-  }
-      // FINAL SYNC
-      currentToken.state = latestToken.state;
-      currentToken.pathId = latestToken.pathId;
-      currentToken.pathIndex = latestToken.pathIndex;
-      currentToken.baseSlotId = latestToken.baseSlotId;
-      currentToken.forwardJourney = latestToken.forwardJourney ?? [];
-      currentToken.backwardJourney = latestToken.backwardJourney ?? [];
-      currentToken.tokenKilled = latestToken.tokenKilled;
+      // COLLECT KILLED TOKEN
+      if (
+        currentToken.state === "TRACK" &&
+        latestToken.state === "BASE" &&
+        latestToken.tokenKilled
+      ) {
+
+        killedAnimations.push({
+          currentToken,
+          latestToken,
+        });
+      }
+
     }
   }
 
+  // PLAY KILLED TOKEN ANIMATIONS
+  for (const { currentToken, latestToken } of killedAnimations) {
+
+    const backwardJourney =
+      latestToken.backwardJourney?.length
+        ? latestToken.backwardJourney
+        : currentToken.backwardJourney ?? [];
+
+    for (let i = backwardJourney.length - 1; i >= 0; i--) {
+
+      currentToken.pathId = backwardJourney[i];
+      currentToken.pathIndex = i;
+
+      setGameState(prev => ({
+        ...prev,
+        board: structuredClone(board)
+      }));
+
+      await new Promise(resolve =>
+        setTimeout(resolve, 70)
+      );
+    }
+
+    currentToken.state = "BASE";
+    currentToken.pathId = null;
+    currentToken.pathIndex = null;
+    currentToken.baseSlotId = latestToken.baseSlotId;
+    currentToken.forwardJourney = [];
+    currentToken.backwardJourney = [];
+    currentToken.tokenKilled = false;
+
+    setGameState(prev => ({
+      ...prev,
+      board: structuredClone(board)
+    }));
+  }
+
+  // FINAL SYNC
   setGameState(prev => ({
     ...prev,
     board: structuredClone(newBoard)
   }));
+
   animatingRef.current = false;
+  setAnimationComplete(true);
 };
-  
+  // if (!boardData) {
   return (
   <div
     className="
@@ -383,6 +455,7 @@ if (uniqueDiceOptions.length === 1 && selectedDice === null) {
               rolling={rolling}
               onRoll={handleRollDice}
               colors={boardData.metadata.colors}
+              // colors={boardData?.metadata?.colors ?? []}
             />
 
             {diceOptions.length > 0 && (
@@ -468,7 +541,7 @@ if (uniqueDiceOptions.length === 1 && selectedDice === null) {
     </div>
   </div>
 );
-
-};
+  };
+// };
 
 export default LudoGameRoom;

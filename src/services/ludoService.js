@@ -4,12 +4,9 @@ import { checkLogicalError, handleApiError } from "../utils/errorHandler";
 // 1. Roll Dice for ludo
 export const rollDice = async ({ roomCode, userId }) => {
   try {
-    const res = await api.post(
-      `/rooms/${roomCode}/roll-dice`,
-      {
-        userId,
-      }
-    );
+    const res = await api.post(`/rooms/${roomCode}/roll-dice`, {
+      userId,
+    });
     return checkLogicalError(res.data);
   } catch (error) {
     throw new Error(handleApiError(error));
@@ -17,19 +14,16 @@ export const rollDice = async ({ roomCode, userId }) => {
 };
 
 // 2. Make Move for ludo
-export const makeMove = async ({roomCode, userId, tokenId, consumedDice,}) => {
-    try{
-  const res = await api.post(
-    `/game/${roomCode}/move`,
-    {
+export const makeMove = async ({ roomCode, userId, tokenId, consumedDice }) => {
+  try {
+    const res = await api.post(`/game/${roomCode}/move`, {
       userId,
       moveData: {
         tokenId,
         consumedDice,
       },
-    }
-  );
-   return checkLogicalError(res.data);
+    });
+    return checkLogicalError(res.data);
   } catch (error) {
     throw new Error(handleApiError(error));
   }
@@ -38,9 +32,7 @@ export const makeMove = async ({roomCode, userId, tokenId, consumedDice,}) => {
 // 3. Get Board api
 // export const getBoard = async (roomCode) => {
 //   try {
-//     const res = await api.get(
-//       `/rooms/${roomCode}/board-layout`
-//     );
+//     const res = await api.get(`/rooms/${roomCode}/board-layout`);
 
 //     return checkLogicalError(res.data);
 //   } catch (error) {
