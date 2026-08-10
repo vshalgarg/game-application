@@ -3,13 +3,13 @@ package com.codemonks.tic_tac_toe_game_engine.bot.strategy;
 import com.codemonks.tic_tac_toe_game_engine.domain.board.Board;
 import com.codemonks.tic_tac_toe_game_engine.domain.board.CellValue;
 import com.codemonks.tic_tac_toe_game_engine.domain.move.Move;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-@Component
+@Service("ticTacToeEasyRandomBotStrategy")
 public class EasyRandomBotStrategy implements BotStrategy {
 
     private final Random random = new Random();

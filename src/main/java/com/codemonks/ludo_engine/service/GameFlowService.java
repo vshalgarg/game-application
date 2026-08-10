@@ -1,20 +1,17 @@
 package com.codemonks.ludo_engine.service;
 
 
-import com.codemonks.ludo_engine.dto.common.GameStateDTO;
-import com.codemonks.ludo_engine.dto.realtime.RealtimeLobbyDTO;
 import com.codemonks.ludo_engine.dto.request.DiceRollRequestDTO;
 import com.codemonks.ludo_engine.dto.request.EngineMoveRequestDTO;
 import com.codemonks.ludo_engine.dto.request.EngineStartGameRequestDTO;
 import com.codemonks.ludo_engine.dto.response.DiceRollResponseDTO;
 import com.codemonks.ludo_engine.dto.response.EngineGameStateResponseDTO;
 
-public interface EngineService {
+public interface GameFlowService {
 
-    EngineGameStateResponseDTO startGame(EngineStartGameRequestDTO requestDTO);
-    void publishLobbyState(RealtimeLobbyDTO lobbyDTO);
+    EngineGameStateResponseDTO startGame(EngineStartGameRequestDTO request);
+
     EngineGameStateResponseDTO processMove(EngineMoveRequestDTO request);
-    DiceRollResponseDTO rollDice(DiceRollRequestDTO request);
-    GameStateDTO continueTurnAfterDelay(Long roomId, String roomCode, Long playerId);
 
+    DiceRollResponseDTO rollDice(DiceRollRequestDTO request);
 }

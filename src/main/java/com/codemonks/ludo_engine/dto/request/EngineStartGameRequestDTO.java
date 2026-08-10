@@ -29,7 +29,6 @@ public class EngineStartGameRequestDTO {
 
     @NotNull(message = "Game type is required")
     private GameTypeEnum gameType;
-
     private BotDifficultyEnum botDifficulty;
 
 }

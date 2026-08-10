@@ -10,7 +10,8 @@ import com.codemonks.ludo_engine.dto.response.DiceRollResponseDTO;
 import com.codemonks.ludo_engine.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.ludo_engine.model.BoardLayout;
 import com.codemonks.ludo_engine.service.BoardService;
-import com.codemonks.ludo_engine.service.Impl.EngineServiceImpl;
+import com.codemonks.ludo_engine.service.EngineService;
+import com.codemonks.ludo_engine.service.GameFlowService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import java.util.Map;
@@ -26,31 +27,27 @@ import static com.codemonks.ludo_engine.constant.ApiConstants.*;
 @Slf4j
 public class LudoEngineController {
 
-    private final EngineServiceImpl engineService;
+    private final GameFlowService gameFlowService;
+    private final EngineService engineService;
     private final BoardService boardService;
 
     @PostMapping(START_GAME)
-    public ResponseEntity<EngineGameStateResponseDTO>startGame(@Valid @RequestBody EngineStartGameRequestDTO request){
-
+    public ResponseEntity<EngineGameStateResponseDTO>startGame(
+            @Valid @RequestBody EngineStartGameRequestDTO request){
         log.info("Start game request received for room:{}", request.getRoomCode());
-
-        return ResponseEntity.ok(engineService.startGame(request));
-
+        return ResponseEntity.ok(gameFlowService.startGame(request));
     }
 
     @GetMapping(BOARD_LAYOUT)
     public ResponseEntity<BoardLayout> getBoardLayout() {
 
         BoardLayout boardLayout = boardService.getBoard();
-
         long gridCells = boardLayout.getGrid().stream().mapToLong(Map::size).sum();
-
         log.info(
                 "[BOARD_LAYOUT_REQUEST] Grid:{} Paths:{}",
                 gridCells,
                 boardLayout.getPaths().size()
         );
-
         return ResponseEntity.ok(boardLayout);
     }
 
@@ -58,7 +55,7 @@ public class LudoEngineController {
     public ResponseEntity<EngineGameStateResponseDTO> processmove(
             @Valid @RequestBody EngineMoveRequestDTO request
     ){
-        return ResponseEntity.ok(engineService.processMove(request));
+        return ResponseEntity.ok(gameFlowService.processMove(request));
     }
 
     @PostMapping(LOBBY)
@@ -69,9 +66,10 @@ public class LudoEngineController {
     }
 
     @PostMapping(ApiConstants.ROLL_DICE)
-    public ResponseEntity<DiceRollResponseDTO>rollDice(@RequestBody DiceRollRequestDTO request) {
-
-        log.info("Dice roll requested for RoomId:{} | PlayerId:{}", request.getRoomId(),request.getPlayerId());
-        return ResponseEntity.ok(engineService.rollDice(request));
+    public ResponseEntity<DiceRollResponseDTO>rollDice(
+            @RequestBody DiceRollRequestDTO request) {
+        log.info("Dice roll requested for RoomId:{} | PlayerId:{}",
+                request.getRoomId(),request.getPlayerId());
+        return ResponseEntity.ok(gameFlowService.rollDice(request));
     }
 }

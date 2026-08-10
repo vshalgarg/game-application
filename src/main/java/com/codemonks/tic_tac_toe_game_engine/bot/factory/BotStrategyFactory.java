@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-@Component
+@Component("ticTacToeBotStrategyFactory")
 public class BotStrategyFactory {
 
     private final Map<BotDifficultyEnum, BotStrategy> strategies;

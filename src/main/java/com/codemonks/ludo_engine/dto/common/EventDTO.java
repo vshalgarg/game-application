@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 public class EventDTO {
 
     private EventTypeEnum type;
-    //Engine may say:TOKEN_MOVED,KILL,EXTRA_TURN,Player won
-    private String message;//Human-readable frontend message
+    private String message;
 
 }
