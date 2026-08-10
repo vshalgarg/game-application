@@ -133,7 +133,10 @@ public class RoomServiceImpl implements RoomService {
 
     @Transactional
     @Override
-    public RoomActionResponseDTO addBot(String roomCode, AddBotRequestDTO request) {
+    public RoomActionResponseDTO addBot(
+            String roomCode,
+            AddBotRequestDTO request
+    ) {
 
         log.info(
                 "Add bot request. roomCode={}, hostUserId={}",
@@ -141,73 +144,127 @@ public class RoomServiceImpl implements RoomService {
                 request.getHostUserId()
         );
 
+        //  Find room
         RoomEntity room = roomRepository
                 .findByRoomCode(roomCode)
-                .orElseThrow(() -> new ResourceNotFoundException(ROOM_NOT_FOUND));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(ROOM_NOT_FOUND)
+                );
 
+        //  Find host
         PlayerEntity host = playerRepository
-                .findByRoom_IdAndUserId(room.getId(), request.getHostUserId())
-                .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
+                .findByRoom_IdAndUserId(
+                        room.getId(),
+                        request.getHostUserId()
+                )
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(USER_NOT_FOUND)
+                );
 
+        //  Only host can add bot
         if (host.getRole() != RoomPlayerRole.HOST) {
             throw new GameException(ONLY_HOST_CAN_START_GAME);
         }
 
+        //  Bot can only be added while room is waiting
         if (room.getStatus() != RoomStatusEnum.WAITING) {
             throw new GameException(GAME_ALREADY_STARTED);
         }
 
         GameConfigEntity config = gameConfigRepository
-                .findByIdTenantIdAndIdGameType(room.getTenantId(), room.getGameType())
+                .findByIdTenantIdAndIdGameType(
+                        room.getTenantId(),
+                        room.getGameType()
+                )
                 .orElseThrow(() -> {
-                    log.error("Config missing. tenantId={}, gameType={}",
+
+                    log.error(
+                            "Config missing. tenantId={}, gameType={}",
                             room.getTenantId(),
-                            room.getGameType());
+                            room.getGameType()
+                    );
+
                     return new GameException(GAME_CONFIG_NOT_FOUND);
                 });
-        List<PlayerEntity> players = playerRepository.findByRoom_Id(room.getId());
+
+        List<PlayerEntity> players =
+                playerRepository.findByRoom_Id(room.getId());
 
         if (players.size() >= config.getMaxPlayers()) {
             throw new GameException(ROOM_FULL);
         }
-        Long botUserId = botService.getNextBotUserId(players);
-        playerRepository.save(RoomMapper.toBotPlayer(room.getTenantId(), room, botUserId));
 
+        if (room.getBotDifficulty() == null
+                && request.getBotDifficulty() == null) {
+
+            throw new GameException(INVALID_REQUEST);
+        }
+
+        Long botUserId = botService.getNextBotUserId(players);
+         //create bot
+        PlayerEntity bot =
+                RoomMapper.toBotPlayer(
+                        room.getTenantId(),
+                        room,
+                        botUserId
+                );
+
+        playerRepository.save(bot);
+
+
+         // Set room difficulty ONLY for the first bot.
         if (room.getBotDifficulty() == null) {
 
-            log.info(
-                    "Setting bot difficulty. roomId={}, difficulty={}",
-                    room.getId(),
+            room.setBotDifficulty(
                     request.getBotDifficulty()
             );
 
-            if (request.getBotDifficulty() == null) {
-                throw new GameException(INVALID_REQUEST);
-            }
-
-            room.setBotDifficulty(request.getBotDifficulty());
             roomRepository.save(room);
-            log.info("Bot added. roomId={}, botUserId={}", room.getId(), botUserId);
 
+            log.info(
+                    "Bot difficulty initialized. roomId={}, difficulty={}",
+                    room.getId(),
+                    room.getBotDifficulty()
+            );
         }
+
+        log.info(
+                "Bot added. roomId={}, botUserId={}, botDifficulty={}",
+                room.getId(),
+                botUserId,
+                room.getBotDifficulty()
+        );
+
+        // Reload players so lobby contains the new bot
         players = playerRepository.findByRoom_Id(room.getId());
+
         RoomRealtimeStatusEnum status =
                 players.size() >= config.getMaxPlayers()
                         ? RoomRealtimeStatusEnum.READY
                         : RoomRealtimeStatusEnum.WAITING;
 
         RealtimeLobbyDTO lobbyDTO =
-                LobbyMapper.toLobbyDTO(room, players, status);
+                LobbyMapper.toLobbyDTO(
+                        room,
+                        players,
+                        status
+                );
 
-        gameEngineFactory.getStrategy(room.getGameType()).publishLobbyState(lobbyDTO);
-        RoomDetailsResponseDTO roomDetails = RoomMapper.toRoomDetailsResponseDTO(
-                        room, players);
+        gameEngineFactory
+                .getStrategy(room.getGameType())
+                .publishLobbyState(lobbyDTO);
+
+
+        RoomDetailsResponseDTO roomDetails =
+                RoomMapper.toRoomDetailsResponseDTO(
+                        room,
+                        players
+                );
 
         return RoomActionResponseDTO.builder()
                 .roomDetails(roomDetails)
                 .message(ResponseMessages.BOT_ADDED)
                 .build();
-
     }
 
     @Override

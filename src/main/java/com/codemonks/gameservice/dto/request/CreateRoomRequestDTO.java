@@ -12,6 +12,6 @@ public class CreateRoomRequestDTO {
     private String tenantId;
     private Long userId;
     private GameTypeEnum gameType;
-    private MatchTypeEnum matchType;
-    private BotDifficultyEnum botDifficulty;
+
+
 }

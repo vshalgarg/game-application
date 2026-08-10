@@ -132,3 +132,6 @@ CREATE INDEX idx_result_tenant
 CREATE INDEX idx_result_winner
     ON game_results (winner_id);
 
+
+ALTER TABLE game_db.rooms
+    MODIFY COLUMN match_type VARCHAR(50) NULL;

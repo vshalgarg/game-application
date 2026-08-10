@@ -9,8 +9,7 @@ import lombok.Data;
 @Data
 public class AddBotRequestDTO {
 
-    @NotNull
-    private String tenantId;
+
     @NotNull
     private Long hostUserId;
     private BotDifficultyEnum botDifficulty;

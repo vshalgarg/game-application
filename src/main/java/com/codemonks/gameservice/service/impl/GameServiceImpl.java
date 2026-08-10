@@ -53,8 +53,7 @@ public class GameServiceImpl implements GameService {
 
 
         RealtimeLobbyDTO lobbyDTO = LobbyMapper.toLobbyDTO(room,
-                        players,
-                        RoomRealtimeStatusEnum.ACTIVE
+                        players, RoomRealtimeStatusEnum.ACTIVE
                 );
 
         engine.publishLobbyState(lobbyDTO);
@@ -84,23 +83,21 @@ public class GameServiceImpl implements GameService {
 
 
         List<PlayerEntity> roomPlayers = playerRepository.findByRoom_Id(room.getId());
-       // List<PlayerDto> players = PlayerMapper.toPlayerDtos(roomPlayers);
+
         boolean isPlayerInRoom = roomPlayers.stream()
                 .anyMatch(p -> p.getUserId().equals(makeMoveRequestDTO.getUserId()));
 
         if (!isPlayerInRoom) {
             log.error("User {} is not a player in room {}",
                     makeMoveRequestDTO.getUserId(), roomCode);
-            throw new GameException(PLAYER_NOT_IN_ROOM); // error code add karna hoga
+            throw new GameException(PLAYER_NOT_IN_ROOM);
         }
-
         EngineMoveRequestDTO moveRequest =
                 EngineMoveRequestDTO.builder()
                         .roomId(room.getId())
-                        .roomCode(room.getRoomCode()) // ADDED
+                        .roomCode(room.getRoomCode())
                         .userId(makeMoveRequestDTO.getUserId())
                         .moveData(makeMoveRequestDTO.getMoveData())
-               //         .players(players)
                         .botDifficulty(room.getBotDifficulty())
                         .build();
 
@@ -171,7 +168,6 @@ public class GameServiceImpl implements GameService {
                 .build();
 
         gameResultEntityRepository.save(result);
-
         log.info(
                 "Game result saved successfully. roomId={}, winnerUserId={}",
                 room.getId(),
