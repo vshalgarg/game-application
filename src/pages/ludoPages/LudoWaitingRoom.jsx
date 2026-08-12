@@ -6,24 +6,23 @@ import { useSnackbar } from "../../context/SnackbarContext";
 import { startRoom } from "../../services/roomService";
 import useWaitingRoomRealtime from "../../hooks/useWaitingRoomRealtime";
 import useRoomRealtime from "../../hooks/useRoomRealtime";
+import { useAuth } from "../../context/AuthContext";
 
 const WaitingRoom = () => {
   const navigate = useNavigate();
-  const { roomCode } = useParams();
   const { showSnackbar } = useSnackbar();
+  const { auth } = useAuth();
+  const { roomCode } = useParams();
   const [copied, setCopied] = useState(false);
-  const storedAuth = JSON.parse(localStorage.getItem("user"));
-  const currentUserId = storedAuth?.userId;
+  const currentUserId = auth?.userId;
 
   // Supabase WaitingRealtime Hook
   const { players } = useWaitingRoomRealtime(roomCode);
-  console.log("Players:", players);
 
   // Supabase RoomRealtime Hook
   useRoomRealtime({
     roomCode,
     onStartGame: () => {
-      console.log("NAVIGATION CALLBACK FIRED");
       navigate(`/ludogame-room/${roomCode}`);
     },
   });
@@ -32,12 +31,10 @@ const WaitingRoom = () => {
   const handleStartGame = async () => {
     try {
       if (players.length < 2) {
-      showSnackbar("Waiting for another player...", "error");
-      return;
-      } else if (players.length >= 2 && players.length <= 4) 
-
-
-      console.log("Starting game for room:", roomCode);
+        showSnackbar("Waiting for another player...", "error");
+        return;
+      } else if (players.length >= 2 && players.length <= 4)
+        console.log("Starting game for room:", roomCode);
 
       const result = await startRoom({
         roomCode,
@@ -51,13 +48,8 @@ const WaitingRoom = () => {
     }
   };
 
-  const currentPlayer = players.find(
-    (player) => player.user_id === currentUserId
-  );
-
-  console.log("currentPlayer", currentPlayer);
+  const currentPlayer = players.find((player) => player.user_id === currentUserId);
   const isHost = currentPlayer?.role === "HOST";
-  console.log("isHost", isHost);
 
   // Copy room code
   const handleCopy = async () => {
@@ -158,14 +150,15 @@ const WaitingRoom = () => {
           {players.length < 2
             ? "Waiting for players to join..."
             : players.length < 4
-            ? "You can wait for other players or start the game."
-            : "All players joined. Ready to start!"}
+              ? "You can wait for other players or start the game."
+              : "All players joined. Ready to start!"}
         </p>
 
         {/* Players List */}
         <div className="mb-8 space-y-3">
           {players.map((player) => (
-            <div key={player.user_id}
+            <div
+              key={player.user_id}
               className="
                 bg-black/30
                 border
@@ -175,10 +168,10 @@ const WaitingRoom = () => {
                 text-white
                 flex
                 justify-between
-                px-4">
+                px-4"
+            >
               {/* Player Name */}
-              <span
-                className={`${player.user_id === currentUserId ? "font-bold" : ""}`}>
+              <span className={`${player.user_id === currentUserId ? "font-bold" : ""}`}>
                 {player.user_id === currentUserId
                   ? `You (${player.user_id})`
                   : `Player ${player.user_id}`}
@@ -187,10 +180,8 @@ const WaitingRoom = () => {
               {/* Role */}
               <span
                 className={`text-sm
-                  ${player.role === "HOST"
-                      ? "text-green-400 font-semibold"
-                      : "text-gray-400"}`}>
-                        
+                  ${player.role === "HOST" ? "text-green-400 font-semibold" : "text-gray-400"}`}
+              >
                 {player.role === "HOST" ? "Host" : "Player"}
               </span>
             </div>

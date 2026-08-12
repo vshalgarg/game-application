@@ -1,9 +1,8 @@
 import axios from "axios";
-import { showGlobalSnackbar } from "../services/snackbarService";
+import { loadAuth } from "../storage/authStorage";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  
   headers: {
     "Content-Type": "application/json",
   },
@@ -12,41 +11,39 @@ const api = axios.create({
 // Attach JWT token automatically to every request
 api.interceptors.request.use(
   (config) => {
-    const storedAuth = JSON.parse(localStorage.getItem("user"));
+    const token = loadAuth()?.token;
 
-    if (storedAuth?.token) {
-      config.headers.Authorization = `Bearer ${storedAuth.token}`;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
-
 let isLoggingOut = false;
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.log("Response interceptor triggered");
-    console.log(error.response);
-    if (error.response?.status === 401 && !isLoggingOut) {
+    console.error(error);
+    if (error.response?.status === 401) {
+      console.warn("Token expired or unauthorized. Logging out...");
       isLoggingOut = true;
-
-      // Show snackbar
-      showGlobalSnackbar("Login session expired. Please login again.","error");
-
-      // Clear auth data
-      localStorage.removeItem("user");
-
-      // Redirect after snackbar is shown
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 1500);
+      
+      window.dispatchEvent(
+        new CustomEvent("app:logout", {
+          detail: {
+            reason: "unauthorized",
+            status: 401,
+            message: "Session expired",
+          },
+        }),
+      );
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;
