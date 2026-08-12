@@ -20,15 +20,11 @@ public class PathOrderServiceImpl implements PathOrderService {
     ) {
 
         List<PlayerDTO> players = gameState.getPlayers();
-
         for (PlayerDTO player : players) {
-
             if (player.getPlayerId().equals(playerId)) {
-
                 log.debug("[PATH_ORDER] Player:{} PathOrder:{}",
                         playerId,
                         player.getColorIndex());
-
                 return player.getColorIndex();
             }
         }

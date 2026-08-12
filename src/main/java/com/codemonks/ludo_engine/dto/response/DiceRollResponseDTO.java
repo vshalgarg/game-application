@@ -22,5 +22,6 @@ public class DiceRollResponseDTO {
     private boolean tripleSixForfeited;
     private Long currentTurnPlayerId;
     private PlayerTurnStageEnum playerTurnStage;
+    private boolean delayedTurnRotationRequired;
 
 }

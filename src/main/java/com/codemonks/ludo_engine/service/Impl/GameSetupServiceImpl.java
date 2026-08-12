@@ -37,7 +37,7 @@ public class GameSetupServiceImpl implements GameSetupService {
                 request.getPlayerIds());
 
         //Create all players
-        List<PlayerDTO> initializedPlayers = createPlayers(request.getPlayerIds());
+        List<PlayerDTO> initializedPlayers = createPlayers(request.getPlayerIds(),request);
 
         //Choose first turn randomly
         Long selectedFirstPlayerId = selectRandomPlayer(request.getPlayerIds());
@@ -65,7 +65,7 @@ public class GameSetupServiceImpl implements GameSetupService {
     private static final List<Integer> CORNER_ORDER = List.of(1, 2, 3, 4);
 
     //Create player objects
-    private List<PlayerDTO> createPlayers(List<Long> playerIds) {
+    private List<PlayerDTO> createPlayers(List<Long> playerIds,EngineStartGameRequestDTO request) {
 
         log.info("Player creation started");
         List<PlayerDTO> playerList = new ArrayList<>();
@@ -79,6 +79,13 @@ public class GameSetupServiceImpl implements GameSetupService {
 
             player.setPlayerId(playerId);
             player.setColorIndex(colorIndex);
+
+            player.setIsBot(playerId < 0);
+
+            if (player.getIsBot()) {
+                player.setBotDifficulty(request.getBotDifficulty());
+            }
+
             long startingTokenId = (playerIndex * 4L) + 1;
             player.setTokens(createTokens(startingTokenId, colorIndex));
 
@@ -89,10 +96,18 @@ public class GameSetupServiceImpl implements GameSetupService {
         }
         playerList.sort(Comparator.comparingInt(p -> CORNER_ORDER.indexOf(p.getColorIndex())));
 
-        log.info("[PLAYER_CREATED] Players:{} AssignedColorIndexes:{}  CornerOrdered:{}",
+        log.info(
+                "[PLAYER_CREATED] Players:{} Bots:{} AssignedColorIndexes:{} CornerOrdered:{}",
                 playerIds,
+                playerList.stream()
+                        .filter(PlayerDTO::getIsBot)
+                        .map(PlayerDTO::getPlayerId)
+                        .toList(),
                 assignedColorIndexes,
-                playerList.stream().map(PlayerDTO::getColorIndex).toList());
+                playerList.stream()
+                        .map(PlayerDTO::getColorIndex)
+                        .toList()
+        );
 
         return playerList;
     }

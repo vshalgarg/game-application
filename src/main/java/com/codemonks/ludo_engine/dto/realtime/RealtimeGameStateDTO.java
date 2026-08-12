@@ -1,6 +1,7 @@
 package com.codemonks.ludo_engine.dto.realtime;
 
 import com.codemonks.ludo_engine.dto.common.PlayerDTO;
+import com.codemonks.ludo_engine.enums.BotDifficultyEnum;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,5 +39,5 @@ public class RealtimeGameStateDTO {
     private Long winnerUserId;
 
     @JsonProperty("bot_difficulty")
-    private String botDifficulty;
+    private BotDifficultyEnum botDifficulty;
 }

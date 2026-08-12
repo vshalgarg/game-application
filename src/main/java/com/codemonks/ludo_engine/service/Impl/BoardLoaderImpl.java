@@ -46,7 +46,7 @@ public class BoardLoaderImpl implements BoardLoader {
                             LinkedHashMap::new
                     ));
 
-            // Step 3: derive baseCells from the start ("S") cells of each base
+            // Step 3: derive from the start ("S") cells of each base
             Map<Integer, List<Integer>> baseCells = gridMap.entrySet().stream()
                     .filter(entry -> "S".equals(entry.getValue().getType())
                             && entry.getValue().getTokenColorIndex() != null)
@@ -73,7 +73,6 @@ public class BoardLoaderImpl implements BoardLoader {
 
     @Override
     public BoardLayout getBoardLayout() {
-
         log.info("[BOARD_FROM_MEMORY] Hash:{}", System.identityHashCode(boardLayout));
         return boardLayout;
     }

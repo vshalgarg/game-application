@@ -1,5 +1,6 @@
 package com.codemonks.ludo_engine.dto.common;
 
+import com.codemonks.ludo_engine.enums.BotDifficultyEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,7 +16,7 @@ public class PlayerDTO {
     private Integer colorIndex;
     private List<TokenDTO> tokens;
     private List<Integer> pendingDice;
-    private Boolean bot;
-    private String botDifficulty;
+    private Boolean isBot;
+    private BotDifficultyEnum botDifficulty;
     private Boolean pendingExtraTurn;
 }
