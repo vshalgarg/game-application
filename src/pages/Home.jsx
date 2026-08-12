@@ -3,10 +3,12 @@ import GameButton from "../components/GameButton";
 import { createRoom } from "../services/roomService";
 import { useSnackbar } from "../context/SnackbarContext";
 import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 const Home = () => {
   const navigate = useNavigate();
   const { showSnackbar } = useSnackbar();
+  const { auth } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const handleCreateRoom = async () => {
@@ -15,8 +17,7 @@ const Home = () => {
     setLoading(true);
 
     try {
-      const storedAuth = JSON.parse(localStorage.getItem("user"));
-      const hostUserId = storedAuth?.userId;
+      const hostUserId = auth?.userId;
 
       const res = await createRoom({
         tenantId: "test-1",

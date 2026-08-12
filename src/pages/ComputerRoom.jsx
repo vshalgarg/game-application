@@ -2,44 +2,44 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GameButton from "../components/GameButton";
 import { createRoom, startRoom } from "../services/roomService";
-
 import { useSnackbar } from "../context/SnackbarContext";
+import { useAuth } from "../context/AuthContext";
 
-  const difficulties = [
-    {
-      id: "EASY",
-      title: "Easy",
-      description: "Perfect for beginners",
-      emoji: "🟢",
-      activeBorder: "border-green-500",
-    },
-    {
-      id: "MEDIUM",
-      title: "Medium",
-      description: "Balanced challenge",
-      emoji: "🟡",
-      activeBorder: "border-yellow-500",
-    },
-    {
-      id: "HARD",
-      title: "Hard",
-      description: "A real challenge",
-      emoji: "🔴",
-      activeBorder: "border-red-500",
-    },
-  ];
+const difficulties = [
+  {
+    id: "EASY",
+    title: "Easy",
+    description: "Perfect for beginners",
+    emoji: "🟢",
+    activeBorder: "border-green-500",
+  },
+  {
+    id: "MEDIUM",
+    title: "Medium",
+    description: "Balanced challenge",
+    emoji: "🟡",
+    activeBorder: "border-yellow-500",
+  },
+  {
+    id: "HARD",
+    title: "Hard",
+    description: "A real challenge",
+    emoji: "🔴",
+    activeBorder: "border-red-500",
+  },
+];
 
 const ComputerRoom = () => {
   const navigate = useNavigate();
   const [difficulty, setDifficulty] = useState("EASY");
   const [loading, setLoading] = useState(false);
   const { showSnackbar } = useSnackbar();
+  const { auth } = useAuth();
 
   const handleStartGame = async () => {
     try {
       setLoading(true);
-      const storedAuth = JSON.parse(localStorage.getItem("user"));
-      const playerUserId = storedAuth?.userId;
+      const playerUserId = auth?.userId;
 
       const createResponse = await createRoom({
         tenantId: "test-1",
@@ -59,8 +59,7 @@ const ComputerRoom = () => {
       navigate(`/game-room/${roomCode}`);
     } catch (err) {
       console.error("Failed to start game:", err);
-      showSnackbar(err.startResponse?.message || "Failed to start game.","error");
-      
+      showSnackbar(err.startResponse?.message || "Failed to start game.", "error");
     } finally {
       setLoading(false);
     }
@@ -138,13 +137,9 @@ const ComputerRoom = () => {
                 <span className="text-2xl">{item.emoji}</span>
 
                 <div className="text-left">
-                  <h3 className="text-white font-bold text-base">
-                    {item.title}
-                  </h3>
+                  <h3 className="text-white font-bold text-base">{item.title}</h3>
 
-                  <p className="text-gray-400 text-xs">
-                    {item.description}
-                  </p>
+                  <p className="text-gray-400 text-xs">{item.description}</p>
                 </div>
               </div>
             </div>

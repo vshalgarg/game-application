@@ -5,9 +5,10 @@ import DiceHolder from "../../components/ludoComponents/DiceHolder";
 import { rollDice, makeMove } from "../../services/ludoService.js";
 import useGameRealtime from "../../hooks/useGameRealtime";
 import boardData from "../../data/board.json";
+import { useAuth } from "../../context/AuthContext";
 
 const LudoGameRoom = () => {
-
+  const { auth } = useAuth();
   const { roomCode } = useParams();
   const [rolling, setRolling] = useState(false);
   const [selectedToken, setSelectedToken] = useState(null);
@@ -18,369 +19,310 @@ const LudoGameRoom = () => {
   const [status, setStatus] = useState(null);
   const [diceOptions, setDiceOptions] = useState([]);
   const [animationComplete, setAnimationComplete] = useState(true);
-  // const [boardData, setBoardData] = useState(null);
-
-  const storedAuth = JSON.parse(localStorage.getItem("user"));
-  const currentUserId = storedAuth?.userId;
 
   const previousBoardRef = useRef(null);
   const animatingRef = useRef(false);
   const autoMovingRef = useRef(false);
   const autoMoveKeyRef = useRef(null);
   const moveInProgressRef = useRef(false);
-  
-  // get board api when page loads
-//   const fetchBoard = async () => {
-//   try {
-//     const res = await getBoard(roomCode);
-//     console.log("Board API:", res);
 
-//     setBoardData(res.data);
-//   } catch (error) {
-//     console.error(error);
-//   }
-// };
-// useEffect(() => {
-//   fetchBoard();
-// }, [roomCode]);
+  const currentUserId = auth?.userId;
 
   //REALTIME GAME UPDATE
   useGameRealtime({
-  roomCode,
+    roomCode,
 
-  onGameUpdate: async (game) => {
+    onGameUpdate: async (game) => {
+      const board = game.game_state_data.board;
 
-    const board = game.game_state_data.board;
-
-    if (!previousBoardRef.current) {
-      previousBoardRef.current = structuredClone(board);
-      setGameState(game.game_state_data);
-    }
-
-    else if (!animatingRef.current) {
-      setCurrentTurnUserId(game.current_turn_user_id);
-      setWinnerUserId(game.winner_user_id);
-      setStatus(game.game_status);
-      setDiceValue(board.lastDice);
-      await animateBoard(previousBoardRef.current,board);
-      previousBoardRef.current = structuredClone(board);
-    }
-  }
-});
+      if (!previousBoardRef.current) {
+        previousBoardRef.current = structuredClone(board);
+        setGameState(game.game_state_data);
+      } else if (!animatingRef.current) {
+        setCurrentTurnUserId(game.current_turn_user_id);
+        setWinnerUserId(game.winner_user_id);
+        setStatus(game.game_status);
+        setDiceValue(board.lastDice);
+        await animateBoard(previousBoardRef.current, board);
+        previousBoardRef.current = structuredClone(board);
+      }
+    },
+  });
 
   const board = gameState?.board;
   const legalMoves = board?.legalMoves ?? [];
   const playerTurnStage = board?.playerTurnStage;
-  const currentPlayer = board?.players?.find(player => player.playerId === currentTurnUserId);
+  const currentPlayer = board?.players?.find((player) => player.playerId === currentTurnUserId);
   const pendingDice = currentPlayer?.pendingDice ?? [];
   const isMyTurn = currentTurnUserId === currentUserId;
   const canRoll = isMyTurn && playerTurnStage === "ROLL_DICE" && !rolling;
-  const movableTokenIds = isMyTurn && playerTurnStage === "TOKEN_MOVE" ? legalMoves.map(move => move.tokenId): [];
+  const movableTokenIds =
+    isMyTurn && playerTurnStage === "TOKEN_MOVE" ? legalMoves.map((move) => move.tokenId) : [];
 
   // for automatic move when single token is on track
   useEffect(() => {
+    // Don't auto move while animation is running
+    if (!animationComplete) return;
 
-  // Don't auto move while animation is running
-  if (!animationComplete) return;
+    // Don't auto move while API call is running
+    if (moveInProgressRef.current) return;
 
-  // Don't auto move while API call is running
-  if (moveInProgressRef.current) return;
+    if (!isMyTurn) {
+      autoMoveKeyRef.current = null;
+      return;
+    }
 
-  if (!isMyTurn) {
-    autoMoveKeyRef.current = null;
-    return;
-  }
+    if (playerTurnStage !== "TOKEN_MOVE") return;
 
-  if (playerTurnStage !== "TOKEN_MOVE") return;
+    if (legalMoves.length !== 1) {
+      autoMoveKeyRef.current = null;
+      return;
+    }
 
-  if (legalMoves.length !== 1) {
-    autoMoveKeyRef.current = null;
-    return;
-  }
+    const move = legalMoves[0];
 
-  const move = legalMoves[0];
+    const moveKey = `${roomCode}-${currentTurnUserId}-${move.tokenId}-${move.dice}`;
 
-  const moveKey =
-    `${roomCode}-${currentTurnUserId}-${move.tokenId}-${move.dice}`;
+    // Already processed this exact move
+    if (autoMoveKeyRef.current === moveKey) return;
 
-  // Already processed this exact move
-  if (autoMoveKeyRef.current === moveKey) return;
+    autoMoveKeyRef.current = moveKey;
 
-  autoMoveKeyRef.current = moveKey;
-
-  (async () => {
-    await handleTokenClick(move.tokenId, move.dice);
-  })();
-
+    (async () => {
+      await handleTokenClick(move.tokenId, move.dice);
+    })();
   }, [legalMoves, playerTurnStage, isMyTurn, currentTurnUserId, roomCode, animationComplete]);
 
   // Dice position according to player color
   const dicePositions = {
-  1: {
-    right: "-28%",
-    bottom: "3%",
-  },
+    1: {
+      right: "-28%",
+      bottom: "3%",
+    },
 
-  2: {
-    left: "-28%",
-    bottom: "3%",
-  },
+    2: {
+      left: "-28%",
+      bottom: "3%",
+    },
 
-  3: {
-    left: "-28%",
-    top: "3%",
-  },
+    3: {
+      left: "-28%",
+      top: "3%",
+    },
 
-  4: {
-    right: "-28%",
-    top: "3%",
-  },
-};
+    4: {
+      right: "-28%",
+      top: "3%",
+    },
+  };
 
   // Roll Dice handler
-  const handleRollDice = async()=>{
-    if (!canRoll)
-    return;
+  const handleRollDice = async () => {
+    if (!canRoll) return;
 
-    try{
+    try {
       setRolling(true);
 
       await rollDice({
         roomCode,
-        userId:currentUserId
+        userId: currentUserId,
       });
 
-      setTimeout(()=>{
+      setTimeout(() => {
         setRolling(false);
-      },800);
-    }
-
-    catch(error){
+      }, 800);
+    } catch (error) {
       console.error(error);
       setRolling(false);
     }
   };
-  
+
   // Make move api
   const moveToken = async (tokenId, consumedDice) => {
+    // Prevent duplicate API calls
+    if (moveInProgressRef.current) return;
+    moveInProgressRef.current = true;
 
-  // Prevent duplicate API calls
-  if (moveInProgressRef.current) return;
-  moveInProgressRef.current = true;
+    try {
+      await makeMove({
+        roomCode,
+        userId: currentUserId,
+        tokenId,
+        consumedDice,
+      });
 
-  try {
-    await makeMove({
-      roomCode,
-      userId: currentUserId,
-      tokenId,
-      consumedDice,
-    });
+      setSelectedToken(null);
+      setDiceOptions([]);
+      autoMovingRef.current = false;
+    } catch (error) {
+      console.error(error);
+    } finally {
+      moveInProgressRef.current = false;
+    }
+  };
 
-    setSelectedToken(null);
-    setDiceOptions([]);
-    autoMovingRef.current = false;
-
-  } catch (error) {
-    console.error(error);
-  } finally {
-    moveInProgressRef.current = false;
-  }
-};
-  
-// make move api when token is clicked 
+  // make move api when token is clicked
   const handleTokenClick = async (tokenId, selectedDice = null) => {
-  if (currentTurnUserId !== currentUserId)
-    return;
-  if (playerTurnStage !== "TOKEN_MOVE")
-    return;
+    if (currentTurnUserId !== currentUserId) return;
+    if (playerTurnStage !== "TOKEN_MOVE") return;
 
-  // All legal moves for this token
-  const tokenMoves = legalMoves.filter(move => move.tokenId === tokenId);
+    // All legal moves for this token
+    const tokenMoves = legalMoves.filter((move) => move.tokenId === tokenId);
 
-  if (tokenMoves.length === 0)
-    return;
+    if (tokenMoves.length === 0) return;
 
-  // Token can move using multiple dice number
-  if (tokenMoves.length > 1 && selectedDice === null) {
-    setSelectedToken(tokenId);
-    // setDiceOptions(tokenMoves);
-    const uniqueDiceOptions = tokenMoves.filter(
-  (move, index, self) =>
-    index === self.findIndex((m) => m.dice === move.dice)
-);
+    // Token can move using multiple dice number
+    if (tokenMoves.length > 1 && selectedDice === null) {
+      setSelectedToken(tokenId);
+      // setDiceOptions(tokenMoves);
+      const uniqueDiceOptions = tokenMoves.filter(
+        (move, index, self) => index === self.findIndex((m) => m.dice === move.dice),
+      );
 
-if (uniqueDiceOptions.length === 1 && selectedDice === null) {
-  await moveToken(tokenId, uniqueDiceOptions[0].dice);
-  return;
-}
+      if (uniqueDiceOptions.length === 1 && selectedDice === null) {
+        await moveToken(tokenId, uniqueDiceOptions[0].dice);
+        return;
+      }
 
-  setSelectedToken(tokenId);
-  setDiceOptions(uniqueDiceOptions);
-  return;
-  }
+      setSelectedToken(tokenId);
+      setDiceOptions(uniqueDiceOptions);
+      return;
+    }
 
-  // Find which dice to consume
-  const consumedDice = selectedDice ?? tokenMoves[0].dice;
-  await moveToken(tokenId, consumedDice);
-};
+    // Find which dice to consume
+    const consumedDice = selectedDice ?? tokenMoves[0].dice;
+    await moveToken(tokenId, consumedDice);
+  };
 
-
-  // make move api when a number is clicked 
+  // make move api when a number is clicked
   const handleDiceSelection = async (dice) => {
-    console.log("Selected Token:", selectedToken);
-    console.log("Selected Dice:", dice);
-
-  if (selectedToken === null)
-    return;
-  await moveToken(selectedToken, dice);
-}; 
+    if (selectedToken === null) return;
+    await moveToken(selectedToken, dice);
+  };
   // Find current player's color
   const currentTurnColorIndex = currentPlayer?.colorIndex;
 
-const animateBoard = async (oldBoard, newBoard) => {
-  animatingRef.current = true;
-  setAnimationComplete(false);
+  const animateBoard = async (oldBoard, newBoard) => {
+    animatingRef.current = true;
+    setAnimationComplete(false);
 
-  const board = structuredClone(oldBoard);
+    const board = structuredClone(oldBoard);
 
-  // Store killed tokens here
-  const killedAnimations = [];
+    // Store killed tokens here
+    const killedAnimations = [];
 
-  for (const latestPlayer of newBoard.players) {
+    for (const latestPlayer of newBoard.players) {
+      const currentPlayer = board.players.find((p) => p.playerId === latestPlayer.playerId);
 
-    const currentPlayer = board.players.find(
-      p => p.playerId === latestPlayer.playerId
-    );
+      if (!currentPlayer) continue;
 
-    if (!currentPlayer) continue;
+      for (const latestToken of latestPlayer.tokens) {
+        const currentToken = currentPlayer.tokens.find((t) => t.tokenId === latestToken.tokenId);
 
-    for (const latestToken of latestPlayer.tokens) {
+        if (!currentToken) continue;
 
-      const currentToken = currentPlayer.tokens.find(
-        t => t.tokenId === latestToken.tokenId
-      );
+        // FORWARD ANIMATION
+        if (
+          currentToken.state === "TRACK" &&
+          (latestToken.state === "TRACK" || latestToken.state === "FINISHED") &&
+          !latestToken.tokenKilled
+        ) {
+          const previousLength = currentToken.forwardJourney?.length ?? 0;
 
-      if (!currentToken) continue;
+          const journey = latestToken.forwardJourney ?? [];
 
-      // FORWARD ANIMATION
-      if (
-        currentToken.state === "TRACK" &&
-        (latestToken.state === "TRACK" ||
-          latestToken.state === "FINISHED") &&
-        !latestToken.tokenKilled
-      ) {
+          const newSteps = journey.slice(previousLength);
 
-        const previousLength =
-          currentToken.forwardJourney?.length ?? 0;
+          for (const cellId of newSteps) {
+            currentToken.pathId = cellId;
 
-        const journey = latestToken.forwardJourney ?? [];
+            setGameState((prev) => ({
+              ...prev,
+              board: structuredClone(board),
+            }));
 
-        const newSteps = journey.slice(previousLength);
+            await new Promise((resolve) => setTimeout(resolve, 150));
+          }
 
-        for (const cellId of newSteps) {
-
-          currentToken.pathId = cellId;
-
-          setGameState(prev => ({
-            ...prev,
-            board: structuredClone(board)
-          }));
-
-          await new Promise(resolve =>
-            setTimeout(resolve, 150)
-          );
+          currentToken.forwardJourney = latestToken.forwardJourney;
+          currentToken.backwardJourney = latestToken.backwardJourney;
+          currentToken.pathIndex = latestToken.pathIndex;
+          currentToken.tokenKilled = latestToken.tokenKilled;
         }
 
-        currentToken.forwardJourney = latestToken.forwardJourney;
-        currentToken.backwardJourney = latestToken.backwardJourney;
-        currentToken.pathIndex = latestToken.pathIndex;
-        currentToken.tokenKilled = latestToken.tokenKilled;
+        // TOKEN REACHED HOME
+        if (currentToken.state !== "FINISHED" && latestToken.state === "FINISHED") {
+          currentToken.state = "FINISHED";
+          currentToken.pathId = latestToken.pathId;
+          currentToken.pathIndex = latestToken.pathIndex;
+          currentToken.forwardJourney = latestToken.forwardJourney;
+          currentToken.backwardJourney = latestToken.backwardJourney;
+
+          setGameState((prev) => ({
+            ...prev,
+            board: structuredClone(board),
+          }));
+        }
+
+        // COLLECT KILLED TOKEN
+        if (
+          currentToken.state === "TRACK" &&
+          latestToken.state === "BASE" &&
+          latestToken.tokenKilled
+        ) {
+          killedAnimations.push({
+            currentToken,
+            latestToken,
+          });
+        }
       }
-
-      // TOKEN REACHED HOME
-      if (
-        currentToken.state !== "FINISHED" &&
-        latestToken.state === "FINISHED"
-      ) {
-
-        currentToken.state = "FINISHED";
-        currentToken.pathId = latestToken.pathId;
-        currentToken.pathIndex = latestToken.pathIndex;
-        currentToken.forwardJourney = latestToken.forwardJourney;
-        currentToken.backwardJourney = latestToken.backwardJourney;
-
-        setGameState(prev => ({
-          ...prev,
-          board: structuredClone(board)
-        }));
-      }
-
-      // COLLECT KILLED TOKEN
-      if (
-        currentToken.state === "TRACK" &&
-        latestToken.state === "BASE" &&
-        latestToken.tokenKilled
-      ) {
-
-        killedAnimations.push({
-          currentToken,
-          latestToken,
-        });
-      }
-
     }
-  }
 
-  // PLAY KILLED TOKEN ANIMATIONS
-  for (const { currentToken, latestToken } of killedAnimations) {
-
-    const backwardJourney =
-      latestToken.backwardJourney?.length
+    // PLAY KILLED TOKEN ANIMATIONS
+    for (const { currentToken, latestToken } of killedAnimations) {
+      const backwardJourney = latestToken.backwardJourney?.length
         ? latestToken.backwardJourney
-        : currentToken.backwardJourney ?? [];
+        : (currentToken.backwardJourney ?? []);
 
-    for (let i = backwardJourney.length - 1; i >= 0; i--) {
+      for (let i = backwardJourney.length - 1; i >= 0; i--) {
+        currentToken.pathId = backwardJourney[i];
+        currentToken.pathIndex = i;
 
-      currentToken.pathId = backwardJourney[i];
-      currentToken.pathIndex = i;
+        setGameState((prev) => ({
+          ...prev,
+          board: structuredClone(board),
+        }));
 
-      setGameState(prev => ({
+        await new Promise((resolve) => setTimeout(resolve, 70));
+      }
+
+      currentToken.state = "BASE";
+      currentToken.pathId = null;
+      currentToken.pathIndex = null;
+      currentToken.baseSlotId = latestToken.baseSlotId;
+      currentToken.forwardJourney = [];
+      currentToken.backwardJourney = [];
+      currentToken.tokenKilled = false;
+
+      setGameState((prev) => ({
         ...prev,
-        board: structuredClone(board)
+        board: structuredClone(board),
       }));
-
-      await new Promise(resolve =>
-        setTimeout(resolve, 70)
-      );
     }
 
-    currentToken.state = "BASE";
-    currentToken.pathId = null;
-    currentToken.pathIndex = null;
-    currentToken.baseSlotId = latestToken.baseSlotId;
-    currentToken.forwardJourney = [];
-    currentToken.backwardJourney = [];
-    currentToken.tokenKilled = false;
-
-    setGameState(prev => ({
+    // FINAL SYNC
+    setGameState((prev) => ({
       ...prev,
-      board: structuredClone(board)
+      board: structuredClone(newBoard),
     }));
-  }
 
-  // FINAL SYNC
-  setGameState(prev => ({
-    ...prev,
-    board: structuredClone(newBoard)
-  }));
-
-  animatingRef.current = false;
-  setAnimationComplete(true);
-};
+    animatingRef.current = false;
+    setAnimationComplete(true);
+  };
   // if (!boardData) {
   return (
-  <div
-    className="
+    <div
+      className="
       min-h-screen
       w-full
       bg-gradient-to-br
@@ -394,33 +336,30 @@ const animateBoard = async (oldBoard, newBoard) => {
       sm:p-4
       md:p-6
     "
-  >
-    <div
-      className="
+    >
+      <div
+        className="
         flex
         flex-col
         items-center
         gap-4
         w-full
       "
-    >
-      {/* Turn Info */}
-      <div className="text-center text-white">
-        <h2 className="font-bold text-sm sm:text-base md:text-lg">
-          {isMyTurn ? "Your Turn" : "Other Player's Turn"}
-        </h2>
+      >
+        {/* Turn Info */}
+        <div className="text-center text-white">
+          <h2 className="font-bold text-sm sm:text-base md:text-lg">
+            {isMyTurn ? "Your Turn" : "Other Player's Turn"}
+          </h2>
 
-        <p className="text-xs sm:text-sm break-all">
-          Your User ID: {currentUserId}
-        </p>
-      </div>
+          <p className="text-xs sm:text-sm break-all">Your User ID: {currentUserId}</p>
+        </div>
 
-      {/* Game Area */}
-      <div className="relative">
-
-        {/* Board */}
-        <div
-          className="
+        {/* Game Area */}
+        <div className="relative">
+          {/* Board */}
+          <div
+            className="
             bg-white/10
             backdrop-blur-lg
             border
@@ -430,37 +369,33 @@ const animateBoard = async (oldBoard, newBoard) => {
             p-2
             sm:p-4
           "
-        >
-          <LudoBoard
-            boardData={boardData}
-            gameState={gameState}
-            selectedToken={selectedToken}
-            setSelectedToken={setSelectedToken}
-            handleTokenClick={handleTokenClick}
-            legalMoves={legalMoves}
-            movableTokenIds={movableTokenIds}
-          />
-        </div>
-
-        {/* Dice */}
-        <div
-          className="absolute z-30"
-          style={dicePositions[currentTurnColorIndex]}
-        >
-          <div className="relative">
-
-            <DiceHolder
-              turnColorIndex={currentTurnColorIndex}
-              diceValue={diceValue ?? 1}
-              rolling={rolling}
-              onRoll={handleRollDice}
-              colors={boardData.metadata.colors}
-              // colors={boardData?.metadata?.colors ?? []}
+          >
+            <LudoBoard
+              boardData={boardData}
+              gameState={gameState}
+              selectedToken={selectedToken}
+              setSelectedToken={setSelectedToken}
+              handleTokenClick={handleTokenClick}
+              legalMoves={legalMoves}
+              movableTokenIds={movableTokenIds}
             />
+          </div>
 
-            {diceOptions.length > 0 && (
-              <div
-                className="
+          {/* Dice */}
+          <div className="absolute z-30" style={dicePositions[currentTurnColorIndex]}>
+            <div className="relative">
+              <DiceHolder
+                turnColorIndex={currentTurnColorIndex}
+                diceValue={diceValue ?? 1}
+                rolling={rolling}
+                onRoll={handleRollDice}
+                colors={boardData.metadata.colors}
+                // colors={boardData?.metadata?.colors ?? []}
+              />
+
+              {diceOptions.length > 0 && (
+                <div
+                  className="
                   absolute
                   top-full
                   left-1/2
@@ -477,12 +412,12 @@ const animateBoard = async (oldBoard, newBoard) => {
                   max-w-[180px]
                   z-50
                 "
-              >
-                {diceOptions.map((move, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleDiceSelection(move.dice)}
-                    className="
+                >
+                  {diceOptions.map((move, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleDiceSelection(move.dice)}
+                      className="
                       w-8
                       h-8
                       sm:w-9
@@ -493,19 +428,19 @@ const animateBoard = async (oldBoard, newBoard) => {
                       font-bold
                       text-black
                     "
-                  >
-                    {move.dice}
-                  </button>
-                ))}
-              </div>
-            )}
+                    >
+                      {move.dice}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Pending Dice */}
-        {pendingDice.length > 0 && (
-          <div
-            className="
+          {/* Pending Dice */}
+          {pendingDice.length > 0 && (
+            <div
+              className="
               absolute
               left-1/2
               -translate-x-1/2
@@ -513,11 +448,11 @@ const animateBoard = async (oldBoard, newBoard) => {
               flex
               gap-2
             "
-          >
-            {pendingDice.map((dice, index) => (
-              <div
-                key={index}
-                className="
+            >
+              {pendingDice.map((dice, index) => (
+                <div
+                  key={index}
+                  className="
                   w-7
                   h-7
                   sm:w-8
@@ -531,17 +466,17 @@ const animateBoard = async (oldBoard, newBoard) => {
                   font-bold
                   text-xs
                 "
-              >
-                {dice}
-              </div>
-            ))}
-          </div>
-        )}
+                >
+                  {dice}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-);
-  };
+  );
+};
 // };
 
 export default LudoGameRoom;

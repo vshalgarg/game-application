@@ -3,33 +3,28 @@ import authApi from "./authAxios";
 
 // Signup
 export const signupUser = async ({ email, password }) => {
-  try{
+  try {
     const res = await authApi.post("/register", {
-    email,
-    password,
-  });
-const result= checkLogicalError(res.data)
-  return result;
+      email,
+      password,
+    });
+    const result = checkLogicalError(res.data);
+    return result;
+  } catch (error) {
+    throw new Error(handleApiError(error));
   }
-
- catch (error) {
-    throw new Error(handleApiError(error))
-  }
-  
 };
 
 // Login
 export const loginUser = async ({ email, password }) => {
   try {
     const res = await authApi.post("/login", {
-    email,
-    password,
-  });
-   const result= checkLogicalError(res.data)
-  return result;
-    
+      email,
+      password,
+    });
+    const result = checkLogicalError(res.data);
+    return result;
   } catch (error) {
-    throw new Error(handleApiError(error))
+    throw new Error(handleApiError(error));
   }
-  
 };

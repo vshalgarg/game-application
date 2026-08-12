@@ -1,42 +1,25 @@
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useSnackbar } from "../context/SnackbarContext";
 
 const Navbar = () => {
   const navigate = useNavigate();
-
-  // Safely get user
-  const userData = localStorage.getItem("user");
-  const user = userData ? JSON.parse(userData) : null;
+  const { auth, logout } = useAuth();
+  const { showSnackbar } = useSnackbar();
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    navigate("/login");
+    logout();
+    showSnackbar("Logged out successfully", "success");
+    navigate("/login", { replace: true });
   };
 
   return (
-
-    <div className="
-      w-full
-      bg-gray-800/70
-      backdrop-blur-lg
-      border-b
-      border-white/10
-      px-4 md:px-6
-      py-4
-      flex
-      justify-between
-      items-center
-    ">
-
+    <div className=" w-full bg-gray-800/70 backdrop-blur-lg border-b border-white/10 px-4 md:px-6 py-4 flex justify-between items-center ">
       {/* Logo */}
 
       <h1
         onClick={() => navigate("/")}
-        className="
-          text-xl md:text-2xl
-          font-bold
-          text-white
-          cursor-pointer
-        "
+        className="text-xl md:text-2xl font-bold text-white cursor-pointer"
       >
         GameZone
       </h1>
@@ -44,15 +27,12 @@ const Navbar = () => {
       {/* Right Section */}
 
       <div className="flex items-center gap-3 md:gap-6">
-
         {/* Navigation Links */}
 
         <div className="flex gap-3 md:gap-6 text-gray-300 text-sm md:text-base">
-
           <p onClick={() => navigate("/")} className="cursor-pointer hover:text-white">
             Home
           </p>
-
 
           <p onClick={() => navigate("/about")} className="cursor-pointer hover:text-white">
             About
@@ -65,39 +45,18 @@ const Navbar = () => {
           <p onClick={() => navigate("/profile")} className="cursor-pointer hover:text-white">
             Profile
           </p>
-
         </div>
 
-        {/* User Email (hidden on small screens) */}
-
-        {user && (
-          <span className="hidden md:block text-gray-400 text-sm">
-            {user.email}
-          </span>
-        )}
+        {auth && <span className="hidden md:block text-gray-400 text-sm">{auth.username}</span>}
 
         {/* Logout Button */}
-
-        {user && (
-          <button
-            onClick={handleLogout}
-            className="
-              bg-red-500
-              hover:bg-red-600
-              text-white
-              px-3 md:px-4
-              py-1 md:py-2
-              rounded-lg
-              text-sm
-              transition
-            "
-          >
-            Logout
-          </button>
-        )}
-
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 hover:bg-red-600 text-white px-3 md:px-4 py-1 md:py-2 rounded-lg text-sm transition"
+        >
+          Logout
+        </button>
       </div>
-
     </div>
   );
 };

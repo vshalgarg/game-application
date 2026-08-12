@@ -1,18 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import GameButton from "../components/GameButton";
 import { joinRoom } from "../services/roomService";
-
 import { useSnackbar } from "../context/SnackbarContext";
+import { useAuth } from "../context/AuthContext";
 
 const JoinRoom = () => {
   const navigate = useNavigate();
-
-  // Store input value
-  const [roomCode, setRoomCode] = useState("");
-
   const { showSnackbar } = useSnackbar();
+  const { auth } = useAuth();
+  const [roomCode, setRoomCode] = useState("");
 
   // Handle join room
   const handleJoinRoom = async () => {
@@ -20,35 +17,32 @@ const JoinRoom = () => {
       showSnackbar("Please enter room ID", "error");
       return;
     }
-  
+
     try {
-        const storedAuth = JSON.parse( localStorage.getItem("user") );
-        const joinUserId = storedAuth?.userId;
+      const joinUserId = auth?.userId;
 
-        console.log("Current User ID:", joinUserId);
+      const res = await joinRoom({
+        roomCode,
+        tenantId: "test-1",
+        userId: joinUserId,
+      });
+      showSnackbar(res.message, "success");
+      navigate(`/waiting-room/${roomCode}`);
+    } catch (error) {
+      showSnackbar(error.message || "Failed to join room.", "error");
+      console.error("Failed to join room:", err);
+    }
+  };
 
-        const res = await joinRoom({
-            roomCode,
-            tenantId: "test-1",
-            userId: joinUserId,
-  });
-        showSnackbar(res.message, "success");
-        console.log("Joined room:", res);   // res stores the response of the join api 
-        navigate(`/waiting-room/${roomCode}`);
-          } catch (error) {
-            showSnackbar(error.message || "Failed to join room.","error");
-            console.error("Failed to join room:", err);
-          }
-};
-
-// for enter button click form submisison 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  await handleJoinRoom();
-};
+  // for enter button click form submisison
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await handleJoinRoom();
+  };
 
   return (
-    <div className="
+    <div
+      className="
       min-h-screen
       bg-gradient-to-br
       from-gray-900
@@ -58,9 +52,10 @@ const handleSubmit = async (e) => {
       items-center
       justify-center
       px-4
-    ">
-
-      <div className="
+    "
+    >
+      <div
+        className="
         w-full
         max-w-md
         bg-white/10
@@ -70,33 +65,37 @@ const handleSubmit = async (e) => {
         rounded-3xl
         shadow-2xl
         p-8
-      ">
-
-        <h1 className="
+      "
+      >
+        <h1
+          className="
           text-4xl
           font-bold
           text-white
           text-center
           mb-4
-        ">
+        "
+        >
           Join Room
         </h1>
 
-        <p className="
+        <p
+          className="
           text-gray-300
           text-center
           mb-8
-        ">
+        "
+        >
           Enter room ID to join the game
         </p>
 
         <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Enter Room ID"
-          value={roomCode}
-          onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-          className="
+          <input
+            type="text"
+            placeholder="Enter Room ID"
+            value={roomCode}
+            onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+            className="
             w-full
             bg-black/30
             border
@@ -111,21 +110,19 @@ const handleSubmit = async (e) => {
             focus:border-purple-500
             transition
           "
-        />
+          />
 
-        <GameButton
-          title="Join Waiting Room"
-          color="
+          <GameButton
+            title="Join Waiting Room"
+            color="
             bg-purple-500
             hover:bg-purple-600
             shadow-purple-500/40
           "
-          type="submit"
-        />
+            type="submit"
+          />
         </form>
-
       </div>
-
     </div>
   );
 };
