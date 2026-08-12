@@ -42,32 +42,8 @@ const Login = () => {
   };
 
   return (
-    <div
-      className="
-        min-h-screen
-        flex
-        items-center
-        justify-center
-        bg-gradient-to-br
-        from-black
-        via-gray-900
-        to-black
-        px-4
-      "
-    >
-      <div
-        className="
-          w-full
-          max-w-md
-          bg-white/10
-          backdrop-blur-lg
-          border
-          border-white/20
-          rounded-3xl
-          p-8
-          shadow-2xl
-        "
-      >
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black px-4">
+      <div className="w-full max-w-md bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-8 shadow-2xl">
         <h1 className="text-4xl text-white font-bold text-center mb-6">Login 🎮</h1>
 
         <p className="text-gray-300 text-center mb-8">Enter your login credentials</p>
@@ -93,33 +69,24 @@ const Login = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
             >
               {showPassword ? <FaEye size={20} /> : <FaEyeSlash size={20} />}
             </button>
           </div>
           <button
             type="submit"
-            className="
-            w-full
-            bg-blue-500
-            hover:bg-blue-600
-            py-3
-            rounded-xl
-            text-white
-            font-semibold
-            transition
-          "
+            className="w-full bg-blue-500 hover:bg-blue-600 py-3 rounded-xl text-white font-semibold transition cursor-pointer"
           >
             Login
           </button>
         </form>
 
         <p
-          onClick={() => navigate("/signup")}
+          onClick={() => navigate("/signup", { replace: true })}
           className="text-center text-gray-300 mt-6 cursor-pointer hover:text-white"
         >
-          Create Account
+          Don’t have an account? Sign up
         </p>
       </div>
     </div>
