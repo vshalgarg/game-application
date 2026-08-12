@@ -1,5 +1,6 @@
 package com.codemonks.gameservice.engineModule.dto.common;
 
+import com.codemonks.gameservice.engineModule.enums.BotDifficultyEnum;
 import lombok.*;
 
 @Getter
@@ -13,4 +14,5 @@ public class PlayerDTO {
     private Integer turnOrder;
     private String side;
     private Boolean isBot;
+    private BotDifficultyEnum botDifficulty;
 }

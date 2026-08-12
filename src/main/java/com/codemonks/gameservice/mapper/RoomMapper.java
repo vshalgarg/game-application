@@ -20,12 +20,11 @@ public class RoomMapper {
 
     public static RoomEntity toRoomEntity(CreateRoomRequestDTO request, String roomCode) {
         RoomEntity room = new RoomEntity();
+
         room.setTenantId(request.getTenantId());
         room.setGameType(request.getGameType());
         room.setStatus(RoomStatusEnum.WAITING);
         room.setRoomCode(roomCode);
-        room.setMatchType(request.getMatchType());
-        room.setBotDifficulty(request.getBotDifficulty());
         return room;
     }
 

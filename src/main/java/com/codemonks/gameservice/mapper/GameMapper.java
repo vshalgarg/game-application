@@ -12,17 +12,13 @@ public final class GameMapper {
 
     public static EngineStartGameRequestDTO toStartGameRequest(
             RoomEntity room,
-            List<PlayerEntity> players
-    ) {
-        players.sort(
-                Comparator.comparing(
-                        p -> p.getRole() == RoomPlayerRole.HOST ? 0 : 1
-                )
-        );
+            List<PlayerEntity> players) {
+
         List<Long> playerIds = players.stream()
+                .sorted(Comparator.comparing(
+                        p -> p.getRole() == RoomPlayerRole.HOST ? 0 : 1))
                 .map(PlayerEntity::getUserId)
                 .toList();
-
         return EngineStartGameRequestDTO.builder()
                 .roomId(room.getId())
                 .roomCode(room.getRoomCode())
