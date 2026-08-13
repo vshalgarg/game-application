@@ -34,15 +34,17 @@ const LudoGameRoom = () => {
 
     onGameUpdate: async (game) => {
       const board = game.game_state_data.board;
+      console.log("Realtime received:", game);
+
+      setCurrentTurnUserId(game.current_turn_user_id);
+      setWinnerUserId(game.winner_user_id);
+      setStatus(game.game_status);
+      setDiceValue(board.lastDice);
 
       if (!previousBoardRef.current) {
         previousBoardRef.current = structuredClone(board);
         setGameState(game.game_state_data);
       } else if (!animatingRef.current) {
-        setCurrentTurnUserId(game.current_turn_user_id);
-        setWinnerUserId(game.winner_user_id);
-        setStatus(game.game_status);
-        setDiceValue(board.lastDice);
         await animateBoard(previousBoardRef.current, board);
         previousBoardRef.current = structuredClone(board);
       }
@@ -56,8 +58,7 @@ const LudoGameRoom = () => {
   const pendingDice = currentPlayer?.pendingDice ?? [];
   const isMyTurn = currentTurnUserId === currentUserId;
   const canRoll = isMyTurn && playerTurnStage === "ROLL_DICE" && !rolling;
-  const movableTokenIds =
-    isMyTurn && playerTurnStage === "TOKEN_MOVE" ? legalMoves.map((move) => move.tokenId) : [];
+  const movableTokenIds = isMyTurn && playerTurnStage === "TOKEN_MOVE" ? legalMoves.map((move) => move.tokenId) : [];
 
   // for automatic move when single token is on track
   useEffect(() => {
@@ -320,6 +321,12 @@ const LudoGameRoom = () => {
     setAnimationComplete(true);
   };
   // if (!boardData) {
+  console.log("currentTurnUserId:", currentTurnUserId);
+  console.log("currentTurnColorIndex:", currentTurnColorIndex);
+  console.log("board players:", board?.players);
+  console.log("currentTurnUserId:", currentTurnUserId);
+  console.log("currentPlayer:", currentPlayer);
+  console.log("currentTurnColorIndex:", currentTurnColorIndex);
   return (
     <div
       className="

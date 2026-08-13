@@ -2,14 +2,14 @@ import api from "./axios";
 import { checkLogicalError, handleApiError } from "../utils/errorHandler";
 
 // 1. CREATE ROOM
-export const createRoom = async ({tenantId, userId, gameType, matchType, botDifficulty,}) => {
+export const createRoom = async ({tenantId, userId, gameType}) => {
   try {
     const res = await api.post("/rooms/create", {
       tenantId,
       userId,
       gameType,
-      matchType,
-      botDifficulty,
+      // matchType,
+      // botDifficulty,
     });
 
     const result = checkLogicalError(res.data);

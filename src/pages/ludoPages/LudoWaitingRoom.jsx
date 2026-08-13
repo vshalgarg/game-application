@@ -7,6 +7,7 @@ import { startRoom } from "../../services/roomService";
 import useWaitingRoomRealtime from "../../hooks/useWaitingRoomRealtime";
 import useRoomRealtime from "../../hooks/useRoomRealtime";
 import { useAuth } from "../../context/AuthContext";
+import { addBot, removePlayer } from "../../services/ludoService";
 
 const WaitingRoom = () => {
   const navigate = useNavigate();
@@ -14,10 +15,12 @@ const WaitingRoom = () => {
   const { auth } = useAuth();
   const { roomCode } = useParams();
   const [copied, setCopied] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
   const currentUserId = auth?.userId;
 
   // Supabase WaitingRealtime Hook
   const { players } = useWaitingRoomRealtime(roomCode);
+  console.log("Players in waiting room", players);
 
   // Supabase RoomRealtime Hook
   useRoomRealtime({
@@ -61,20 +64,48 @@ const WaitingRoom = () => {
     }, 2000);
   };
 
+  // Add bot handler 
+  const handleAddBot = async () => {
+    console.log("Current User ID:", currentUserId);
+    console.log("Room Code:", roomCode);
+
+  try {
+    const result = await addBot({
+      roomCode,
+      hostUserId: currentUserId,
+      botDifficulty: "EASY", // or whatever your backend expects
+    });
+
+    showSnackbar(result.message, "success");
+  } catch (error) {
+    console.error(error);
+    showSnackbar(error.message || "Failed to add bot", "error");
+  }
+};
+
+  // Remove player handler
+  const handleRemovePlayer = async () => {
+    if (!selectedPlayer) {
+    showSnackbar("Select a player to remove.", "error");
+    return;
+  }
+  try {
+    const result = await removePlayer({
+      roomCode,
+      hostUserId: currentUserId,
+      userId: selectedPlayer.user_id,
+    });
+
+    showSnackbar(result.message, "success");
+    setSelectedPlayer(null);
+  } catch (error) {
+    console.error(error);
+    showSnackbar(error.message || "Failed to remove player.", "error");
+  }
+};
+
   return (
-    <div
-      className="
-        min-h-screen
-        bg-gradient-to-br
-        from-black
-        via-gray-900
-        to-black
-        flex
-        items-center
-        justify-center
-        px-4
-      "
-    >
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center px-4">
       {/* Card */}
       <div
         className="
@@ -147,11 +178,13 @@ const WaitingRoom = () => {
 
         {/* Status */}
         <p className="text-gray-300 mb-6">
-          {players.length < 2
-            ? "Waiting for players to join..."
-            : players.length < 4
-              ? "You can wait for other players or start the game."
-              : "All players joined. Ready to start!"}
+          {isHost
+            ? players.length < 2
+              ? "Waiting for players to join..."
+              : players.length < 4
+                ? "You can wait for other players or start the game."
+                : "All players joined. Ready to start!"
+            : "Waiting for the host to start the game..."}
         </p>
 
         {/* Players List */}
@@ -159,17 +192,32 @@ const WaitingRoom = () => {
           {players.map((player) => (
             <div
               key={player.user_id}
-              className="
+              onClick={() => isHost && player.user_id !== currentUserId && setSelectedPlayer(player)}
+              className={`
                 bg-black/30
                 border
-                border-white/10
                 rounded-xl
                 py-3
-                text-white
+                px-4
                 flex
                 justify-between
-                px-4"
-            >
+                text-white
+                cursor-pointer
+                transition
+
+                ${
+                  selectedPlayer?.user_id === player.user_id
+                    ? "border-red-500 bg-red-500/20"
+                    : "border-white/10 hover:border-red-400"
+                }
+
+                ${
+                  player.user_id === currentUserId
+                    ? "cursor-default"
+                    : ""
+                }
+              `}>
+
               {/* Player Name */}
               <span className={`${player.user_id === currentUserId ? "font-bold" : ""}`}>
                 {player.user_id === currentUserId
@@ -204,6 +252,47 @@ const WaitingRoom = () => {
             </div>
           )}
         </div>
+
+        {/* Host Controls */}
+{isHost && (
+  <div className="mb-6">
+    <div className="flex justify-center gap-4">
+      {/* Add Button */}
+      <button
+        className="
+          px-6
+          py-2.5
+          rounded-xl
+          bg-gradient-to-r
+          from-emerald-500
+          to-green-600
+          text-white
+          font-semibold
+          shadow-lg
+          shadow-green-500/30
+          hover:scale-105
+          hover:shadow-green-400/50
+          active:scale-95
+          transition-all
+          duration-200"
+        onClick={handleAddBot}>
+        + Add Bot
+      </button>
+
+      {/* Remove Button */}
+      <button
+        disabled={!selectedPlayer}
+        onClick={handleRemovePlayer}
+        className={`px-6 py-2.5 rounded-xl text-white font-semibold transition
+        ${selectedPlayer
+        ? "bg-gradient-to-r from-red-500 to-rose-600 hover:scale-105"
+        : "bg-gray-600 cursor-not-allowed opacity-50"
+        }`}>
+        − Remove Player
+      </button>
+    </div>
+  </div>
+)}
 
         {/* Start Button */}
         {isHost && (
