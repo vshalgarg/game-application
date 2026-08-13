@@ -39,3 +39,33 @@ export const makeMove = async ({ roomCode, userId, tokenId, consumedDice }) => {
 //     throw new Error(handleApiError(error));
 //   }
 // };
+
+// 4. Add bot api 
+export const addBot = async ({ roomCode, hostUserId, botDifficulty }) => {
+  try {
+    const res = await api.post(`/rooms/${roomCode}/bots`, {
+      hostUserId,
+      botDifficulty,
+    });
+
+    return checkLogicalError(res.data);
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+// 5. Remove players
+export const removePlayer = async ({ roomCode, userId, hostUserId }) => {
+  try {
+    const res = await api.delete(`/rooms/${roomCode}/players`, {
+      data: {
+        userId,
+        hostUserId,
+      },
+    });
+
+    return checkLogicalError(res.data);
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};

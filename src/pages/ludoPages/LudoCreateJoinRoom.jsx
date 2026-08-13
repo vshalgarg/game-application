@@ -27,11 +27,11 @@ const Home = () => {
         tenantId: "test-1",
         userId: hostUserId,
         gameType: "LUDO",
-        matchType: "PVP",
+        // matchType: "PVP",
       });
 
       showSnackbar(res.message, "success");
-
+      console.log("res", res);
       const roomCode = res.data.roomCode;
 
       navigate(`/ludowaiting-room/${roomCode}`);
