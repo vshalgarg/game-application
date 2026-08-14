@@ -5,6 +5,7 @@ import com.codemonks.tic_tac_toe_game_engine.domain.board.Board;
 import com.codemonks.tic_tac_toe_game_engine.domain.board.CellValue;
 import com.codemonks.tic_tac_toe_game_engine.domain.move.Move;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 @Component
 public class HardBotStrategy implements BotStrategy {

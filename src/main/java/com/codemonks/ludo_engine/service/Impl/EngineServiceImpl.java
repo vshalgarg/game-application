@@ -127,6 +127,7 @@ public class EngineServiceImpl implements EngineService {
                 }
             }
         }
+
         Long tokenId = getTokenId(request);
         Integer consumedDice = ((Number) request.getMoveData()
                         .get("consumedDice"))
@@ -149,29 +150,20 @@ public class EngineServiceImpl implements EngineService {
                 tokenId,
                 consumedDice);
 
-        log.info(
-                "[MOVE_VALIDATED] Player:{} Token:{}",
-                request.getUserId(),
-                tokenId
-        );
+        log.info("[MOVE_VALIDATED] Player:{} Token:{}", request.getUserId(), tokenId);
         GameStateDTO updatedGameState = tokenMovementService.moveToken(gameState,
                         request.getUserId(), tokenId,
-                        consumedDice
-                );
+                        consumedDice);
+
         log.info("[TOKEN_MOVED] Player:{} Token:{}", request.getUserId(), tokenId);
 
         List<EventDTO> events = new ArrayList<>();
         events.add(eventService.createEvent(EventTypeEnum.TOKEN_MOVED,
                 "Player " + request.getUserId() + " moved token " + tokenId));
 
-        // ── Kill Rule
-
-        KillRuleResultDTO killResult =
-                killRuleService.processKillRule(
-                        updatedGameState,
+        KillRuleResultDTO killResult = killRuleService.processKillRule(updatedGameState,
                         request.getUserId(),
-                        tokenId
-                );
+                        tokenId);
 
         updatedGameState = killResult.getGameState();
 
@@ -181,36 +173,26 @@ public class EngineServiceImpl implements EngineService {
         }
 
         boolean tokenFinished = false;
-
         for (PlayerDTO player : updatedGameState.getPlayers()) {
-
             if (!player.getPlayerId().equals(request.getUserId())) {
-                continue;
-            }
-
+                continue;}
             for (TokenDTO token : player.getTokens()) {
-
                 if (token.getTokenId().equals(tokenId)) {
                     tokenFinished = token.getState() == TokenStateEnum.FINISHED;
                     break;
                 }
             }
-
             break;
         }
 
         if (tokenFinished) {
-
             events.add(eventService.createEvent(EventTypeEnum.TOKEN_REACHED_HOME,
-                            "Player " + request.getUserId() + " reached home"
-                    )
-            );
+                            "Player " + request.getUserId() + " reached home"));
         }
+
         boolean extraTurn = extraTurnService.hasExtraTurn(
-    
                         killResult.isTokenKilled(),
-                        tokenFinished
-                );
+                        tokenFinished);
 
         PlayerDTO moverPlayer = null;
 
@@ -228,8 +210,7 @@ public class EngineServiceImpl implements EngineService {
 
             log.info(
                     "[BONUS_STORED] Player:{} Bonus turn earned from kill/home.",
-                    request.getUserId()
-            );
+                    request.getUserId());
         }
 
         if (moverPlayer != null
@@ -256,7 +237,7 @@ public class EngineServiceImpl implements EngineService {
                 && Boolean.TRUE.equals(moverPlayer.getPendingExtraTurn());
 
         if (effectiveExtraTurn) {
-            moverPlayer.setPendingExtraTurn(false); // consumed — about to grant it
+            moverPlayer.setPendingExtraTurn(false);
             log.info("[BONUS_CONSUMED] Player:{} — granting fresh reroll", request.getUserId());
         }
         updatedGameState = turnRotationService.updateTurn(
@@ -266,9 +247,7 @@ public class EngineServiceImpl implements EngineService {
                 );
 
         PlayerDTO nextTurnPlayer = null;
-
         for (PlayerDTO player : updatedGameState.getPlayers()) {
-
             if (player.getPlayerId().equals(updatedGameState.getCurrentTurnPlayerId())) {
                 nextTurnPlayer = player;
                 break;
@@ -285,9 +264,7 @@ public class EngineServiceImpl implements EngineService {
 
         } else {
 
-            updatedGameState.setPlayerTurnStage(
-                    PlayerTurnStageEnum.ROLL_DICE
-            );
+            updatedGameState.setPlayerTurnStage(PlayerTurnStageEnum.ROLL_DICE);
         }
 
         log.info(
@@ -338,7 +315,7 @@ public class EngineServiceImpl implements EngineService {
         } else {
             response.setStatus(GameStatusEnum.RUNNING);
         }
-        //  Wrap game state in "board" for frontend, persist to Supabase
+
         Map<String, Object> moveBoardWrapped = new HashMap<>();
         moveBoardWrapped.put("board", persistedStateMap);
         RealtimeGameStateDTO updatedRealtimeState = RealtimeGameStateDTO.builder()
@@ -355,7 +332,7 @@ public class EngineServiceImpl implements EngineService {
                 "[STATE_PERSISTED] Room:{}",
                 request.getRoomId()
         );
-        // ── Persist move history
+
         RealtimeMoveDTO moveDTO = RealtimeMoveDTO.builder()
                 .roomId(request.getRoomId())
                 .roomCode(request.getRoomCode())
@@ -380,7 +357,7 @@ public class EngineServiceImpl implements EngineService {
                 request.getPlayerId()
         );
 
-        //  Fetch authoritative state from Supabase
+
         RealtimeGameStateDTO realtimeState = supabaseRealtimeService.getGameState(request.getRoomId());
         Map<String, Object> rawState = realtimeState.getGameState();
         Object boardObj = rawState.get("board");
@@ -404,7 +381,8 @@ public class EngineServiceImpl implements EngineService {
                 gameState.getCurrentTurnPlayerId(),
                 gameState.getPlayerTurnStage()
         );
-        // Turn validation
+
+
         if (!gameState.getCurrentTurnPlayerId().equals(request.getPlayerId())) {
             log.warn(
                     "[INVALID_DICE_ROLL] Room:{} ExpectedPlayer:{} ActualPlayer:{}",
@@ -415,7 +393,6 @@ public class EngineServiceImpl implements EngineService {
             throw new InvalidMoveException(LudoErrorCodesEnum.INVALID_TURN);
         }
 
-        // Stage validation
         if (gameState.getPlayerTurnStage() != PlayerTurnStageEnum.ROLL_DICE) {
 
             log.warn(
@@ -430,9 +407,7 @@ public class EngineServiceImpl implements EngineService {
         }
 
         PlayerDTO currentPlayer = null;
-
         for (PlayerDTO player : gameState.getPlayers()) {
-
             if (player.getPlayerId().equals(request.getPlayerId())) {
                 currentPlayer = player;
                 break;
@@ -443,7 +418,6 @@ public class EngineServiceImpl implements EngineService {
             throw new ResourceNotFoundException(LudoErrorCodesEnum.PLAYER_NOT_FOUND);
         }
 
-        // Roll dice
         int diceNumber = ThreadLocalRandom.current().nextInt(1, 7);
         log.info("[DICE_GENERATED] DiceNumber:{}", diceNumber);
 
@@ -481,25 +455,39 @@ public class EngineServiceImpl implements EngineService {
         }
 
         if (!tripleSixForfeited) {
-
-            boolean legalMoveExists =
-                    availableMoveService.hasAnyLegalMove(
+            List<LegalMoveDTO> combinedLegalMoves =
+                    availableMoveService.getAvailableMoves(
                             gameState,
                             currentPlayer,
-                            diceNumber
+                            currentPlayer.getPendingDice()
                     );
+            boolean anyDiceUsable = !combinedLegalMoves.isEmpty();
+
             if (diceNumber == 6) {
                 gameState.setPlayerTurnStage(PlayerTurnStageEnum.ROLL_DICE);
                 log.info("[ROLLED_6] Extra roll granted. PlayerId:{} Buffer:{}",
                         request.getPlayerId(), pendingDice);
-            } else if (legalMoveExists || pendingDice.contains(6)) {
+
+            } else if (anyDiceUsable) {
                 gameState.setPlayerTurnStage(PlayerTurnStageEnum.TOKEN_MOVE);
                 log.info("[STAGE_MOVE] Player:{} Dice:{}. Stage:TOKEN_MOVE. Buffer:{}",
                         request.getPlayerId(), diceNumber, pendingDice);
+
             } else {
                 currentPlayer.getPendingDice().clear();
                 autoSkipHandled = true;
 
+                log.info(
+                        "[NO_MOVE] Player:{} Dice:{} Buffer:{} — nothing usable, rotating turn now.",
+                        request.getPlayerId(), diceNumber, pendingDice
+                );
+
+                gameState = turnRotationService.updateTurn(
+                        gameState,
+                        request.getPlayerId(),
+                        false
+                );
+                gameState.setPlayerTurnStage(PlayerTurnStageEnum.ROLL_DICE);
                 Map<String, Object> immediateStateMap = objectMapper.convertValue(gameState, Map.class);
                 immediateStateMap.put("legalMoves", new ArrayList<LegalMoveDTO>());
 
@@ -511,19 +499,13 @@ public class EngineServiceImpl implements EngineService {
                         .roomCode(realtimeState.getRoomCode())
                         .gameState(immediateBoardWrapped)
                         .players(gameState.getPlayers())
-                        .currentTurnUserId(request.getPlayerId())
+                        .currentTurnUserId(gameState.getCurrentTurnPlayerId())
                         .gameStatus(realtimeState.getGameStatus())
                         .winnerUserId(realtimeState.getWinnerUserId())
                         .build();
                 supabaseRealtimeService.upsertGameState(immediateRealtimeState);
-                log.info("[NO_MOVE_IMMEDIATE_PERSISTED] Room:{} Player:{} Dice:{} — turn switch delayed",
-                        request.getRoomId(), request.getPlayerId(), diceNumber);
-                gameState.setPlayerTurnStage(PlayerTurnStageEnum.ROLL_DICE);
-                log.info(
-                        "[NO_MOVE] Player:{} Dice:{} Returning without rotating turn.",
-                        request.getPlayerId(),
-                        diceNumber
-                );
+                log.info("[NO_MOVE_TURN_ROTATED] Room:{} FromPlayer:{} ToPlayer:{}",
+                        request.getRoomId(), request.getPlayerId(), gameState.getCurrentTurnPlayerId());
             }
         }
 
@@ -585,41 +567,27 @@ public class EngineServiceImpl implements EngineService {
         }
 
     @Override
-    public GameStateDTO continueTurnAfterDelay(
-            Long roomId,
-            String roomCode,
-            Long playerId
-    ) {
+    public GameStateDTO continueTurnAfterDelay(Long roomId, String roomCode, Long playerId) {
 
-        log.info(
-                "[DELAYED_TURN_CONTINUATION] Room:{} Player:{}",
-                roomId,
-                playerId
-        );
+        log.info("[DELAYED_TURN_CONTINUATION] Room:{} Player:{}", roomId, playerId);
 
         // Reload the latest authoritative state
-        RealtimeGameStateDTO realtimeState =
-                supabaseRealtimeService.getGameState(roomId);
+        RealtimeGameStateDTO realtimeState = supabaseRealtimeService.getGameState(roomId);
 
-        Map<String, Object> rawState =
-                realtimeState.getGameState();
+        Map<String, Object> rawState = realtimeState.getGameState();
 
-        Object boardObj =
-                rawState.get("board");
+        Object boardObj = rawState.get("board");
 
         Map<String, Object> gameStateMap =
                 boardObj instanceof Map
                         ? (Map<String, Object>) boardObj
                         : rawState;
 
-        GameStateDTO gameState =
-                objectMapper.convertValue(
+        GameStateDTO gameState = objectMapper.convertValue(
                         gameStateMap,
                         GameStateDTO.class
                 );
 
-        // Make sure the delayed continuation still belongs
-        // to the player whose turn was delayed.
         if (!playerId.equals(gameState.getCurrentTurnPlayerId())) {
 
             log.warn(
@@ -632,39 +600,18 @@ public class EngineServiceImpl implements EngineService {
             return null;
         }
 
-        // Rotate to the next player.
-        gameState = turnRotationService.updateTurn(
-                gameState,
-                playerId,
-                false
-        );
+        gameState = turnRotationService.updateTurn(gameState, playerId, false);
 
-        gameState.setPlayerTurnStage(
-                PlayerTurnStageEnum.ROLL_DICE
-        );
+        gameState.setPlayerTurnStage(PlayerTurnStageEnum.ROLL_DICE);
 
-        Map<String, Object> persistedStateMap =
-                objectMapper.convertValue(
+        Map<String, Object> persistedStateMap = objectMapper.convertValue(
                         gameState,
-                        Map.class
-                );
+                        Map.class);
+        persistedStateMap.put("legalMoves", new ArrayList<LegalMoveDTO>());
+        Map<String, Object> boardWrapped = new HashMap<>();
+        boardWrapped.put("board", persistedStateMap);
 
-        persistedStateMap.put(
-                "legalMoves",
-                new ArrayList<LegalMoveDTO>()
-        );
-
-        Map<String, Object> boardWrapped =
-                new HashMap<>();
-
-        boardWrapped.put(
-                "board",
-                persistedStateMap
-        );
-
-        RealtimeGameStateDTO updatedRealtimeState =
-                RealtimeGameStateDTO.builder()
-                        .roomId(roomId)
+        RealtimeGameStateDTO updatedRealtimeState = RealtimeGameStateDTO.builder().roomId(roomId)
                         .roomCode(
                                 roomCode != null
                                         ? roomCode
@@ -672,21 +619,12 @@ public class EngineServiceImpl implements EngineService {
                         )
                         .gameState(boardWrapped)
                         .players(gameState.getPlayers())
-                        .currentTurnUserId(
-                                gameState.getCurrentTurnPlayerId()
-                        )
-                        .gameStatus(
-                                realtimeState.getGameStatus()
-                        )
-                        .winnerUserId(
-                                realtimeState.getWinnerUserId()
-                        )
+                        .currentTurnUserId(gameState.getCurrentTurnPlayerId())
+                        .gameStatus(realtimeState.getGameStatus())
+                        .winnerUserId(realtimeState.getWinnerUserId())
                         .build();
 
-        supabaseRealtimeService.upsertGameState(
-                updatedRealtimeState
-        );
-
+        supabaseRealtimeService.upsertGameState(updatedRealtimeState);
         log.info(
                 "[DELAYED_TURN_ROTATED] Room:{} FromPlayer:{} ToPlayer:{}",
                 roomId,
@@ -695,8 +633,6 @@ public class EngineServiceImpl implements EngineService {
         );
         return gameState;
     }
-
-
     private Long getTokenId(EngineMoveRequestDTO request) {
         Object value = request.getMoveData().get("tokenId");
         if (value == null) {

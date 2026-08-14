@@ -16,12 +16,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-/**
- * Strict tier hierarchy, exactly:
- * finish > kill > exit base > land on safety > best position > random.
- * The first tier with any candidate wins outright; ties within a tier
- * are broken randomly.
- */
+
 @Slf4j
 @RequiredArgsConstructor
 @Service("ludoMediumBotStrategy")

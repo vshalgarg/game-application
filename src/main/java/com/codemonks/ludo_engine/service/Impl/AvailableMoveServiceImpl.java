@@ -65,12 +65,6 @@ public class AvailableMoveServiceImpl implements AvailableMoveService {
         return legal;
     }
 
-    /**
-     * Runs the move + kill checks against a CLONE of the game state, so the
-     * real TokenMovementService/KillRuleService logic can be reused exactly
-     * as-is (single source of truth for game rules) without mutating the
-     * actual game state the caller is holding.
-     */
     private LegalMoveDTO evaluateCandidate(
             GameStateDTO gameState,
             PlayerDTO player,
@@ -125,8 +119,6 @@ public class AvailableMoveServiceImpl implements AvailableMoveService {
                     .build();
 
         } catch (Exception exception) {
-            // Should be rare since isTokenMovable() already pre-filtered reachability,
-            // but never let a speculative-evaluation failure break the whole roll.
             log.warn(
                     "[EVALUATE_CANDIDATE_FAILED] Player:{} Token:{} Dice:{} Reason:{}",
                     player.getPlayerId(), token.getTokenId(), dice, exception.getMessage()

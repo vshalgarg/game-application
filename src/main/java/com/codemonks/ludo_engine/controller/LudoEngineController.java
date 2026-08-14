@@ -65,6 +65,7 @@ public class LudoEngineController {
         return ResponseEntity.ok().build();
     }
 
+
     @PostMapping(ApiConstants.ROLL_DICE)
     public ResponseEntity<DiceRollResponseDTO>rollDice(
             @RequestBody DiceRollRequestDTO request) {
