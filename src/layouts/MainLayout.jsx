@@ -2,15 +2,9 @@ import Navbar from "../components/Navbar";
 
 const MainLayout = ({ children }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800">
-
+    <div className="min-h-dvh bg-gz-popup-dark">
       <Navbar />
-
-      {/* Page Content */}
-      <div>
-        {children}
-      </div>
-
+      <main className="pt-[var(--gz-navbar-height)]">{children}</main>
     </div>
   );
 };

@@ -1,0 +1,211 @@
+:root {
+  /* Brand / actions */
+  --gz-primary-cyan: #00d9e8;
+  --gz-login-from: #20c7e8;
+  --gz-login-to: #2d64f5;
+  --gz-purple-accent: #8b5cf6;
+  --gz-purple-glow: #6c4fe8;
+  --gz-card-border: #306be4;
+
+  /* Surfaces */
+  --gz-bg: #a2b4f9;
+  --gz-popup: #203757;
+  --gz-popup-dark: #172a46;
+  --gz-input-bg: #203755;
+  --gz-input-border: #466a91;
+  --gz-social-bg: #203757;
+  --gz-social-border: #496783;
+
+  /* Text */
+  --gz-text: #f5fafc;
+  --gz-text-secondary: #c5d0df;
+  --gz-link: #00d9e8;
+  --gz-icon: #d8e8f5;
+
+  /* Effects */
+  --gz-radius-card: 1.25rem;
+  --gz-radius-control: 0.75rem;
+  --gz-shadow-card: 0 20px 60px rgba(0, 0, 0, 0.45), 0 0 40px rgba(48, 107, 228, 0.25);
+  --gz-font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+
+  /* Auth layout — vertical space follows viewport HEIGHT, not width */
+  --gz-auth-page-pad-y: clamp(1.5rem, 6vh, 4rem);
+  --gz-auth-card-pad-y: clamp(1rem, 2.2vh, 1.5rem);
+  --gz-auth-card-pad-x: clamp(1.25rem, 3vw, 2rem);
+  --gz-navbar-height: 4.5rem;
+
+  /* Photo overlay — tweak this one value to dim/brighten all page backgrounds */
+  --gz-bg-overlay: rgb(23 42 70 / 28%);
+
+  /* Feedback (snackbar) */
+  --gz-snackbar-success: #00d9e8;
+  --gz-snackbar-warning: #8b5cf6;
+  --gz-snackbar-error: #ef4444;
+  --gz-snackbar-info: #2d64f5;
+}
+
+@theme {
+  --font-sans: var(--gz-font-sans);
+
+  --color-gz-primary-cyan: var(--gz-primary-cyan);
+  --color-gz-login-from: var(--gz-login-from);
+  --color-gz-login-to: var(--gz-login-to);
+  --color-gz-purple-accent: var(--gz-purple-accent);
+  --color-gz-purple-glow: var(--gz-purple-glow);
+  --color-gz-card-border: var(--gz-card-border);
+  --color-gz-bg: var(--gz-bg);
+  --color-gz-popup: var(--gz-popup);
+  --color-gz-popup-dark: var(--gz-popup-dark);
+  --color-gz-input-bg: var(--gz-input-bg);
+  --color-gz-input-border: var(--gz-input-border);
+  --color-gz-social-bg: var(--gz-social-bg);
+  --color-gz-social-border: var(--gz-social-border);
+  --color-gz-text: var(--gz-text);
+  --color-gz-text-secondary: var(--gz-text-secondary);
+  --color-gz-link: var(--gz-link);
+  --color-gz-icon: var(--gz-icon);
+
+  --radius-gz-card: var(--gz-radius-card);
+  --radius-gz-control: var(--gz-radius-control);
+  --shadow-gz-card: var(--gz-shadow-card);
+}
+
+/* Reusable utility classes for patterns Tailwind alone is awkward for */
+@layer components {
+  .gz-page-auth {
+    @apply relative flex h-dvh items-center justify-center overflow-hidden px-4 sm:px-6;
+    padding-block: var(--gz-auth-page-pad-y);
+  }
+
+  .gz-page-auth__bg {
+    @apply absolute inset-0 bg-cover bg-center bg-no-repeat;
+  }
+
+  .gz-page-auth__bg::after {
+    content: "";
+    @apply pointer-events-none absolute inset-0;
+    background: var(--gz-bg-overlay);
+  }
+
+  .gz-auth-card {
+    @apply relative z-10 w-full max-w-[400px] rounded-gz-card border border-gz-card-border/70
+      bg-gz-popup-dark/90 shadow-gz-card backdrop-blur-xl md:max-w-[420px];
+    padding: var(--gz-auth-card-pad-y) var(--gz-auth-card-pad-x);
+  }
+
+  .gz-input {
+    @apply w-full rounded-gz-control border border-gz-input-border bg-gz-input-bg
+      py-2.5 text-sm text-gz-text outline-none transition
+      placeholder:text-gz-text-secondary/70
+      focus:border-gz-primary-cyan focus:ring-1 focus:ring-gz-primary-cyan/40;
+  }
+
+  .gz-btn-primary {
+    @apply w-full cursor-pointer rounded-gz-control bg-linear-to-r from-gz-login-from to-gz-login-to
+      py-2.5 text-center text-sm font-semibold text-white shadow-lg shadow-gz-login-to/30
+      transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .gz-btn-nav {
+    @apply w-auto cursor-pointer rounded-full bg-linear-to-r from-gz-login-from to-gz-login-to
+      px-5 py-2 text-sm font-semibold text-white shadow-md shadow-gz-login-to/30
+      transition hover:brightness-110 active:scale-[0.99];
+  }
+
+  .gz-btn-social {
+    @apply flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl
+      border border-gz-social-border bg-gz-social-bg text-gz-icon transition
+      hover:border-gz-primary-cyan/60 hover:text-gz-primary-cyan;
+  }
+
+  .gz-link {
+    @apply cursor-pointer font-medium text-gz-link transition hover:brightness-110;
+  }
+
+  .gz-divider {
+    @apply flex items-center gap-3 text-xs font-semibold tracking-widest text-gz-text-secondary;
+  }
+
+  .gz-divider::before,
+  .gz-divider::after {
+    content: "";
+    @apply h-px flex-1 bg-gz-input-border/80;
+  }
+
+  /* Full-bleed content area under navbar */
+  .gz-page-shell {
+    @apply relative flex min-h-[calc(100dvh-var(--gz-navbar-height))] items-center justify-center px-4 py-6 sm:px-6;
+  }
+
+  .gz-page-shell__bg {
+    @apply pointer-events-none fixed inset-0 bg-cover bg-center bg-no-repeat;
+  }
+
+  .gz-page-shell__bg::after {
+    content: "";
+    @apply pointer-events-none absolute inset-0;
+    background: var(--gz-bg-overlay);
+  }
+
+  /* Compact selection card (Select Game, etc.) */
+  .gz-select-card {
+    @apply relative z-10 w-full max-w-[380px] rounded-gz-card border border-gz-primary-cyan/50
+      bg-gz-popup-dark/92 px-6 py-8 text-center shadow-gz-card backdrop-blur-xl sm:px-8 sm:py-10;
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.45),
+      0 -8px 28px rgba(0, 217, 232, 0.22),
+      0 8px 28px rgba(0, 217, 232, 0.18),
+      -10px 0 28px rgba(108, 79, 232, 0.28);
+  }
+
+  .gz-select {
+    @apply w-full cursor-pointer appearance-none rounded-gz-control border border-gz-primary-cyan/70
+      bg-gz-input-bg py-3 pr-11 pl-11 text-left text-sm text-gz-text outline-none transition
+      focus:border-gz-primary-cyan focus:ring-1 focus:ring-gz-primary-cyan/40;
+  }
+
+  .gz-select option {
+    color: #172a46;
+    background: #f5fafc;
+  }
+
+  .gz-navbar {
+    @apply fixed inset-x-0 top-0 z-50 bg-transparent;
+  }
+
+  .gz-navbar__inner {
+    @apply mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 md:px-6;
+    height: var(--gz-navbar-height);
+  }
+
+  .gz-navbar__brand {
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+  }
+
+  .gz-text-neon {
+    color: var(--gz-primary-cyan);
+    text-shadow:
+      0 0 8px rgba(0, 217, 232, 0.85),
+      0 0 18px rgba(0, 217, 232, 0.45),
+      0 1px 3px rgba(0, 0, 0, 0.55);
+  }
+
+  .gz-navbar__link {
+    @apply cursor-pointer text-sm text-gz-text transition;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+  }
+
+  .gz-navbar__link:hover,
+  .gz-navbar__link--active {
+    color: var(--gz-primary-cyan);
+    text-shadow:
+      0 0 8px rgba(0, 217, 232, 0.85),
+      0 0 18px rgba(0, 217, 232, 0.45),
+      0 1px 3px rgba(0, 0, 0, 0.55);
+  }
+
+  .gz-navbar__menu {
+    @apply absolute top-full right-4 mt-1 w-44 rounded-xl border border-white/15
+      bg-gz-popup-dark/70 px-3 py-3 shadow-lg backdrop-blur-md md:hidden;
+  }
+}

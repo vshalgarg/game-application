@@ -1,17 +1,31 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaEnvelope, FaEye, FaEyeSlash, FaLock } from "react-icons/fa";
 import { loginUser } from "../services/authService";
 import { useSnackbar } from "../context/SnackbarContext";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
+import {
+  clearRememberedEmail,
+  loadRememberedEmail,
+  updateRememberedEmail,
+} from "../storage/rememberStorage";
+import AuthLayout from "../components/auth/AuthLayout";
+import AuthCard from "../components/auth/AuthCard";
+import SocialAuthButtons from "../components/auth/SocialAuthButtons";
+import TextField from "../components/ui/TextField";
+import Button from "../components/ui/Button";
 
 const Login = () => {
   const navigate = useNavigate();
   const { showSnackbar } = useSnackbar();
   const { login } = useAuth();
-  const [email, setEmail] = useState("");
+
+  const savedEmail = loadRememberedEmail();
+  const [email, setEmail] = useState(savedEmail || "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(Boolean(savedEmail));
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -20,19 +34,25 @@ const Login = () => {
     }
 
     try {
-      const response = await loginUser({
-        email,
-        password,
-      });
-
+      setLoading(true);
+      const response = await loginUser({ email, password });
       const { token, userId, username, roles, permissions, userProfile } = response;
 
       login({ token, userId, username, roles, permissions, userProfile });
+
+      if (rememberMe) {
+        updateRememberedEmail(email);
+      } else {
+        clearRememberedEmail();
+      }
+
       showSnackbar(response.message || "Login Successful", "success");
       navigate("/", { replace: true });
     } catch (error) {
       console.error("Login Error:", error);
       showSnackbar(error.message || "Login Failed.", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -41,55 +61,94 @@ const Login = () => {
     await handleLogin();
   };
 
+  const handleSocialSelect = (provider) => {
+    showSnackbar(`${provider} login coming soon`, "info");
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black px-4">
-      <div className="w-full max-w-md bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-8 shadow-2xl">
-        <h1 className="text-4xl text-white font-bold text-center mb-6">Login 🎮</h1>
-
-        <p className="text-gray-300 text-center mb-8">Enter your login credentials</p>
-
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
+    <AuthLayout>
+      <AuthCard
+        eyebrow="Welcome Back!"
+        title="Login"
+        subtitle="Enter your login credentials"
+        footer={
+          <>
+            Don&apos;t have an account?{" "}
+            <span
+              className="gz-link"
+              onClick={() => navigate("/signup", { replace: true })}
+              role="link"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  navigate("/signup", { replace: true });
+                }
+              }}
+            >
+              Create Account
+            </span>
+          </>
+        }
+      >
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <TextField
+            id="login-email"
+            type="email"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full mb-4 px-4 py-3 rounded-xl bg-black/30 text-white outline-none border border-blue-500/30 focus:border-blue-500"
+            autoComplete="email"
+            leftIcon={<FaEnvelope size={16} />}
           />
 
-          <div className="relative mb-6">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 pr-12  rounded-xl bg-black/30 text-white outline-none border border-purple-500/30 focus:border-purple-500"
-            />
+          <TextField
+            id="login-password"
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            leftIcon={<FaLock size={16} />}
+            rightSlot={
+              <button
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="cursor-pointer text-gz-icon transition hover:text-gz-primary-cyan"
+              >
+                {showPassword ? <FaEye size={18} /> : <FaEyeSlash size={18} />}
+              </button>
+            }
+          />
+
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <label className="flex cursor-pointer items-center gap-2 text-gz-text-secondary">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="size-4 accent-gz-primary-cyan"
+              />
+              Remember me
+            </label>
 
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+              className="gz-link bg-transparent text-sm"
+              onClick={() => showSnackbar("Password reset coming soon", "info")}
             >
-              {showPassword ? <FaEye size={20} /> : <FaEyeSlash size={20} />}
+              Forgot Password?
             </button>
           </div>
-          <button
-            type="submit"
-            className="w-full bg-blue-500 hover:bg-blue-600 py-3 rounded-xl text-white font-semibold transition cursor-pointer"
-          >
-            Login
-          </button>
+
+          <Button type="submit" disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
+          </Button>
         </form>
 
-        <p
-          onClick={() => navigate("/signup", { replace: true })}
-          className="text-center text-gray-300 mt-6 cursor-pointer hover:text-white"
-        >
-          Don’t have an account? Sign up
-        </p>
-      </div>
-    </div>
+        <SocialAuthButtons onSelect={handleSocialSelect} />
+      </AuthCard>
+    </AuthLayout>
   );
 };
 
