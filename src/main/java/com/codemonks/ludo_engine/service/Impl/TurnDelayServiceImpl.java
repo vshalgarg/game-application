@@ -19,29 +19,19 @@ public class TurnDelayServiceImpl implements TurnDelayService {
     private final TaskScheduler taskScheduler;
 
     @Override
-    public void scheduleTurnContinuation(
-            Long roomId,
-            String roomCode,
-            Long playerId
-    ) {
+    public void scheduleTurnContinuation(Long roomId, String roomCode, Long playerId) {
 
-        taskScheduler.schedule(
-                () -> {
-
-                    engineService.continueTurnAfterDelay(
+        taskScheduler.schedule(() -> {
+            engineService.continueTurnAfterDelay(
                             roomId,
                             roomCode,
                             playerId
                     );
-
                     botTurnService.triggerBotIfNeeded(
                             roomId,
                             roomCode
                     );
                 },
-                Instant.now().plusMillis(
-                        GameConstants.TURN_DELAY_MS
-                )
-        );
+                Instant.now().plusMillis(GameConstants.TURN_DELAY_MS));
     }
 }

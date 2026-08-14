@@ -33,58 +33,36 @@ public class BotMoveServiceImpl implements BotMoveService {
 
     @Override
     @Async("botMoveExecutor")
-    public void processBotTurn(
-            GameStateDTO gameState,
-            Long roomId,
+    public void processBotTurn(GameStateDTO gameState, Long roomId,
             String roomCode,
-            Long botPlayerId
-    ) {
+            Long botPlayerId) {
 
         Long activePlayerId = botPlayerId;
         boolean needsRoll = true;
         GameStateDTO currentState = gameState;
 
-        // Loop internally: rolling, rerolling on 6, delayed no-move rotation,
-        // playing out remaining pending dice, and bot-to-bot chaining — all
-        // without leaving this class, so there's no dependency edge back to
-        // BotTurnService/TurnDelayService.
         while (activePlayerId != null) {
-
             try {
-
                 if (needsRoll) {
-
                     Thread.sleep(BotConstants.BOT_DELAY_MS);
-
                     DiceRollRequestDTO diceRequest = new DiceRollRequestDTO();
                     diceRequest.setRoomId(roomId);
                     diceRequest.setPlayerId(activePlayerId);
 
-                    DiceRollResponseDTO diceResponse =
-                            engineService.rollDice(diceRequest);
+                    DiceRollResponseDTO diceResponse = engineService.rollDice(diceRequest);
+                    log.info("[BOT_DICE_RESPONSE] {}", diceResponse.getGameState());
 
-                    log.info(
-                            "[BOT_DICE_RESPONSE] {}",
-                            diceResponse.getGameState()
-                    );
-
-                    // No legal move for this roll: wait, rotate, then
-                    // continue with whoever is next (if a bot).
                     if (diceResponse.isDelayedTurnRotationRequired()) {
 
                         log.info(
-                                "[BOT_NO_MOVE_DELAYED_ROTATION] Room:{} Bot:{}",
+                                "[BOT_NO_MOVE_ALREADY_ROTATED] Room:{} Bot:{}",
                                 roomCode,
                                 activePlayerId
                         );
-
                         Thread.sleep(GameConstants.TURN_DELAY_MS);
-
-                        GameStateDTO rotatedState =
-                                engineService.continueTurnAfterDelay(
-                                        roomId,
-                                        roomCode,
-                                        activePlayerId
+                        GameStateDTO rotatedState = objectMapper.convertValue(
+                                        diceResponse.getGameState(),
+                                        GameStateDTO.class
                                 );
 
                         activePlayerId = nextBotIdOrNull(rotatedState);
@@ -92,23 +70,17 @@ public class BotMoveServiceImpl implements BotMoveService {
                         continue;
                     }
 
-                    // Rolled a 6 (or similar): stage stays ROLL_DICE without
-                    // being a "no move" case. Same bot rolls again.
                     if (diceResponse.getPlayerTurnStage() != PlayerTurnStageEnum.TOKEN_MOVE) {
-
                         log.info(
                                 "[BOT_TURN_COMPLETED_AFTER_ROLL] Room:{} Bot:{} Stage:{}",
                                 roomCode,
                                 activePlayerId,
                                 diceResponse.getPlayerTurnStage()
                         );
-
                         needsRoll = true;
                         continue;
                     }
 
-                    // Legal move exists: fall through to the move branch
-                    // using this freshly rolled state, without rolling again.
                     currentState = objectMapper.convertValue(
                             diceResponse.getGameState(),
                             GameStateDTO.class
@@ -116,7 +88,6 @@ public class BotMoveServiceImpl implements BotMoveService {
                     needsRoll = false;
                 }
 
-                // ---- Move branch: play the current pending dice buffer ----
 
                 PlayerDTO botPlayerState = findPlayer(currentState, activePlayerId);
 
@@ -129,34 +100,29 @@ public class BotMoveServiceImpl implements BotMoveService {
                     return;
                 }
 
-                BotStrategy strategy =
-                        botStrategyFactory.getStrategy(
+                BotStrategy strategy = botStrategyFactory.getStrategy(
                                 currentState,
                                 activePlayerId
                         );
 
-                BotDecisionDTO decision =
-                        strategy.chooseMove(
+                BotDecisionDTO decision = strategy.chooseMove(
                                 currentState,
                                 activePlayerId,
                                 botPlayerState.getPendingDice()
                         );
 
                 if (!decision.isMoveAvailable()) {
-
                     log.info(
                             "[BOT_NO_MOVE_AVAILABLE] Room:{} Bot:{}",
                             roomCode,
                             activePlayerId
                     );
-
                     return;
                 }
 
                 Map<String, Object> moveData = new HashMap<>();
                 moveData.put("tokenId", decision.getMove().getTokenId());
                 moveData.put("consumedDice", decision.getMove().getDice());
-
                 EngineMoveRequestDTO moveRequest = new EngineMoveRequestDTO();
                 moveRequest.setRoomId(roomId);
                 moveRequest.setRoomCode(roomCode);
@@ -171,26 +137,21 @@ public class BotMoveServiceImpl implements BotMoveService {
                         decision.getMove().getDice()
                 );
 
-                EngineGameStateResponseDTO moveResponse =
-                        engineService.processMove(moveRequest);
+                EngineGameStateResponseDTO moveResponse = engineService.processMove(moveRequest);
 
-                GameStateDTO afterMoveState =
-                        objectMapper.convertValue(
+                GameStateDTO afterMoveState = objectMapper.convertValue(
                                 moveResponse.getGameState(),
                                 GameStateDTO.class
                         );
 
                 if (activePlayerId.equals(afterMoveState.getCurrentTurnPlayerId())) {
 
-                    // Still this bot's turn: either more pending dice to
-                    // play (TOKEN_MOVE), or it earned a fresh roll (ROLL_DICE).
                     needsRoll = afterMoveState.getPlayerTurnStage()
                             != PlayerTurnStageEnum.TOKEN_MOVE;
                     currentState = afterMoveState;
 
                 } else {
 
-                    // Turn moved on: continue only if the next player is a bot.
                     activePlayerId = nextBotIdOrNull(afterMoveState);
                     needsRoll = true;
                 }
@@ -203,7 +164,6 @@ public class BotMoveServiceImpl implements BotMoveService {
                         activePlayerId,
                         exception
                 );
-
                 return;
             }
         }
@@ -226,7 +186,6 @@ public class BotMoveServiceImpl implements BotMoveService {
         if (gameState == null
                 || gameState.getPlayers() == null
                 || gameState.getCurrentTurnPlayerId() == null) {
-
             return null;
         }
 
