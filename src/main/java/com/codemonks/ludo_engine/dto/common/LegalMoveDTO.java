@@ -14,10 +14,10 @@ public class LegalMoveDTO {
     private Long tokenId;
     private Integer dice;
     private boolean exitsBase;
+    private boolean landsOnSafeCell;
     private boolean reachesHome;
     private boolean killsOpponent;
     private Long killedTokenId;
     private Long killedPlayerId;
-    private boolean landsOnSafeCell;
     private Integer resultingPathIndex;
 }

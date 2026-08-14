@@ -5,6 +5,4 @@ public enum TokenStateEnum {
     BASE,
     TRACK,
     FINISHED
-
-
 }

@@ -17,7 +17,6 @@ public class DiceRollResponseDTO {
     private Long playerId;
     private Integer dice;
     private List<Integer> pendingDice;
-
     private Map<String, Object> gameState;
     private boolean tripleSixForfeited;
     private Long currentTurnPlayerId;
