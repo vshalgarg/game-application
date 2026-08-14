@@ -512,8 +512,7 @@ public class EngineServiceImpl implements EngineService {
         Map<String, Object> diceStateMap;
         if (!autoSkipHandled) {
 
-            List<LegalMoveDTO> legalMoves =
-                    availableMoveService.getAvailableMoves(
+            List<LegalMoveDTO> legalMoves = availableMoveService.getAvailableMoves(
                             gameState,
                             currentPlayer,
                             currentPlayer.getPendingDice()
