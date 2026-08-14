@@ -1,5 +1,9 @@
-import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { FaGamepad } from "react-icons/fa";
+import gameBg from "../assets/images/game_bg.jpg";
+import GameZoneLogo from "../components/brand/GameZoneLogo";
+import SelectField from "../components/ui/SelectField";
 
 const gameOptions = [
   { label: "Select a game", value: "", path: null },
@@ -21,27 +25,30 @@ const Landing = () => {
   };
 
   return (
-    <div className="flex items-center justify-center h-[80vh] px-4">
-      {/* Card */}
+    <div className="gz-page-shell">
+      <div
+        className="gz-page-shell__bg"
+        style={{ backgroundImage: `url(${gameBg})` }}
+        aria-hidden="true"
+      />
 
-      <div className="w-full max-w-md bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-8 text-center shadow-2xl">
-        <h1 className="text-4xl font-bold text-white mb-4">Select Game</h1>
-        <p className="text-gray-300 mb-8">Choose a game to continue</p>
+      <div className="gz-select-card">
+        <div className="mb-6 flex flex-col items-center">
+          <GameZoneLogo className="mb-4 h-14 w-14 text-gz-primary-cyan" />
+          <h1 className="text-3xl font-bold text-gz-text sm:text-4xl">Select Game</h1>
+          <p className="mt-2 text-sm text-gz-text-secondary sm:text-base">
+            Choose a game to continue
+          </p>
+        </div>
 
-        {/* Dropdown */}
-        <select
+        <SelectField
+          id="select-game"
           value={selectedGame}
           onChange={(e) => handleSelect(e.target.value)}
-          className="w-full bg-black/30 border border-cyan-400/30 text-white px-4 py-3 rounded-xl outline-none focus:border-cyan-400 transition cursor-pointer"
-        >
-          {gameOptions.map(({ label, value }) => {
-            return (
-              <option key={value || "default"} value={value}>
-                {label}
-              </option>
-            );
-          })}
-        </select>
+          options={gameOptions}
+          leftIcon={<FaGamepad size={16} />}
+          aria-label="Select a game"
+        />
       </div>
     </div>
   );

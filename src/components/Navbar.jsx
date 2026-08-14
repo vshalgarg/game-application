@@ -1,63 +1,114 @@
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { FaBars, FaTimes } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import { useSnackbar } from "../context/SnackbarContext";
+import GameZoneLogo from "./brand/GameZoneLogo";
+import Button from "./ui/Button";
+
+const navItems = [
+  { label: "Home", path: "/" },
+  { label: "About", path: "/about" },
+  { label: "Contact", path: "/contact" },
+  { label: "Profile", path: "/profile" },
+];
 
 const Navbar = () => {
   const navigate = useNavigate();
   const { auth, logout } = useAuth();
   const { showSnackbar } = useSnackbar();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = () => {
+    setMenuOpen(false);
     logout();
     showSnackbar("Logged out successfully", "success");
     navigate("/login", { replace: true });
   };
 
+  const handleLogin = () => {
+    setMenuOpen(false);
+    navigate("/login", { replace: true });
+  };
+
+  const authButton = auth ? (
+    <Button variant="nav" className="px-4 py-1.5 text-xs sm:px-5 sm:py-2 sm:text-sm" onClick={handleLogout}>
+      Logout
+    </Button>
+  ) : (
+    <Button variant="nav" className="px-4 py-1.5 text-xs sm:px-5 sm:py-2 sm:text-sm" onClick={handleLogin}>
+      Login
+    </Button>
+  );
+
   return (
-    <div className=" w-full bg-gray-800/70 backdrop-blur-lg border-b border-white/10 px-4 md:px-6 py-4 flex justify-between items-center ">
-      {/* Logo */}
-
-      <h1
-        onClick={() => navigate("/")}
-        className="text-xl md:text-2xl font-bold text-white cursor-pointer"
-      >
-        GameZone
-      </h1>
-
-      {/* Right Section */}
-
-      <div className="flex items-center gap-3 md:gap-6">
-        {/* Navigation Links */}
-
-        <div className="flex gap-3 md:gap-6 text-gray-300 text-sm md:text-base">
-          <p onClick={() => navigate("/")} className="cursor-pointer hover:text-white">
-            Home
-          </p>
-
-          <p onClick={() => navigate("/about")} className="cursor-pointer hover:text-white">
-            About
-          </p>
-
-          <p onClick={() => navigate("/contact")} className="cursor-pointer hover:text-white">
-            Contact
-          </p>
-
-          <p onClick={() => navigate("/profile")} className="cursor-pointer hover:text-white">
-            Profile
-          </p>
-        </div>
-
-        {auth && <span className="hidden md:block text-gray-400 text-sm">{auth.username}</span>}
-
-        {/* Logout Button */}
+    <header className="gz-navbar">
+      <div className="gz-navbar__inner">
         <button
-          onClick={handleLogout}
-          className="bg-red-500 hover:bg-red-600 text-white px-3 md:px-4 py-1 md:py-2 rounded-lg text-sm transition"
+          type="button"
+          className="flex min-w-0 cursor-pointer items-center gap-2 bg-transparent"
+          onClick={() => {
+            setMenuOpen(false);
+            navigate("/");
+          }}
+          aria-label="GameZone home"
         >
-          Logout
+          <GameZoneLogo className="h-8 w-8 shrink-0" />
+          <span className="gz-navbar__brand truncate text-lg font-bold tracking-wide text-gz-text md:text-xl">
+            Game<span className="gz-text-neon">Zone</span>
+          </span>
         </button>
+
+        <div className="flex items-center gap-2 sm:gap-4">
+          <nav className="hidden items-center gap-8 md:flex" aria-label="Main">
+            {navItems.map(({ label, path }) => (
+              <NavLink
+                key={path}
+                to={path}
+                end={path === "/"}
+                className={({ isActive }) =>
+                  `gz-navbar__link ${isActive ? "gz-navbar__link--active" : ""}`
+                }
+              >
+                {label}
+              </NavLink>
+            ))}
+          </nav>
+
+          {authButton}
+
+          <button
+            type="button"
+            className="cursor-pointer bg-transparent p-2 text-gz-text md:hidden"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+          >
+            {menuOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
+          </button>
+        </div>
       </div>
-    </div>
+
+      {menuOpen && (
+        <nav className="gz-navbar__menu" aria-label="Mobile">
+          <div className="flex flex-col gap-3">
+            {navItems.map(({ label, path }) => (
+              <NavLink
+                key={path}
+                to={path}
+                end={path === "/"}
+                onClick={() => setMenuOpen(false)}
+                className={({ isActive }) =>
+                  `gz-navbar__link py-1 ${isActive ? "gz-navbar__link--active" : ""}`
+                }
+              >
+                {label}
+              </NavLink>
+            ))}
+          </div>
+        </nav>
+      )}
+    </header>
   );
 };
 
