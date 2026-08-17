@@ -2,9 +2,9 @@ import Navbar from "../components/Navbar";
 
 const MainLayout = ({ children }) => {
   return (
-    <div className="min-h-dvh bg-gz-popup-dark">
+    <div className="gz-app-frame">
       <Navbar />
-      <main className="pt-[var(--gz-navbar-height)]">{children}</main>
+      <main className="gz-app-main">{children}</main>
     </div>
   );
 };

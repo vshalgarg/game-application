@@ -1,81 +1,40 @@
 import { useNavigate } from "react-router-dom";
-import GameButton from "../components/GameButton";
+import { FaDesktop, FaGamepad, FaUserFriends } from "react-icons/fa";
+import PageShell from "../components/layout/PageShell";
+import GameZoneLogo from "../components/brand/GameZoneLogo";
+import ModeOption from "../components/ui/ModeOption";
 
 const GameMode = () => {
   const navigate = useNavigate();
 
   return (
-    <div
-      className="
-        min-h-screen
-        bg-gradient-to-br
-        from-gray-900
-        via-black
-        to-gray-800
-        flex
-        items-center
-        justify-center
-        px-4
-      "
-    >
-      <div
-        className="
-          w-full
-          max-w-md
-          bg-white/10
-          backdrop-blur-lg
-          p-8
-          rounded-3xl
-          shadow-2xl
-          border
-          border-white/20
-        "
-      >
-        <h1
-          className="
-            text-5xl
-            font-bold
-            text-center
-            text-white
-            mb-3
-          "
-        >
-          Tic Tac Toe
-        </h1>
+    <PageShell>
+      <div className="gz-select-card w-full">
+        <div className="mb-5 flex flex-col items-center">
+          <GameZoneLogo className="mb-3 h-10 w-10" />
+          <h1 className="text-2xl font-bold text-gz-text sm:text-3xl">Tic Tac Toe</h1>
+          <div className="gz-divider mt-3 w-full max-w-[200px] justify-center">
+            <FaGamepad className="text-gz-primary-cyan" size={12} />
+          </div>
+          <p className="mt-2 text-sm text-gz-text-secondary">Choose Game Mode</p>
+        </div>
 
-        <p
-          className="
-            text-gray-300
-            text-center
-            mb-10
-          "
-        >
-          Choose Game Mode
-        </p>
-
-        <div className="flex flex-col gap-5">
-          <GameButton
-            title="Play With Person"
-            color="
-              bg-blue-500
-              hover:bg-blue-600
-              shadow-blue-500/40
-            "
+        <div className="flex flex-col gap-2.5">
+          <ModeOption
+            icon={FaUserFriends}
+            label="Play With Person"
+            tone="cyan"
             onClick={() => navigate("/tic-tac-toe")}
           />
-
-          <GameButton
-            title="Play With Computer"
-            color="
-              bg-green-500
-              hover:bg-green-600
-              shadow-green-500/40
-            "
+          <ModeOption
+            icon={FaDesktop}
+            label="Play With Computer"
+            tone="purple"
             onClick={() => navigate("/computer-room")}
           />
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 };
 
