@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -22,4 +23,5 @@ public class GameStateDTO {
     private Integer lastDice;
     private Long lastDicePlayerId;
     private List<LegalMoveDTO> legalMoves;
+    private List<Long> finishOrder = new ArrayList<>();
 }

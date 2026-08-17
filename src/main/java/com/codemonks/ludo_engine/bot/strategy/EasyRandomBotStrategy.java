@@ -27,59 +27,34 @@ public class EasyRandomBotStrategy implements BotStrategy {
             List<Integer> pendingDice
     ) {
 
-        log.info(
-                "[BOT_MOVE_SELECTION_STARTED] Bot:{} Dice:{}",
-                botPlayerId,
-                pendingDice
-        );
-
+        log.info("[BOT_MOVE_SELECTION_STARTED] Bot:{} Dice:{}", botPlayerId, pendingDice);
         PlayerDTO botPlayer = gameState.getPlayers()
                 .stream()
                 .filter(player -> player.getPlayerId().equals(botPlayerId))
                 .findFirst()
-                .orElseThrow(() ->
-                        new IllegalStateException(
-                                "Bot player not found: " + botPlayerId
-                        )
-                );
+                .orElseThrow(() -> new IllegalStateException("Bot player not found: " + botPlayerId));
 
-        List<LegalMoveDTO> legalMoves =
-                availableMoveService.getAvailableMoves(
-                        gameState,
-                        botPlayer,
-                        pendingDice
-                );
+        List<LegalMoveDTO> legalMoves = availableMoveService.getAvailableMoves(
+                gameState, botPlayer, pendingDice);
 
         if (legalMoves.isEmpty()) {
-
-            log.info(
-                    "[BOT_NO_LEGAL_MOVE] Bot:{} Dice:{}",
-                    botPlayerId,
-                    pendingDice
-            );
-
+            log.info("[BOT_NO_LEGAL_MOVE] Bot:{} Dice:{}", botPlayerId, pendingDice);
             return BotDecisionDTO.builder()
                     .moveAvailable(false)
                     .move(null)
                     .build();
         }
-        LegalMoveDTO selectedMove =
-                legalMoves.get(
-                        ThreadLocalRandom.current().nextInt(legalMoves.size())
-                );
-
+        LegalMoveDTO selectedMove = legalMoves.get(
+                ThreadLocalRandom.current().nextInt(legalMoves.size()));
         log.info(
                 "[BOT_MOVE_SELECTED] Bot:{} Token:{} Dice:{}",
                 botPlayerId,
                 selectedMove.getTokenId(),
                 selectedMove.getDice()
         );
-
         return BotDecisionDTO.builder()
                 .moveAvailable(true)
                 .move(selectedMove)
                 .build();
-
-
     }
 }

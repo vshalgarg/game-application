@@ -14,12 +14,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-/**
- * Weighted scoring, not a strict tier cutoff. Every candidate gets a score
- * combining all its consequence flags, so combined outcomes (e.g. a kill
- * that ALSO lands on a safe cell) correctly outrank a kill alone — something
- * a strict hierarchy (see MediumBotStrategy) can't express.
- */
+
 @Slf4j
 @RequiredArgsConstructor
 @Service("ludoHardBotStrategy")
@@ -29,8 +24,8 @@ public class HardBotStrategy implements BotStrategy {
     private static final double KILL_WEIGHT = 500;
     private static final double SAFE_CELL_WEIGHT = 150;
     private static final double EXIT_BASE_WEIGHT = 100;
-    private static final double ADVANCEMENT_WEIGHT = 1;      // per path-index point
-    private static final double TIE_BREAK_RANDOMNESS = 5;    // small jitter so ties aren't always the same move
+    private static final double ADVANCEMENT_WEIGHT = 1;
+    private static final double TIE_BREAK_RANDOMNESS = 5;
 
     private final AvailableMoveService availableMoveService;
 

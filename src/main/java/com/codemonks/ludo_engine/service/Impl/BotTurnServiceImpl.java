@@ -42,30 +42,21 @@ public class BotTurnServiceImpl implements BotTurnService {
             return;
         }
 
-        Map<String, Object> raw =
-                realtimeState.getGameState();
+        Map<String, Object> raw = realtimeState.getGameState();
 
-        Object board =
-                raw.get("board");
+        Object board = raw.get("board");
 
-        Map<String, Object> state =
-                board instanceof Map
+        Map<String, Object> state = board instanceof Map
                         ? (Map<String, Object>) board
                         : raw;
 
-        GameStateDTO gameState =
-                objectMapper.convertValue(
-                        state,
-                        GameStateDTO.class
-                );
+        GameStateDTO gameState = objectMapper.convertValue(state, GameStateDTO.class);
 
         if (gameState.getPlayers() == null ||
                 gameState.getCurrentTurnPlayerId() == null) {
 
-            log.warn(
-                    "[BOT_TRIGGER_SKIPPED] Invalid game state. Room:{}",
-                    roomId
-            );
+            log.warn("[BOT_TRIGGER_SKIPPED] Invalid game state. Room:{}", roomId);
+
             return;
         }
         PlayerDTO currentPlayer = gameState.getPlayers()
@@ -79,13 +70,10 @@ public class BotTurnServiceImpl implements BotTurnService {
                         .orElse(null);
 
         if (currentPlayer == null) {
-
             log.warn(
                     "[BOT_TRIGGER_SKIPPED] Current player not found. Room:{} Player:{}",
-                    roomId,
-                    gameState.getCurrentTurnPlayerId()
+                    roomId, gameState.getCurrentTurnPlayerId()
             );
-
             return;
         }
 
@@ -93,24 +81,17 @@ public class BotTurnServiceImpl implements BotTurnService {
 
             log.debug(
                     "[BOT_NOT_REQUIRED] Room:{} Player:{} is human",
-                    roomId,
-                    currentPlayer.getPlayerId()
-            );
-
+                    roomId, currentPlayer.getPlayerId());
             return;
         }
 
-        String effectiveRoomCode =
-                roomCode != null
+        String effectiveRoomCode = roomCode != null
                         ? roomCode
                         : realtimeState.getRoomCode();
 
         log.info(
                 "[BOT_TURN_TRIGGERED] Room:{} Player:{}",
-                roomId,
-                currentPlayer.getPlayerId()
-        );
-
+                roomId, currentPlayer.getPlayerId());
         botMoveService.processBotTurn(
                 gameState,
                 roomId,

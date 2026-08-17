@@ -28,16 +28,13 @@ public class MoveProcessorService {
 
     private final SupabaseRealtimeService supabaseRealtimeService;
 
-
     public void validateMove(Board board, Move move) {
         if (move.getRow() < 0 || move.getRow() > 2 || move.getCol() < 0 || move.getCol() > 2 || !board.isCellEmpty(move.getRow(), move.getCol())) {
             throw new TicTacToeEngineException(INVALID_MOVE);
         }
     }
-
     public void applyMove(Board board, Move move, CellValue symbol) {
         board.setCell(move.getRow(), move.getCol(), symbol);}
-
 
     public EngineGameStateResponseDTO checkGameOver(
             Board board,
@@ -47,8 +44,6 @@ public class MoveProcessorService {
             BotDifficultyEnum difficulty,
             Integer restartCount
     ) {
-
-        // win
         if (board.checkWin(symbol)) {
             log.info("[GAME_OVER] Winner: {}", winnerUserId);
             return buildResponse(
@@ -62,7 +57,6 @@ public class MoveProcessorService {
             );
         }
 
-        // draw
         if (board.isBoardFull()) {
             log.info("[GAME_OVER] Match DRAW");
             return buildResponse(
