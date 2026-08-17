@@ -8,6 +8,8 @@ const Button = ({
 }) => {
   const variants = {
     primary: "gz-btn-primary",
+    secondary: "gz-btn-secondary",
+    accent: "gz-btn-accent",
     social: "gz-btn-social",
     nav: "gz-btn-nav",
   };

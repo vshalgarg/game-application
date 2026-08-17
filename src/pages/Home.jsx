@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import GameButton from "../components/GameButton";
 import { createRoom } from "../services/roomService";
 import { useSnackbar } from "../context/SnackbarContext";
-import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import PageShell from "../components/layout/PageShell";
+import GameZoneLogo from "../components/brand/GameZoneLogo";
+import Button from "../components/ui/Button";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -40,83 +42,24 @@ const Home = () => {
   };
 
   return (
-    <div
-      className="
-        min-h-screen
-        bg-gradient-to-br
-        from-gray-900
-        via-black
-        to-gray-800
-        flex
-        items-center
-        justify-center
-        px-4
-      "
-    >
-      {/* Main Card */}
-      <div
-        className="
-          w-full
-          max-w-md
-          bg-white/10
-          backdrop-blur-lg
-          p-8
-          rounded-3xl
-          shadow-2xl
-          border
-          border-white/20
-        "
-      >
-        {/* Heading */}
-        <h1
-          className="
-            text-5xl
-            font-bold
-            text-center
-            text-white
-            mb-3
-          "
-        >
-          Welcome !
-        </h1>
+    <PageShell>
+      <div className="gz-select-card w-full">
+        <div className="mb-6 flex flex-col items-center sm:mb-8">
+          <GameZoneLogo className="mb-4 h-12 w-12 sm:h-14 sm:w-14" />
+          <h1 className="text-3xl font-bold text-gz-text sm:text-4xl">Welcome!</h1>
+          <p className="mt-2 text-sm text-gz-text-secondary sm:text-base">Gaming Room</p>
+        </div>
 
-        {/* Subtitle */}
-        <p
-          className="
-            text-gray-300
-            text-center
-            mb-10
-          "
-        >
-          Gaming Room
-        </p>
-
-        {/* Buttons Container */}
-        <div className="flex flex-col gap-5">
-          {/* Create Room Button */}
-          <GameButton
-            title={loading ? "Creating..." : "Create Room"}
-            color="
-              bg-blue-500
-              hover:bg-blue-600
-              shadow-blue-500/40
-            "
-            onClick={handleCreateRoom}
-          />
-
-          {/* Join Room Button */}
-          <GameButton
-            title="Join Room"
-            color="
-              bg-purple-500
-              hover:bg-purple-600
-              shadow-purple-500/40
-            "
-            onClick={() => navigate("/join-room")}
-          />
+        <div className="flex flex-col gap-3 sm:gap-4">
+          <Button onClick={handleCreateRoom} disabled={loading}>
+            {loading ? "Creating..." : "Create Room"}
+          </Button>
+          <Button variant="accent" onClick={() => navigate("/join-room")}>
+            Join Room
+          </Button>
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 };
 

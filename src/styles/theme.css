@@ -32,7 +32,7 @@
   --gz-auth-page-pad-y: clamp(1.5rem, 6vh, 4rem);
   --gz-auth-card-pad-y: clamp(1rem, 2.2vh, 1.5rem);
   --gz-auth-card-pad-x: clamp(1.25rem, 3vw, 2rem);
-  --gz-navbar-height: 4.5rem;
+  --gz-navbar-height: 3.5rem;
 
   /* Photo overlay — tweak this one value to dim/brighten all page backgrounds */
   --gz-bg-overlay: rgb(23 42 70 / 28%);
@@ -106,6 +106,18 @@
       transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60;
   }
 
+  .gz-btn-accent {
+    @apply w-full cursor-pointer rounded-gz-control bg-gz-purple-accent
+      py-2.5 text-center text-sm font-semibold text-white shadow-lg shadow-gz-purple-accent/30
+      transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .gz-btn-secondary {
+    @apply w-full cursor-pointer rounded-gz-control border border-gz-primary-cyan bg-transparent
+      py-2.5 text-center text-sm font-semibold text-gz-primary-cyan
+      transition hover:bg-gz-primary-cyan/10 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
   .gz-btn-nav {
     @apply w-auto cursor-pointer rounded-full bg-linear-to-r from-gz-login-from to-gz-login-to
       px-5 py-2 text-sm font-semibold text-white shadow-md shadow-gz-login-to/30
@@ -132,9 +144,20 @@
     @apply h-px flex-1 bg-gz-input-border/80;
   }
 
-  /* Full-bleed content area under navbar */
+  .gz-app-frame {
+    @apply h-dvh overflow-hidden bg-gz-popup-dark;
+  }
+
+  .gz-app-main {
+    margin-top: var(--gz-navbar-height);
+    height: calc(100dvh - var(--gz-navbar-height));
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  /* Content area inside the scrollport (already below navbar) */
   .gz-page-shell {
-    @apply relative flex min-h-[calc(100dvh-var(--gz-navbar-height))] items-center justify-center px-4 py-6 sm:px-6;
+    @apply relative flex min-h-full items-center justify-center px-4 py-6 sm:px-6;
   }
 
   .gz-page-shell__bg {
@@ -150,7 +173,7 @@
   /* Compact selection card (Select Game, etc.) */
   .gz-select-card {
     @apply relative z-10 w-full max-w-[380px] rounded-gz-card border border-gz-primary-cyan/50
-      bg-gz-popup-dark/92 px-6 py-8 text-center shadow-gz-card backdrop-blur-xl sm:px-8 sm:py-10;
+      bg-gz-popup-dark/92 px-5 py-6 text-center shadow-gz-card backdrop-blur-xl sm:px-7 sm:py-7;
     box-shadow:
       0 20px 60px rgba(0, 0, 0, 0.45),
       0 -8px 28px rgba(0, 217, 232, 0.22),
@@ -169,12 +192,31 @@
     background: #f5fafc;
   }
 
+  .gz-mode-option {
+    @apply flex w-full cursor-pointer items-center gap-2.5 rounded-xl border bg-gz-popup/70
+      px-3 py-2 text-left transition hover:brightness-110 active:scale-[0.99];
+  }
+
+  .gz-mode-option--cyan {
+    @apply border-gz-primary-cyan text-gz-primary-cyan;
+    box-shadow: 0 0 14px rgb(0 217 232 / 35%);
+  }
+
+  .gz-mode-option--purple {
+    @apply border-gz-purple-accent text-gz-purple-accent;
+    box-shadow: 0 0 14px rgb(139 92 246 / 35%);
+  }
+
+  .gz-mode-option__chevron {
+    @apply text-current;
+  }
+
   .gz-navbar {
     @apply fixed inset-x-0 top-0 z-50 bg-transparent;
   }
 
   .gz-navbar__inner {
-    @apply mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 md:px-6;
+    @apply flex w-full items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 xl:px-10;
     height: var(--gz-navbar-height);
   }
 
@@ -207,5 +249,205 @@
   .gz-navbar__menu {
     @apply absolute top-full right-4 mt-1 w-44 rounded-xl border border-white/15
       bg-gz-popup-dark/70 px-3 py-3 shadow-lg backdrop-blur-md md:hidden;
+  }
+
+  .gz-page-shell.gz-page-shell--dashboard {
+    display: flex;
+    height: 100%;
+    min-height: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 0.5rem 1rem 0.75rem;
+  }
+
+  .gz-dashboard {
+    @apply relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-3 rounded-3xl border border-gz-primary-cyan/40
+      bg-gz-popup-dark/88 p-4 pb-3 shadow-gz-card backdrop-blur-xl xl:gap-3 xl:px-5 xl:pt-5 xl:pb-3;
+    height: auto;
+    min-height: 0;
+    flex: 0 0 auto;
+    align-self: flex-start;
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.45),
+      0 0 32px rgb(0 217 232 / 18%);
+  }
+
+  .gz-carousel-panel {
+    @apply flex min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-gz-popup/35 px-3 py-3
+      xl:px-4 xl:py-3;
+  }
+
+  .gz-carousel {
+    @apply flex w-full items-stretch gap-4 overflow-x-auto overflow-y-hidden scroll-smooth;
+    flex: 0 1 auto;
+    width: 100%;
+    height: clamp(8.75rem, 30dvh, 22rem);
+    min-height: 8.75rem;
+    max-height: 22rem;
+    scrollbar-width: none;
+  }
+
+  .gz-carousel::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gz-carousel-nav {
+    @apply h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full
+      border border-gz-primary-cyan/70 bg-gz-popup text-gz-primary-cyan transition
+      hover:bg-gz-primary-cyan/10;
+  }
+
+  .gz-game-card {
+    @apply flex w-[min(240px,78vw)] shrink-0 cursor-pointer flex-col overflow-hidden rounded-2xl
+      border border-white/10 bg-gz-popup text-left transition hover:-translate-y-0.5
+      md:w-[210px] lg:w-[240px] xl:w-[260px];
+    height: 100%;
+    min-height: 8.75rem;
+    max-height: 22rem;
+  }
+
+  .gz-game-card--cyan {
+    box-shadow: 0 0 16px rgb(0 217 232 / 18%);
+  }
+
+  .gz-game-card--purple {
+    box-shadow: 0 0 16px rgb(139 92 246 / 18%);
+  }
+
+  .gz-game-card--soon {
+    @apply cursor-not-allowed opacity-70;
+  }
+
+  .gz-game-card__art {
+    @apply relative flex flex-1 items-center justify-center bg-linear-to-br from-gz-popup-dark to-gz-input-bg
+      text-gz-primary-cyan;
+    min-height: 0;
+  }
+
+  .gz-game-card__art svg {
+    width: clamp(1.75rem, 6dvh, 3.25rem);
+    height: clamp(1.75rem, 6dvh, 3.25rem);
+  }
+
+  .gz-game-card--purple .gz-game-card__art {
+    @apply text-gz-purple-accent;
+  }
+
+  .gz-game-card__badge {
+    @apply absolute top-2 right-2 rounded-full bg-gz-popup-dark/80 px-2 py-0.5 text-[10px]
+      font-semibold tracking-wide text-gz-text-secondary;
+  }
+
+  .gz-game-card__meta {
+    @apply flex items-center justify-between gap-2 border-t border-white/10 px-3 py-2.5;
+  }
+
+  .gz-feature-strip {
+    @apply grid shrink-0 rounded-2xl border border-white/10 bg-gz-popup/70 sm:grid-cols-3;
+  }
+
+  .gz-feature-strip__item {
+    @apply flex items-center gap-3 px-4 py-3.5 sm:px-5 sm:py-4;
+  }
+
+  .gz-feature-strip__item + .gz-feature-strip__item {
+    @apply border-t border-white/10 sm:border-t-0 sm:border-l;
+  }
+
+  .gz-feature-strip__icon {
+    @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-full border;
+  }
+
+  .gz-feature-strip__icon--cyan {
+    @apply border-gz-primary-cyan/50 text-gz-primary-cyan;
+  }
+
+  .gz-feature-strip__icon--purple {
+    @apply border-gz-purple-accent/50 text-gz-purple-accent;
+  }
+
+  @media (max-width: 639px) {
+    .gz-page-shell.gz-page-shell--dashboard {
+      padding: 0.35rem 0.75rem 0.5rem;
+    }
+
+    .gz-dashboard {
+      height: 100%;
+      flex: 1 1 auto;
+      align-self: stretch;
+      gap: 0.5rem;
+      padding: 0.65rem 0.75rem 0.5rem;
+    }
+
+    .gz-carousel-panel {
+      flex: 1 1 auto;
+      padding: 0.5rem 0.5rem 0.4rem;
+    }
+
+    .gz-carousel {
+      flex: 1 1 auto;
+      min-height: 7.5rem;
+      height: 100%;
+      max-height: 13rem;
+    }
+
+    .gz-game-card {
+      width: min(11.5rem, 72vw);
+      min-height: 7.5rem;
+      max-height: 13rem;
+    }
+
+    .gz-game-card__meta {
+      padding: 0.4rem 0.6rem;
+    }
+
+    .gz-game-card__art svg {
+      width: 1.85rem;
+      height: 1.85rem;
+    }
+
+    .gz-feature-strip__item {
+      gap: 0.5rem;
+      padding: 0.35rem 0.7rem;
+    }
+
+    .gz-feature-strip__item p:first-child {
+      font-size: 0.75rem;
+      line-height: 1.2;
+    }
+
+    .gz-feature-strip__hint {
+      font-size: 0.625rem;
+      line-height: 1.2;
+    }
+
+    .gz-feature-strip__icon {
+      height: 1.75rem;
+      width: 1.75rem;
+    }
+
+    .gz-feature-strip__icon svg {
+      width: 0.7rem;
+      height: 0.7rem;
+    }
+  }
+
+  @media (min-width: 640px) {
+    .gz-page-shell.gz-page-shell--dashboard {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+
+    .gz-dashboard {
+      height: auto;
+      max-height: none;
+      flex: 0 0 auto;
+      align-self: flex-start;
+    }
+
+    .gz-carousel-panel {
+      flex: none;
+    }
   }
 }
