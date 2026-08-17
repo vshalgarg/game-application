@@ -4,6 +4,7 @@ import com.codemonks.ludo_engine.dto.common.GameStateDTO;
 import com.codemonks.ludo_engine.dto.common.PlayerDTO;
 import com.codemonks.ludo_engine.dto.realtime.RealtimeGameStateDTO;
 import com.codemonks.ludo_engine.service.BotMoveService;
+import com.codemonks.ludo_engine.service.BotRoomLockService;
 import com.codemonks.ludo_engine.service.BotTurnService;
 import com.codemonks.ludo_engine.service.SupabaseRealtimeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,6 +22,7 @@ public class BotTurnServiceImpl implements BotTurnService {
     private final BotMoveService botMoveService;
     private final SupabaseRealtimeService realtimeService;
     private final ObjectMapper objectMapper;
+    private final BotRoomLockService botRoomLockService;
 
     @Override
     public void triggerBotIfNeeded(
@@ -89,14 +91,20 @@ public class BotTurnServiceImpl implements BotTurnService {
                         ? roomCode
                         : realtimeState.getRoomCode();
 
-        log.info(
-                "[BOT_TURN_TRIGGERED] Room:{} Player:{}",
+        if (!botRoomLockService.tryAcquire(roomId)) {
+            return;
+        }
+
+        log.info("[BOT_TURN_TRIGGERED] Room:{} Player:{}",
                 roomId, currentPlayer.getPlayerId());
+
         botMoveService.processBotTurn(
                 gameState,
                 roomId,
                 effectiveRoomCode,
                 currentPlayer.getPlayerId()
         );
+
+
     }
 }

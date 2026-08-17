@@ -13,6 +13,7 @@ import com.codemonks.ludo_engine.dto.response.DiceRollResponseDTO;
 import com.codemonks.ludo_engine.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.ludo_engine.enums.PlayerTurnStageEnum;
 import com.codemonks.ludo_engine.service.BotMoveService;
+import com.codemonks.ludo_engine.service.BotRoomLockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -30,18 +31,23 @@ public class BotMoveServiceImpl implements BotMoveService {
     private final BotStrategyFactory botStrategyFactory;
     private final EngineServiceImpl engineService;
     private final ObjectMapper objectMapper;
-
+    private final BotRoomLockService botRoomLockService;
     @Override
     @Async("botMoveExecutor")
-    public void processBotTurn(GameStateDTO gameState, Long roomId,
+    public void processBotTurn(
+            GameStateDTO gameState,
+            Long roomId,
             String roomCode,
-            Long botPlayerId) {
+            Long botPlayerId
+    ) {
 
-        Long activePlayerId = botPlayerId;
-        boolean needsRoll = true;
-        GameStateDTO currentState = gameState;
+        try {
 
-        while (activePlayerId != null) {
+            Long activePlayerId = botPlayerId;
+            boolean needsRoll = true;
+            GameStateDTO currentState = gameState;
+
+            while (activePlayerId != null) {
             try {
                 if (needsRoll) {
                     Thread.sleep(BotConstants.BOT_DELAY_MS);
@@ -166,6 +172,10 @@ public class BotMoveServiceImpl implements BotMoveService {
                 );
                 return;
             }
+        }
+    }
+        finally {
+            botRoomLockService.release(roomId);
         }
     }
 
