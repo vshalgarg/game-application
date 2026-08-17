@@ -19,4 +19,5 @@ public class PlayerDTO {
     private Boolean isBot;
     private BotDifficultyEnum botDifficulty;
     private Boolean pendingExtraTurn;
+    private Boolean hasFinished;
 }

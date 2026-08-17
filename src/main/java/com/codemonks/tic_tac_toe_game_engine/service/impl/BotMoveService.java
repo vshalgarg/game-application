@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class BotMoveService {
 
-    private static final long BOT_DELAY_MS = 1000;
+    private static final long BOT_DELAY_MS = 2000;
 
 @Autowired
 @Lazy
@@ -32,18 +32,8 @@ private  TicTacToeEngineImpl ticTacToeEngine;
 
             ticTacToeEngine.makeMove(botRequest);
 
-            log.info(
-                    "[BOT_MOVE_TRIGGERED] roomId={}",
-                    roomId
-            );
+            log.info("[BOT_MOVE_TRIGGERED] roomId={}", roomId);
 
-        } catch (Exception e) {
-
-            log.error(
-                    "[BOT_MOVE_FAILED] roomId={}",
-                    roomId,
-                    e
-            );
-        }
+        } catch (Exception e) {log.error("[BOT_MOVE_FAILED] roomId={}", roomId, e);}
     }
 }

@@ -25,11 +25,6 @@ public class BotStrategyFactory {
     }
 
     public BotStrategy getStrategy(BotDifficultyEnum difficulty) {
-
-//        if (difficulty == null) {
-//            return strategies.get(BotDifficultyEnum.EASY); // default
-//        }
-
         BotStrategy strategy = strategies.get(difficulty);
         if (strategy == null) {
             throw new IllegalArgumentException("Unknown difficulty: " + difficulty);

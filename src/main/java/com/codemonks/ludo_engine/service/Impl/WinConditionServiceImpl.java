@@ -39,10 +39,7 @@ public class WinConditionServiceImpl implements WinConditionService {
                     return new InvalidMoveException(INVALID_MOVE);
                 });
 
-        int tokensRequiredToWin = boardService
-                .getBoard()
-                .getMetadata()
-                .getTokensPerPlayer();
+        int tokensRequiredToWin = boardService.getBoard().getMetadata().getTokensPerPlayer();
 
         long finishedTokenCount = currentPlayer.getTokens().stream()
                 .filter(token -> token.getState() == TokenStateEnum.FINISHED)
@@ -57,13 +54,58 @@ public class WinConditionServiceImpl implements WinConditionService {
 
         if (finishedTokenCount >= tokensRequiredToWin) {
 
-            response.setWinnerUserId(playerId);
-            response.setStatus(GameStatusEnum.FINISHED);
+            currentPlayer.setHasFinished(true);
 
-            gameState.setWinnerPlayerId(playerId);
-            gameState.setGameStatus(GameStatusEnum.FINISHED);
+            if (gameState.getFinishOrder() == null) {
+                gameState.setFinishOrder(new java.util.ArrayList<>());
+            }
 
-            log.info("[WINNER_DECLARED] Player:{} has won the game!", playerId);
+            if (!gameState.getFinishOrder().contains(playerId)) {
+                gameState.getFinishOrder().add(playerId);
+                log.info(
+                        "[PLAYER_FINISHED] Player:{} Rank:{}",
+                        playerId,
+                        gameState.getFinishOrder().size()
+                );
+            }
+
+            int totalPlayers = gameState.getPlayers().size();
+            int finishedPlayers = gameState.getFinishOrder().size();
+
+            if (finishedPlayers >= totalPlayers - 1) {
+
+                gameState.getPlayers().stream()
+                        .filter(p -> !gameState.getFinishOrder().contains(p.getPlayerId()))
+                        .findFirst()
+                        .ifPresent(lastPlayer -> {
+                            gameState.getFinishOrder().add(lastPlayer.getPlayerId());
+                            lastPlayer.setHasFinished(true);
+                            log.info(
+                                    "[LAST_PLAYER_RANKED] Player:{} Rank:{}",
+                                    lastPlayer.getPlayerId(),
+                                    gameState.getFinishOrder().size()
+                            );
+                        });
+
+                response.setWinnerUserId(gameState.getFinishOrder().get(0));
+                response.setStatus(GameStatusEnum.FINISHED);
+
+                gameState.setWinnerPlayerId(gameState.getFinishOrder().get(0));
+                gameState.setGameStatus(GameStatusEnum.FINISHED);
+
+                log.info(
+                        "[GAME_FINISHED] FinishOrder:{}",
+                        gameState.getFinishOrder()
+                );
+
+            } else {
+
+                log.info(
+                        "[PLAYER_FINISHED_GAME_CONTINUES] Player:{} RemainingActivePlayers:{}",
+                        playerId,
+                        totalPlayers - finishedPlayers
+                );
+            }
         }
         else {
             log.info(
@@ -73,13 +115,11 @@ public class WinConditionServiceImpl implements WinConditionService {
                     tokensRequiredToWin
             );
         }
-
         log.info(
                 "[WINNER_CHECK_COMPLETED] Player:{} Winner:{}",
                 playerId,
                 response.getWinnerUserId() != null
         );
-
         return response;
     }
 }

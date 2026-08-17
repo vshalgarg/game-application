@@ -57,11 +57,9 @@ public class AvailableMoveServiceImpl implements AvailableMoveService {
                 if (!isTokenMovable(token, dice, path)) {
                     continue;
                 }
-
                 legal.add(evaluateCandidate(gameState, player, token, dice, safeCells));
             }
         }
-
         return legal;
     }
 
@@ -83,8 +81,7 @@ public class AvailableMoveServiceImpl implements AvailableMoveService {
         try {
             GameStateDTO clonedState = deepClone(gameState);
 
-            GameStateDTO afterMove =
-                    tokenMovementService.moveToken(
+            GameStateDTO afterMove = tokenMovementService.moveToken(
                             clonedState,
                             player.getPlayerId(),
                             token.getTokenId(),
@@ -161,7 +158,6 @@ public class AvailableMoveServiceImpl implements AvailableMoveService {
                 return true;
             }
         }
-
         return false;
     }
 
@@ -177,7 +173,6 @@ public class AvailableMoveServiceImpl implements AvailableMoveService {
 
         if (token.getState() == TokenStateEnum.TRACK) {
             Integer currentIndex = token.getPathIndex();
-
             if (currentIndex == null || currentIndex < 0 || currentIndex >= path.size()) {
                 log.warn(
                         "[INVALID_TOKEN_PATH_INDEX] Token:{} PathIndex:{} PathSize:{}",

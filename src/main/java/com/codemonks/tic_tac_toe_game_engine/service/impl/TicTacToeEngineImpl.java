@@ -53,7 +53,6 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
         Board board = new Board();
         log.debug("[START_GAME] 3x3 board initialized successfully");
 
-        // Assign Players
         List<PlayerDTO> players = buildPlayers(request);
 
         int newRestartCount = fetchRestartCountIfExists(request.getRoomId());
@@ -110,7 +109,6 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
             botMoveService.processBotMove(request.getRoomId());
             log.info("[BOT_SCHEDULED_ON_START] roomId={}", request.getRoomId());
         }
-
         return response;
     }
 
@@ -133,7 +131,6 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
             List<PlayerDTO> players = extractPlayersFromGameState(gameState);
             log.info("Players extracted = {}", players);
 
-            //BOT MOVE (called by BotMoveService async thread
         if (BotConstants.BOT_USER_ID.equals(request.getUserId())) {
 
             PlayerDTO botPlayer = getPlayerByUserId(players, BotConstants.BOT_USER_ID);
@@ -151,15 +148,10 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                     getBotDifficultyFromGameState(gameState),restartCount);
 
             if (botGameOver != null) {
-                moveProcessorService.persistUpdatedState(
-                        realtimeState,
-                        botGameOver
-                );
-
+                moveProcessorService.persistUpdatedState(realtimeState, botGameOver);
                 return botGameOver;
             }
             PlayerDTO humanPlayer = getHumanPlayer(players);
-
             EngineGameStateResponseDTO response = moveProcessorService.buildResponse(
                             board,
                             humanPlayer.getUserId(),
@@ -169,14 +161,10 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                             getBotDifficultyFromGameState(gameState),
                             restartCount
                     );
-
             moveProcessorService.persistUpdatedState(realtimeState, response);
             return response;
         }
-
-        validateTurn(realtimeState.getCurrentTurnUserId(),
-                request.getUserId()
-        );
+        validateTurn(realtimeState.getCurrentTurnUserId(), request.getUserId());
         Move move = MoveMapper.toDomain(request.getMoveData());
         PlayerDTO currentPlayer = getPlayerByUserId(
                 players,
@@ -205,41 +193,23 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                 restartCount
                 );
         if (gameOverResponse != null) {
-
-            moveProcessorService.persistUpdatedState(
-                    realtimeState,
-                    gameOverResponse
-            );
+            moveProcessorService.persistUpdatedState(realtimeState, gameOverResponse);
             return gameOverResponse;
         }
 
         PlayerDTO nextPlayer = moveProcessorService.getNextPlayer(players, request.getUserId());
         EngineGameStateResponseDTO response = moveProcessorService.buildResponse(
-                board,
-                nextPlayer.getUserId(),
-                GameStatusEnum.RUNNING,
-                null,
-                players,
-                getBotDifficultyFromGameState(gameState),
-                restartCount
+                board, nextPlayer.getUserId(), GameStatusEnum.RUNNING, null,
+                players, getBotDifficultyFromGameState(gameState), restartCount);
 
-        );
             log.info("Response players after build = {}", response.getPlayers());
+
             moveProcessorService.persistUpdatedState(realtimeState, response);
 
             if (Boolean.TRUE.equals(nextPlayer.getIsBot())) {
-
-                botMoveService.processBotMove(
-                        request.getRoomId()
-                );
-
-                log.info(
-                        "[BOT_SCHEDULED] roomId={}",
-                        request.getRoomId()
-                );
+                botMoveService.processBotMove(request.getRoomId());
+                log.info("[BOT_SCHEDULED] roomId={}", request.getRoomId());
             }
-
-
         return response;
     }
 
@@ -285,10 +255,7 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
         return players;
     }
 
-    private PlayerDTO buildPlayer(Long userId,
-                                  Integer turnOrder,
-                                  String side,
-                                  Boolean isBot,
+    private PlayerDTO buildPlayer(Long userId, Integer turnOrder, String side, Boolean isBot,
                                   String displayName)
     {
         return PlayerDTO.builder()
@@ -299,16 +266,9 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
                 .isBot(isBot)
                     .build();
     }
-
-    private void validateTurn(
-            Long currentTurnUserId,
-            Long userId
-    ) {
-
+    private void validateTurn(Long currentTurnUserId, Long userId) {
         if (!userId.equals(currentTurnUserId)) {
-            throw new TicTacToeEngineException(
-                    INVALID_TURN
-            );
+            throw new TicTacToeEngineException(INVALID_TURN);
         }
     }
 
@@ -344,16 +304,10 @@ public class TicTacToeEngineImpl implements TicTacToeEngine {
             Map<String, Object> gameState
     ) {
 
-        Object difficulty =
-                gameState.get("botDifficulty");
+        Object difficulty = gameState.get("botDifficulty");
+        if (difficulty == null) {return null;}
+        return BotDifficultyEnum.valueOf(difficulty.toString());
 
-        if (difficulty == null) {
-            return null;
-        }
-
-        return BotDifficultyEnum.valueOf(
-                difficulty.toString()
-        );
     }
 
     private Integer getRestartCountFromGameState(Map<String, Object> gameState) {
