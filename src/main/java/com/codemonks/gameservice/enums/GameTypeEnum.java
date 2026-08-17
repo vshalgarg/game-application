@@ -7,13 +7,9 @@ public enum GameTypeEnum {
 
     private final int code;
 
-    GameTypeEnum(int code) {
-        this.code = code;
-    }
+    GameTypeEnum(int code) {this.code = code;}
 
-    public int getCode() {
-        return code;
-    }
+    public int getCode() {return code;}
 
     public static GameTypeEnum fromCode(int code) {
         for (GameTypeEnum type : values()) {

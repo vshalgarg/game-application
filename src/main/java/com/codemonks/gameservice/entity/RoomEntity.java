@@ -46,7 +46,7 @@ public class RoomEntity extends BaseEntity {
     private GameTypeEnum gameType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "match_type", nullable = false, length = 20)
+    @Column(name = "match_type", nullable = true, length = 20)
     private MatchTypeEnum matchType;
 
     @Enumerated(EnumType.STRING)

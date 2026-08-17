@@ -23,19 +23,12 @@ public class GameController {
 
     @PostMapping(MAKE_MOVE)
     public ResponseEntity<ApiResponse<EngineGameStateResponseDTO>> makeMove(
-            @PathVariable String roomCode,
-            @RequestBody MakeMoveRequestDTO request
-    ) {
-        log.info(
-                "Move request received. roomCode={}, userId={}",
-                roomCode,
-                request.getUserId()
-        );
-        EngineGameStateResponseDTO response =
-                gameService.makeMove(roomCode, request);
+            @PathVariable String roomCode, @RequestBody MakeMoveRequestDTO request) {
 
-        return ResponseEntity.ok(
-                ApiResponse.success(response, ResponseMessages.MOVE_PROCESSED)
-        );
+        log.info("Move request received. roomCode={}, userId={}",
+                roomCode, request.getUserId());
+
+        EngineGameStateResponseDTO response = gameService.makeMove(roomCode, request);
+        return ResponseEntity.ok(ApiResponse.success(response, ResponseMessages.MOVE_PROCESSED));
     }
 }

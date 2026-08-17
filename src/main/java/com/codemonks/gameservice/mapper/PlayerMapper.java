@@ -12,27 +12,21 @@ public final class PlayerMapper {
 
     private PlayerMapper() {}
 
-    public static List<PlayerDTO> toPlayerDtos(
-            List<PlayerEntity> players
-    ) {
+    public static List<PlayerDTO> toPlayerDtos(List<PlayerEntity> players) {
 
         return players.stream()
                 .map(PlayerMapper::toPlayerDto)
                 .toList();
     }
 
-    public static PlayerDTO toPlayerDto(
-            PlayerEntity player
-    ) {
+    public static PlayerDTO toPlayerDto(PlayerEntity player) {
 
-        boolean isHost =
-                player.getRole() == RoomPlayerRole.HOST;
+        boolean isHost = player.getRole() == RoomPlayerRole.HOST;
 
         return PlayerDTO.builder()
                 .userId(player.getUserId())
                 .turnOrder(isHost ? 1 : 2)
-                .side(
-                        isHost
+                .side(isHost
                                 ? PlayerSideEnum.X.name()
                                 : PlayerSideEnum.O.name()
                 )
