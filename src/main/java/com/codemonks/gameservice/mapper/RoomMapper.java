@@ -25,6 +25,7 @@ public class RoomMapper {
         room.setGameType(request.getGameType());
         room.setStatus(RoomStatusEnum.WAITING);
         room.setRoomCode(roomCode);
+        room.setMatchType(com.codemonks.gameservice.engineModule.enums.MatchTypeEnum.PVP);
         return room;
     }
 
@@ -59,9 +60,7 @@ public class RoomMapper {
                 .build();
     }
 
-    public static PlayerResponseDTO toPlayerResponseDTO(
-            PlayerEntity entity
-    ) {
+    public static PlayerResponseDTO toPlayerResponseDTO(PlayerEntity entity) {
 
         return PlayerResponseDTO.builder()
                 .userId(entity.getUserId())
@@ -71,9 +70,7 @@ public class RoomMapper {
     }
 
     public static RoomDetailsResponseDTO toRoomDetailsResponseDTO(
-            RoomEntity room,
-            List<PlayerEntity> players
-    ) {
+            RoomEntity room, List<PlayerEntity> players) {
 
         return RoomDetailsResponseDTO.builder()
                 .roomId(room.getId())

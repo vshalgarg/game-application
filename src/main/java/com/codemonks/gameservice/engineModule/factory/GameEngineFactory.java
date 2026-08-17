@@ -16,26 +16,17 @@ public class GameEngineFactory {
 
     private final Map<GameTypeEnum, GameEngine> strategyMap;
 
-    public GameEngineFactory(
-            List<GameEngine> strategies
-    ) {
+    public GameEngineFactory( List<GameEngine> strategies) {
         this.strategyMap = strategies.stream()
                 .collect(Collectors.toMap(
                         GameEngine::supports,
-                        Function.identity()
-                ));
+                        Function.identity()));
     }
 
-    public GameEngine getStrategy(
-            GameTypeEnum gameType
-    ) {
-        GameEngine strategy =
-                strategyMap.get(gameType);
+    public GameEngine getStrategy(GameTypeEnum gameType) {
+        GameEngine strategy = strategyMap.get(gameType);
         if(strategy == null) {
-            throw new GameException(
-                    ResponseErrorCodes.GAME_ENGINE_NOT_FOUND
-            );
-        }
+            throw new GameException(ResponseErrorCodes.GAME_ENGINE_NOT_FOUND);}
         return strategy;
     }
 }

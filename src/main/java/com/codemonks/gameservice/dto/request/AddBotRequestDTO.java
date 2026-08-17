@@ -13,5 +13,4 @@ public class AddBotRequestDTO {
     @NotNull
     private Long hostUserId;
     private BotDifficultyEnum botDifficulty;
-
 }
