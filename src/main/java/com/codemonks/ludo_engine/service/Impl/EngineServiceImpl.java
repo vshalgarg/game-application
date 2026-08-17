@@ -1,5 +1,6 @@
 package com.codemonks.ludo_engine.service.Impl;
 
+import com.codemonks.ludo_engine.constant.GameConstants;
 import com.codemonks.ludo_engine.constant.LudoErrorCodesEnum;
 import com.codemonks.ludo_engine.dto.common.*;
 import com.codemonks.ludo_engine.dto.realtime.RealtimeGameStateDTO;
@@ -190,10 +191,6 @@ public class EngineServiceImpl implements EngineService {
                             "Player " + request.getUserId() + " reached home"));
         }
 
-        boolean extraTurn = extraTurnService.hasExtraTurn(
-                        killResult.isTokenKilled(),
-                        tokenFinished);
-
         PlayerDTO moverPlayer = null;
 
         for (PlayerDTO player : updatedGameState.getPlayers()) {
@@ -203,13 +200,22 @@ public class EngineServiceImpl implements EngineService {
             }
         }
 
+        boolean allTokensFinished = moverPlayer != null
+                && moverPlayer.getTokens().stream()
+                .allMatch(token -> token.getState() == TokenStateEnum.FINISHED);
+
         if (moverPlayer != null
-                && (killResult.isTokenKilled() || tokenFinished)) {
+                && (killResult.isTokenKilled() || tokenFinished)
+                && !allTokensFinished) {
 
             moverPlayer.setPendingExtraTurn(true);
 
             log.info(
                     "[BONUS_STORED] Player:{} Bonus turn earned from kill/home.",
+                    request.getUserId());
+        } else if (allTokensFinished) {
+            log.info(
+                    "[BONUS_SUPPRESSED] Player:{} finished their last token — no bonus turn.",
                     request.getUserId());
         }
 
@@ -276,7 +282,7 @@ public class EngineServiceImpl implements EngineService {
                         : null
         );
 
-        // ── Winner Check
+
         EngineGameStateResponseDTO winnerResponse = winConditionService.checkWinner(
                 updatedGameState, request.getUserId());
         if (winnerResponse.getWinnerUserId() != null) {
@@ -455,8 +461,7 @@ public class EngineServiceImpl implements EngineService {
         }
 
         if (!tripleSixForfeited) {
-            List<LegalMoveDTO> combinedLegalMoves =
-                    availableMoveService.getAvailableMoves(
+            List<LegalMoveDTO> combinedLegalMoves = availableMoveService.getAvailableMoves(
                             gameState,
                             currentPlayer,
                             currentPlayer.getPendingDice()
@@ -481,6 +486,14 @@ public class EngineServiceImpl implements EngineService {
                         "[NO_MOVE] Player:{} Dice:{} Buffer:{} — nothing usable, rotating turn now.",
                         request.getPlayerId(), diceNumber, pendingDice
                 );
+
+                if (Boolean.TRUE.equals(currentPlayer.getIsBot())) {
+                    try {
+                        Thread.sleep(GameConstants.TURN_DELAY_MS);
+                    } catch (InterruptedException ignored) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
 
                 gameState = turnRotationService.updateTurn(
                         gameState,
@@ -542,7 +555,6 @@ public class EngineServiceImpl implements EngineService {
             diceStateMap = objectMapper.convertValue(gameState, Map.class);
             diceStateMap.put("legalMoves", new ArrayList<LegalMoveDTO>());
         }
-            // ── Build Response
             DiceRollResponseDTO response = new DiceRollResponseDTO();
             response.setRoomId(request.getRoomId());
             response.setPlayerId(request.getPlayerId());
@@ -570,11 +582,8 @@ public class EngineServiceImpl implements EngineService {
 
         log.info("[DELAYED_TURN_CONTINUATION] Room:{} Player:{}", roomId, playerId);
 
-        // Reload the latest authoritative state
         RealtimeGameStateDTO realtimeState = supabaseRealtimeService.getGameState(roomId);
-
         Map<String, Object> rawState = realtimeState.getGameState();
-
         Object boardObj = rawState.get("board");
 
         Map<String, Object> gameStateMap =
