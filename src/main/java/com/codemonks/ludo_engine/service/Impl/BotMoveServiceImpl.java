@@ -11,6 +11,7 @@ import com.codemonks.ludo_engine.dto.request.DiceRollRequestDTO;
 import com.codemonks.ludo_engine.dto.request.EngineMoveRequestDTO;
 import com.codemonks.ludo_engine.dto.response.DiceRollResponseDTO;
 import com.codemonks.ludo_engine.dto.response.EngineGameStateResponseDTO;
+import com.codemonks.ludo_engine.enums.GameStatusEnum;
 import com.codemonks.ludo_engine.enums.PlayerTurnStageEnum;
 import com.codemonks.ludo_engine.service.BotMoveService;
 import com.codemonks.ludo_engine.service.BotRoomLockService;
@@ -145,10 +146,21 @@ public class BotMoveServiceImpl implements BotMoveService {
 
                 EngineGameStateResponseDTO moveResponse = engineService.processMove(moveRequest);
 
+
+                if (moveResponse.getStatus() == GameStatusEnum.WIN) {
+                    log.info(
+                            "[BOT_LOOP_STOPPED_GAME_OVER] Room:{} Bot:{} Winner:{}",
+                            roomCode,
+                            activePlayerId,
+                            moveResponse.getWinnerUserId()
+                    );
+                    return;
+                }
+
                 GameStateDTO afterMoveState = objectMapper.convertValue(
-                                moveResponse.getGameState(),
-                                GameStateDTO.class
-                        );
+                        moveResponse.getGameState(),
+                        GameStateDTO.class
+                );
 
                 if (activePlayerId.equals(afterMoveState.getCurrentTurnPlayerId())) {
 
