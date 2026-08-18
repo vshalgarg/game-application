@@ -81,7 +81,6 @@ const LudoGameRoom = () => {
     }
 
     const move = legalMoves[0];
-
     const moveKey = `${roomCode}-${currentTurnUserId}-${move.tokenId}-${move.dice}`;
 
     // Already processed this exact move
@@ -200,6 +199,7 @@ const LudoGameRoom = () => {
     if (selectedToken === null) return;
     await moveToken(selectedToken, dice);
   };
+
   // Find current player's color
   const currentTurnColorIndex = currentPlayer?.colorIndex;
 
@@ -222,7 +222,7 @@ const LudoGameRoom = () => {
 
         if (!currentToken) continue;
 
-        // FORWARD ANIMATION
+        // Forward Animation
         if (
           currentToken.state === "TRACK" &&
           (latestToken.state === "TRACK" || latestToken.state === "FINISHED") &&
@@ -251,7 +251,7 @@ const LudoGameRoom = () => {
           currentToken.tokenKilled = latestToken.tokenKilled;
         }
 
-        // TOKEN REACHED HOME
+        // Token Reached Center Home
         if (currentToken.state !== "FINISHED" && latestToken.state === "FINISHED") {
           currentToken.state = "FINISHED";
           currentToken.pathId = latestToken.pathId;
@@ -265,7 +265,7 @@ const LudoGameRoom = () => {
           }));
         }
 
-        // COLLECT KILLED TOKEN
+        // Killed Token Animation
         if (
           currentToken.state === "TRACK" &&
           latestToken.state === "BASE" &&
@@ -279,7 +279,7 @@ const LudoGameRoom = () => {
       }
     }
 
-    // PLAY KILLED TOKEN ANIMATIONS
+    // Player Killed Animation Backward Animation
     for (const { currentToken, latestToken } of killedAnimations) {
       const backwardJourney = latestToken.backwardJourney?.length
         ? latestToken.backwardJourney
@@ -311,7 +311,7 @@ const LudoGameRoom = () => {
       }));
     }
 
-    // FINAL SYNC
+    // Final Sync
     setGameState((prev) => ({
       ...prev,
       board: structuredClone(newBoard),
@@ -321,12 +321,6 @@ const LudoGameRoom = () => {
     setAnimationComplete(true);
   };
   // if (!boardData) {
-  console.log("currentTurnUserId:", currentTurnUserId);
-  console.log("currentTurnColorIndex:", currentTurnColorIndex);
-  console.log("board players:", board?.players);
-  console.log("currentTurnUserId:", currentTurnUserId);
-  console.log("currentPlayer:", currentPlayer);
-  console.log("currentTurnColorIndex:", currentTurnColorIndex);
   return (
     <div
       className="
@@ -385,6 +379,7 @@ const LudoGameRoom = () => {
               handleTokenClick={handleTokenClick}
               legalMoves={legalMoves}
               movableTokenIds={movableTokenIds}
+              currentTurnColorIndex={currentTurnColorIndex}
             />
           </div>
 
@@ -398,6 +393,7 @@ const LudoGameRoom = () => {
                 onRoll={handleRollDice}
                 colors={boardData.metadata.colors}
                 // colors={boardData?.metadata?.colors ?? []}
+                isCurrentTurn={isMyTurn}
               />
 
               {diceOptions.length > 0 && (

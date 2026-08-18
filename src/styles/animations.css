@@ -1,0 +1,183 @@
+/* Current Turn Border Glow */
+.current-turn-glow {
+    filter: drop-shadow(0 0 5px white);
+    animation: currentTurnGlow 1s ease-in-out infinite;
+}
+
+@keyframes currentTurnGlow {
+    0%,100%{
+        opacity:.5;
+        filter:
+        brightness(1)
+        drop-shadow(0 0 4px white);
+    }
+    50%{
+        opacity:1;
+        filter:
+        brightness(1.8)
+        drop-shadow(0 0 10px white)
+        drop-shadow(0 0 20px white);
+    }
+}
+
+/* Floating Dice Animation */
+.dice-active {
+  animation: diceFloat 1.8s ease-in-out infinite;
+}
+@keyframes diceFloat {
+  0%,
+  100% {
+    transform: translateY(3px);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+/* Glass Shine Sweep Dice Animation */
+.dice-shine {
+  position: absolute;
+  top: 0;
+  left: -55%;
+  width: 28%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255,255,255,.18) 35%,
+    rgba(255,255,255,.95) 50%,
+    rgba(255,255,255,.18) 65%,
+    transparent 100%
+  );
+  transform: skewX(-20deg);
+  animation: diceShine 2s linear infinite;
+  pointer-events: none;
+  z-index: 5;
+}
+@keyframes diceShine {
+  from {
+    left: -55%;
+  }
+  to {
+    left: 130%;
+  }
+}
+
+/* 3D Dice Roll */
+/* .dice-roll-3d{
+    animation:diceRoll3D .8s cubic-bezier(.2,.8,.2,1);
+    transform-style:preserve-3d;
+    will-change:transform;
+} */
+/* 
+@keyframes diceRoll3D{
+
+    0%{
+        transform:
+        perspective(800px)
+        rotateX(0deg)
+        rotateY(0deg)
+        rotateZ(0deg)
+        scale(1);
+    }
+
+    20%{
+        transform:
+        perspective(800px)
+        translateZ(45px)
+        rotateX(200deg)
+        rotateY(160deg)
+        rotateZ(70deg)
+        scale(1.15);
+    }
+
+    45%{
+        transform:
+        perspective(800px)
+        translateZ(90px)
+        rotateX(430deg)
+        rotateY(340deg)
+        rotateZ(180deg)
+        scale(1.28);
+    }
+
+    70%{
+        transform:
+        perspective(800px)
+        translateZ(35px)
+        rotateX(650deg)
+        rotateY(520deg)
+        rotateZ(280deg)
+        scale(1.08);
+    }
+
+    100%{
+        transform:
+        perspective(800px)
+        rotateX(720deg)
+        rotateY(720deg)
+        rotateZ(360deg)
+        scale(1);
+    }
+} */
+
+/* Dice Scene (3D Dice) */
+.dice-scene {
+  width: 58px;
+  height: 58px;
+  perspective: 900px;
+}
+
+/* Cube */
+ .dice-cube {
+  width: 58px;
+  height: 58px;
+  position: relative;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform 800ms cubic-bezier(.2,.8,.2,1);
+}
+
+/* Shared Face Style */
+.dice-face {
+  position: absolute;
+  width: 58px;
+  height: 58px;
+  background: linear-gradient(
+    135deg,
+    #ffffff,
+    #f3f4f6,
+    #d1d5db
+  );
+
+  border: 2px solid #6b7280;
+  border-radius: 16px;
+  box-shadow:
+      0 10px 25px rgba(0,0,0,.35),
+      inset 0 2px 2px rgba(255,255,255,.9);
+  padding: 4px;
+  backface-visibility: hidden;
+
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Position all faces */
+.dice-front{
+    transform: translateZ(29px);
+}
+.dice-back{
+    transform: rotateY(180deg) translateZ(29px);
+}
+.dice-right{
+    transform: rotateY(90deg) translateZ(29px);
+}
+.dice-left{
+    transform: rotateY(-90deg) translateZ(29px);
+}
+.dice-top{
+    transform: rotateX(90deg) translateZ(29px);
+}
+.dice-bottom{
+    transform: rotateX(-90deg) translateZ(29px);
+}
+

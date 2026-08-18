@@ -1,8 +1,9 @@
 import Token from "./Token";
 import LudoCell from "./LudoCell";
 import CenterHome from "./CenterHome";
+import HighlightLayer from "./HighlightLayer";
 
-const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, handleTokenClick, legalMoves, movableTokenIds,}) => {
+const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, handleTokenClick, legalMoves, movableTokenIds, currentTurnColorIndex,}) => {
   if (!boardData) 
     return null;
 
@@ -17,12 +18,12 @@ const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, hand
     })) 
     .sort((a, b) => a.cellId - b.cellId);
 
-  // Temporary: Show BASE tokens on Slot cells
+  // Show BASE tokens on Slot cells
   const getTokenAtCell = (cell) => {
     if (!gameState?.board?.players)
       return null;
 
-    // BASE SLOT TOKENS
+    // Base slot tokens 
     if (cell.type === "S") {
         console.log(cell);
       if (cell.tokenColorIndex == null)
@@ -83,15 +84,15 @@ const LudoBoard = ({ boardData, gameState, selectedToken, setSelectedToken, hand
           gridTemplateRows: `repeat(${metadata.boardSize.rows}, 1fr)`,
         }}
       >
+
+        <HighlightLayer cells={cells} metadata={metadata} currentTurnColorIndex={currentTurnColorIndex}/>
+
         {cells.map((cell) => {
           
           const baseToken = getTokenAtCell(cell);
           const trackTokens = getTrackTokenAtCell(cell);
-          if (cell.cellId === 113) {
-            console.log("trackTokens:", trackTokens);
-          }
           const tokensToRender = baseToken ? [baseToken] : trackTokens;
-          
+                  
           return (
             <div
               key={cell.cellId}
