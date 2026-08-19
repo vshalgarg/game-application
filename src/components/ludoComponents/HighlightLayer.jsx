@@ -1,32 +1,34 @@
 const HighlightLayer = ({ cells, metadata, currentTurnColorIndex }) => {
-  if (currentTurnColorIndex == null) return null;
+  const { columns, rows } = metadata.boardSize;
+  const colors = metadata.colors ?? [];
 
-  const cellSize = 100 / metadata.boardSize.columns;
-
-  const highlighted = cells.filter(
-    (cell) =>
-      cell.type === null &&
-      cell.colorIndex === currentTurnColorIndex
+  // Only player path cells — colorIndex 0 is white/neutral, skip it
+  const allHighlighted = cells.filter(
+    (cell) => cell.type === null && cell.colorIndex != null && cell.colorIndex !== 0
   );
 
+  if (allHighlighted.length === 0) return null;
+
   return (
-    <svg
-      className="absolute inset-0 w-full h-full pointer-events-none z-20 current-turn-glow"
-      viewBox={`0 0 ${metadata.boardSize.columns} ${metadata.boardSize.rows}`}
-      preserveAspectRatio="none"
-    >
-      {highlighted.map((cell) => (
-        <rect
-          key={cell.cellId}
-          x={cell.col}
-          y={cell.row}
-          width="1"
-          height="1"
-          fill="white"
-          opacity="0.25"
-        />
-      ))}
-    </svg>
+    <div className="absolute inset-0 pointer-events-none">
+      {allHighlighted.map((cell) => {
+        const isCurrentTurn = cell.colorIndex === currentTurnColorIndex;
+
+        return (
+          <div
+            key={cell.cellId}
+            className={`absolute ${isCurrentTurn ? "current-turn-glow" : ""}`}
+            style={{
+              left: `${(cell.col / columns) * 100}%`,
+              top: `${(cell.row / rows) * 100}%`,
+              width: `${(1 / columns) * 100}%`,
+              height: `${(1 / rows) * 100}%`,
+              backgroundColor: colors[cell.colorIndex],
+            }}
+          />
+        );
+      })}
+    </div>
   );
 };
 

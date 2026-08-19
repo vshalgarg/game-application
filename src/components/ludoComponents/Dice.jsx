@@ -34,21 +34,33 @@ const Dice = ({
   isCurrentTurn,
 }) => {
 
-  const [cubeRotation, setCubeRotation] = useState(faceRotations[1]);
-  const wasRolling = useRef(false);
+const [cubeRotation, setCubeRotation] = useState(faceRotations[1]);
+const prevRolling = useRef(rolling);
+const currentRotation = useRef(faceRotations[1]);
 
-  useEffect(() => {
-    const target = faceRotations[value] || faceRotations[1];
+useEffect(() => {
+  const justStoppedRolling = prevRolling.current && !rolling;
+  const target = faceRotations[value] || faceRotations[1];
 
-    if (rolling) {
-      setCubeRotation({
-        x: target.x + 720,
-        y: target.y + 720,
-      });
-    } else {
-      setCubeRotation(target);
-    }
-  }, [value, rolling]);
+  if (justStoppedRolling) {
+
+    // Roll from wherever the cube currently, not from a stale old value
+    const cur = currentRotation.current;
+    const newRotation = {
+      x: cur.x - (cur.x % 360) + target.x + 720,
+      y: cur.y - (cur.y % 360) + target.y + 720,
+    };
+    currentRotation.current = newRotation;
+    setCubeRotation(newRotation);
+  } else if (!rolling) {
+    // Not rolling and not just finished 
+    currentRotation.current = target;
+    setCubeRotation(target);
+  }
+  // while rolling is true nothing done here, CSS handle animation
+
+  prevRolling.current = rolling;
+}, [value, rolling]);
 
   // Other players
   if (!isCurrentTurn) {
@@ -79,9 +91,10 @@ const Dice = ({
       onClick={!rolling ? onRoll : undefined}
       className={`dice-scene cursor-pointer ${!rolling ? "dice-active" : ""}`}
     >
-      <div
-        className="dice-cube"
-        style={{transform: `rotateX(${cubeRotation.x}deg) rotateY(${cubeRotation.y}deg)`,}}
+      <div className={`dice-cube ${rolling ? "rolling" : ""}`}
+        style={rolling? undefined
+                : { transform: `rotateX(${cubeRotation.x}deg) rotateY(${cubeRotation.y}deg)` }
+              }
       >
         {faces.map(({ className, number }) => (
           <div

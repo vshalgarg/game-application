@@ -28,7 +28,7 @@ const LudoGameRoom = () => {
 
   const currentUserId = auth?.userId;
 
-  //REALTIME GAME UPDATE
+  //Realtime game update
   useGameRealtime({
     roomCode,
 
@@ -83,14 +83,17 @@ const LudoGameRoom = () => {
     const move = legalMoves[0];
     const moveKey = `${roomCode}-${currentTurnUserId}-${move.tokenId}-${move.dice}`;
 
-    // Already processed this exact move
+    // Already processed exact move
     if (autoMoveKeyRef.current === moveKey) return;
 
     autoMoveKeyRef.current = moveKey;
 
-    (async () => {
-      await handleTokenClick(move.tokenId, move.dice);
-    })();
+    // Dice animation duration when single token on track
+    const timer = setTimeout(async () => {
+  await handleTokenClick(move.tokenId, move.dice);
+}, 1500);
+
+return () => clearTimeout(timer);
   }, [legalMoves, playerTurnStage, isMyTurn, currentTurnUserId, roomCode, animationComplete]);
 
   // Dice position according to player color
@@ -139,6 +142,7 @@ const LudoGameRoom = () => {
 
   // Make move api
   const moveToken = async (tokenId, consumedDice) => {
+
     // Prevent duplicate API calls
     if (moveInProgressRef.current) return;
     moveInProgressRef.current = true;
@@ -161,7 +165,7 @@ const LudoGameRoom = () => {
     }
   };
 
-  // make move api when token is clicked
+  // Make move api when token is clicked
   const handleTokenClick = async (tokenId, selectedDice = null) => {
     if (currentTurnUserId !== currentUserId) return;
     if (playerTurnStage !== "TOKEN_MOVE") return;
@@ -174,7 +178,7 @@ const LudoGameRoom = () => {
     // Token can move using multiple dice number
     if (tokenMoves.length > 1 && selectedDice === null) {
       setSelectedToken(tokenId);
-      // setDiceOptions(tokenMoves);
+
       const uniqueDiceOptions = tokenMoves.filter(
         (move, index, self) => index === self.findIndex((m) => m.dice === move.dice),
       );
@@ -194,7 +198,7 @@ const LudoGameRoom = () => {
     await moveToken(tokenId, consumedDice);
   };
 
-  // make move api when a number is clicked
+  // Make move api when a number is clicked
   const handleDiceSelection = async (dice) => {
     if (selectedToken === null) return;
     await moveToken(selectedToken, dice);
@@ -279,7 +283,7 @@ const LudoGameRoom = () => {
       }
     }
 
-    // Player Killed Animation Backward Animation
+    // Player Killed Backward Animation
     for (const { currentToken, latestToken } of killedAnimations) {
       const backwardJourney = latestToken.backwardJourney?.length
         ? latestToken.backwardJourney
