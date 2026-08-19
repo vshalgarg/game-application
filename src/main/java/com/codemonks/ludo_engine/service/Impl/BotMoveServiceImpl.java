@@ -77,6 +77,24 @@ public class BotMoveServiceImpl implements BotMoveService {
                         continue;
                     }
 
+                    if (!activePlayerId.equals(diceResponse.getCurrentTurnPlayerId())) {
+
+                        log.info(
+                                "[BOT_TRIPLE_SIX_FORFEITED_ROTATED] Room:{} PrevBot:{} NewTurn:{}",
+                                roomCode,
+                                activePlayerId,
+                                diceResponse.getCurrentTurnPlayerId()
+                        );
+
+                        GameStateDTO rotatedState = objectMapper.convertValue(
+                                diceResponse.getGameState(),
+                                GameStateDTO.class
+                        );
+
+                        activePlayerId = nextBotIdOrNull(rotatedState);
+                        needsRoll = true;
+                        continue;
+                    }
                     if (diceResponse.getPlayerTurnStage() != PlayerTurnStageEnum.TOKEN_MOVE) {
                         log.info(
                                 "[BOT_TURN_COMPLETED_AFTER_ROLL] Room:{} Bot:{} Stage:{}",
@@ -169,13 +187,10 @@ public class BotMoveServiceImpl implements BotMoveService {
                     currentState = afterMoveState;
 
                 } else {
-
                     activePlayerId = nextBotIdOrNull(afterMoveState);
                     needsRoll = true;
                 }
-
             } catch (Exception exception) {
-
                 log.error(
                         "[BOT_MOVE_FAILED] Room:{} Bot:{}",
                         roomCode,
@@ -186,9 +201,7 @@ public class BotMoveServiceImpl implements BotMoveService {
             }
         }
     }
-        finally {
-            botRoomLockService.release(roomId);
-        }
+        finally {botRoomLockService.release(roomId);}
     }
 
     private PlayerDTO findPlayer(GameStateDTO gameState, Long playerId) {
