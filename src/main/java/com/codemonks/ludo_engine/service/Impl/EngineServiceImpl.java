@@ -72,7 +72,6 @@ public class EngineServiceImpl implements EngineService {
         response.setPlayers(initializedGameState.getPlayers());
         response.setBotDifficulty(request.getBotDifficulty());
 
-        //Wrap game state in "board" for frontend, persist to Supabase
         Map<String, Object> startBoardWrapped = new HashMap<>();
         startBoardWrapped.put("board", response.getGameState());
         RealtimeGameStateDTO initialRealtimeState = RealtimeGameStateDTO.builder()
@@ -203,7 +202,6 @@ public class EngineServiceImpl implements EngineService {
         boolean allTokensFinished = moverPlayer != null
                 && moverPlayer.getTokens().stream()
                 .allMatch(token -> token.getState() == TokenStateEnum.FINISHED);
-
         if (moverPlayer != null
                 && (killResult.isTokenKilled() || tokenFinished)
                 && !allTokensFinished) {
@@ -220,8 +218,10 @@ public class EngineServiceImpl implements EngineService {
         }
 
         if (moverPlayer != null
+                && !Boolean.TRUE.equals(moverPlayer.getPendingExtraTurn())
                 && moverPlayer.getPendingDice() != null
                 && !moverPlayer.getPendingDice().isEmpty()) {
+
             List<LegalMoveDTO> remainingLegalMoves =
                     availableMoveService.getAvailableMoves(
                             updatedGameState,
@@ -238,20 +238,15 @@ public class EngineServiceImpl implements EngineService {
                 moverPlayer.getPendingDice().clear();
             }
         }
-        boolean effectiveExtraTurn = moverPlayer != null
-                && (moverPlayer.getPendingDice() == null || moverPlayer.getPendingDice().isEmpty())
+
+ boolean effectiveExtraTurn = moverPlayer != null
                 && Boolean.TRUE.equals(moverPlayer.getPendingExtraTurn());
 
         if (effectiveExtraTurn) {
             moverPlayer.setPendingExtraTurn(false);
             log.info("[BONUS_CONSUMED] Player:{} — granting fresh reroll", request.getUserId());
         }
-        // ── Winner Check FIRST — must run before turn rotation, so that
-        // if this move just finished the mover's last token, their
-        // hasFinished flag is set BEFORE rotation tries to pick the next
-        // player. Otherwise rotation's fallback (when no active player
-        // is found) blindly picks the next array slot, which can be an
-        // already-finished player — sending the turn back to them.
+
         EngineGameStateResponseDTO winnerResponse = winConditionService.checkWinner(
                 updatedGameState, request.getUserId());
         if (winnerResponse.getWinnerUserId() != null) {
@@ -266,8 +261,7 @@ public class EngineServiceImpl implements EngineService {
 
         if (winnerResponse.getStatus() == GameStatusEnum.FINISHED) {
 
-            // Game is fully over (enough players finished) — no next
-            // turn to compute, don't rotate.
+
             updatedGameState.setPlayerTurnStage(PlayerTurnStageEnum.ROLL_DICE);
             log.info("[GAME_OVER_NO_ROTATION] Room:{} FinishOrder:{}",
                     request.getRoomId(), updatedGameState.getFinishOrder());
@@ -288,6 +282,12 @@ public class EngineServiceImpl implements EngineService {
             }
 
             if (nextTurnPlayer != null
+                    && nextTurnPlayer.getPlayerId().equals(request.getUserId())
+                    && effectiveExtraTurn) {
+
+                updatedGameState.setPlayerTurnStage(PlayerTurnStageEnum.ROLL_DICE);
+
+            } else if (nextTurnPlayer != null
                     && nextTurnPlayer.getPendingDice() != null
                     && !nextTurnPlayer.getPendingDice().isEmpty()) {
 
@@ -462,13 +462,27 @@ public class EngineServiceImpl implements EngineService {
                     && pendingDice.get(size - 3) == 6;
 
             if (tripleSix) {
-                currentPlayer.getPendingDice().clear();
-                gameState.setPlayerTurnStage(PlayerTurnStageEnum.ROLL_DICE);
-                turnRotationService.updateTurn(gameState, request.getPlayerId(), false);
+
+                pendingDice.remove(size - 1);
+                pendingDice.remove(size - 2);
+                pendingDice.remove(size - 3);
                 tripleSixForfeited = true;
-                log.info("[TRIPLE_6] Turn Forfeited. PlayerId:{} | Next:{}",
-                        request.getPlayerId(),
-                        gameState.getCurrentTurnPlayerId());
+
+                log.info("[TRIPLE_6_VOIDED] Player:{} discarded last 3 sixes. Remaining PendingDice:{}",
+                        request.getPlayerId(), pendingDice);
+
+                if (pendingDice.isEmpty()) {
+
+                    gameState.setPlayerTurnStage(PlayerTurnStageEnum.ROLL_DICE);
+                    turnRotationService.updateTurn(gameState, request.getPlayerId(), false);
+                    log.info("[TRIPLE_6] Turn Forfeited (no dice left). PlayerId:{} | Next:{}",
+                            request.getPlayerId(), gameState.getCurrentTurnPlayerId());
+                } else {
+                    // Prior pending value(s) abhi bhi usable — turn retain
+                    gameState.setPlayerTurnStage(PlayerTurnStageEnum.TOKEN_MOVE);
+                    log.info("[TRIPLE_6] Prior pending dice retained. PlayerId:{} | Usable:{}",
+                            request.getPlayerId(), pendingDice);
+                }
             }
         }
 
