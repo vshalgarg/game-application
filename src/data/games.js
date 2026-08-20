@@ -13,7 +13,7 @@ export const popularGames = [
     id: "ludo",
     title: "Ludo",
     genre: "Board",
-    path: "/ludoGame-mode",
+    path: "/createjoin-room",
     icon: FaDice,
     accent: "purple",
   },
