@@ -14,9 +14,9 @@ public class AsyncConfig {
     @Bean(name = "botMoveExecutor")
     public Executor botMoveExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(10);      // 10 threads always alive
-        executor.setMaxPoolSize(50);       // max 50 under heavy load
-        executor.setQueueCapacity(500);    // queue up to 500 bot moves
+        executor.setCorePoolSize(10);
+        executor.setMaxPoolSize(50);
+        executor.setQueueCapacity(500);
         executor.setThreadNamePrefix("bot-move-");
         executor.initialize();
         return executor;
