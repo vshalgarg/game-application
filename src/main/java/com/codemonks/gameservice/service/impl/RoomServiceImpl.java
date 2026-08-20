@@ -24,6 +24,7 @@ import com.codemonks.gameservice.repository.RoomEntityRepository;
 import com.codemonks.gameservice.service.BotService;
 import com.codemonks.gameservice.service.GameService;
 import com.codemonks.gameservice.service.RoomService;
+import com.codemonks.gameservice.service.gameroom.factory.GameRoomStrategyFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -48,12 +49,16 @@ public class RoomServiceImpl implements RoomService {
     private final GameService gameService;
     private final GameEngineFactory gameEngineFactory;
     private final BotService botService;
+    private final GameRoomStrategyFactory gameRoomStrategyFactory;
 
     @Transactional
     @Override
     public RoomResponseDTO createRoom(CreateRoomRequestDTO request) {
         log.info("Creating room. tenantId={}, userId={}",
                 request.getTenantId(), request.getUserId());
+
+        gameRoomStrategyFactory.getStrategy(request.getGameType())
+                .validateCreateRequest(request);
 
         String roomCode = generateRoomCode();
         RoomEntity room = roomRepository.save(RoomMapper.toRoomEntity(request, roomCode));
@@ -132,6 +137,10 @@ public class RoomServiceImpl implements RoomService {
 
         RoomEntity room = roomRepository.findByRoomCode(roomCode)
                 .orElseThrow(() -> new ResourceNotFoundException(ROOM_NOT_FOUND));
+
+
+        gameRoomStrategyFactory.getStrategy(room.getGameType())
+                .validateAddBotRequest(request);
 
         PlayerEntity host = playerRepository.findByRoom_IdAndUserId(
                         room.getId(), request.getHostUserId())
