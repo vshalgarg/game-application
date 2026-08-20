@@ -242,6 +242,7 @@ public class RoomServiceImpl implements RoomService {
         if (request.getHostUserId().equals(request.getUserId())) {
             throw new GameException(HOST_CANNOT_REMOVE_SELF);
         }
+
         PlayerEntity participant = playerRepository
                 .findByRoom_IdAndUserId(
                         room.getId(),
@@ -252,9 +253,6 @@ public class RoomServiceImpl implements RoomService {
         List<PlayerEntity> players =
                 playerRepository.findByRoom_Id(room.getId());
 
-        if (players.size() - 1 < 2) {
-            throw new GameException(MINIMUM_PLAYERS_REQUIRED);
-        }
         playerRepository.delete(participant);
 
         players = playerRepository.findByRoom_Id(room.getId());
@@ -342,6 +340,13 @@ public class RoomServiceImpl implements RoomService {
 
         if (room.getStatus() == ACTIVE) {
             throw new GameException(GAME_ALREADY_STARTED);}
+
+        List<PlayerEntity> players = playerRepository.findByRoom_Id(room.getId());
+        if (players.size() < 2) {
+            log.warn("Cannot start game — insufficient players. roomId={}, playerCount={}",
+                    room.getId(), players.size());
+            throw new GameException(MINIMUM_PLAYERS_REQUIRED);
+        }
 
         if (room.getMatchType() == null) {
             room.setMatchType(com.codemonks.gameservice.engineModule.enums.MatchTypeEnum.PVP);
