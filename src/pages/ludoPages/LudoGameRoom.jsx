@@ -19,12 +19,13 @@ const LudoGameRoom = () => {
   const [status, setStatus] = useState(null);
   const [diceOptions, setDiceOptions] = useState([]);
   const [animationComplete, setAnimationComplete] = useState(true);
+  const [moveInProgress, setMoveInProgress] = useState(false);
 
   const previousBoardRef = useRef(null);
   const animatingRef = useRef(false);
   const autoMovingRef = useRef(false);
   const autoMoveKeyRef = useRef(null);
-  const moveInProgressRef = useRef(false);
+  // const moveInProgressRef = useRef(false);
 
   const currentUserId = auth?.userId;
 
@@ -66,7 +67,7 @@ const LudoGameRoom = () => {
     if (!animationComplete) return;
 
     // Don't auto move while API call is running
-    if (moveInProgressRef.current) return;
+    if (moveInProgress) return;   
 
     if (!isMyTurn) {
       autoMoveKeyRef.current = null;
@@ -94,7 +95,7 @@ const LudoGameRoom = () => {
 }, 1500);
 
 return () => clearTimeout(timer);
-  }, [legalMoves, playerTurnStage, isMyTurn, currentTurnUserId, roomCode, animationComplete]);
+  }, [legalMoves, playerTurnStage, isMyTurn, currentTurnUserId, roomCode, animationComplete, moveInProgress]);
 
   // Dice position according to player color
   const dicePositions = {
@@ -144,8 +145,8 @@ return () => clearTimeout(timer);
   const moveToken = async (tokenId, consumedDice) => {
 
     // Prevent duplicate API calls
-    if (moveInProgressRef.current) return;
-    moveInProgressRef.current = true;
+    if (moveInProgress) return;
+    setMoveInProgress(true);
 
     try {
       await makeMove({
@@ -161,7 +162,7 @@ return () => clearTimeout(timer);
     } catch (error) {
       console.error(error);
     } finally {
-      moveInProgressRef.current = false;
+      setMoveInProgress(false);
     }
   };
 
@@ -358,6 +359,7 @@ return () => clearTimeout(timer);
           </h2>
 
           <p className="text-xs sm:text-sm break-all">Your User ID: {currentUserId}</p>
+          <p className="text-xs sm:text-sm break-all">Current Turn Player: {currentTurnUserId}</p>
         </div>
 
         {/* Game Area */}
@@ -375,6 +377,7 @@ return () => clearTimeout(timer);
             sm:p-4
           "
           >
+          
             <LudoBoard
               boardData={boardData}
               gameState={gameState}
@@ -409,7 +412,7 @@ return () => clearTimeout(timer);
                   -translate-x-1/2
                   mt-2
                   flex
-                  flex-wrap
+                  flex-nowrap
                   justify-center
                   gap-2
                   bg-white
@@ -487,3 +490,6 @@ return () => clearTimeout(timer);
 // };
 
 export default LudoGameRoom;
+
+
+
