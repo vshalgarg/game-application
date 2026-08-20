@@ -1,40 +1,34 @@
-import { useNavigate } from "react-router-dom";
-import GameButton from "../../components/GameButton";
+import { useState } from "react";
+import { FaBorderAll, FaGamepad, FaPlusCircle, FaSignInAlt } from "react-icons/fa";
 import { createRoom, joinRoom } from "../../services/roomService";
 import { useSnackbar } from "../../context/SnackbarContext";
-import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import PageShell from "../../components/layout/PageShell";
+import GameZoneLogo from "../../components/brand/GameZoneLogo";
+import ModeOption from "../../components/ui/ModeOption";
+import TextField from "../../components/ui/TextField";
 
-const Home = () => {
+const LudoCreateJoinRoom = () => {
   const navigate = useNavigate();
   const { showSnackbar } = useSnackbar();
   const { auth } = useAuth();
+
   const [loading, setLoading] = useState(false);
-  const [showJoinModal, setShowJoinModal] = useState(false);
   const [roomCode, setRoomCode] = useState("");
   const [joining, setJoining] = useState(false);
 
-  // create room api handler
   const handleCreateRoom = async () => {
     if (loading) return;
-
     setLoading(true);
-
     try {
-      const hostUserId = auth?.userId;
-
       const res = await createRoom({
         tenantId: "test-1",
-        userId: hostUserId,
+        userId: auth?.userId,
         gameType: "LUDO",
-        // matchType: "PVP",
       });
-
       showSnackbar(res.message, "success");
-      console.log("res", res);
-      const roomCode = res.data.roomCode;
-
-      navigate(`/ludowaiting-room/${roomCode}`);
+      navigate(`/ludowaiting-room/${res.data.roomCode}`);
     } catch (error) {
       console.error("Failed to create room:", error);
       showSnackbar(error.message || "Failed to create room", "error");
@@ -43,106 +37,78 @@ const Home = () => {
     }
   };
 
-  // join room api handler
   const handleJoinRoom = async () => {
-    if (!roomCode) {
-      showSnackbar("Please enter room ID", "error");
+    if (!roomCode.trim()) {
+      showSnackbar("Please enter Room ID", "error");
       return;
     }
-
     try {
-      const joinUserId = auth?.userId;
-
+      setJoining(true);
       const res = await joinRoom({
         roomCode,
         tenantId: "test-1",
-        userId: joinUserId,
+        userId: auth?.userId,
       });
       showSnackbar(res.message, "success");
       navigate(`/ludowaiting-room/${roomCode}`);
     } catch (error) {
-      showSnackbar(error.res?.message || "Failed to join room.", "error");
       console.error("Failed to join room:", error);
+      showSnackbar(error.res?.message || "Failed to join room.", "error");
+    } finally {
+      setJoining(false);
     }
   };
 
-  // enter submit button handler
-  const handleJoinSubmit = async (e) => {
+  const handleJoinSubmit = (e) => {
     e.preventDefault();
-    await handleJoinRoom();
+    handleJoinRoom();
   };
 
   return (
-    <div className=" min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 flex items-center justify-center px-4">
-      {/* Main Card */}
-      <div className=" w-full max-w-md bg-white/10 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/20">
-        {/* Heading */}
-        <h1 className=" text-5xl font-bold text-center text-white mb-3 ">Welcome !</h1>
-
-        {/* Subtitle */}
-        <p className=" text-gray-300 text-center mb-10">Gaming Room</p>
-
-        {/* Buttons Container */}
-        <div className="flex flex-col gap-5">
-          {/* Create Room Button */}
-          <GameButton
-            title={loading ? "Creating..." : "Create Room"}
-            color="bg-blue-500 hover:bg-blue-600 shadow-blue-500/40"
-            onClick={handleCreateRoom}
-          />
-
-          {/* Join Room Button */}
-          <GameButton
-            title="Join Room"
-            color=" bg-purple-500 hover:bg-purple-600 shadow-purple-500/40"
-            onClick={() => setShowJoinModal(true)}
-          />
-        </div>
-      </div>
-      {showJoinModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 "
-          onClick={() => setShowJoinModal(false)}
-        >
-          <div
-            className="  w-full  max-w-md  bg-white/10  backdrop-blur-xl  border  border-white/20  rounded-3xl  shadow-2xl p-8"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-3xl font-bold text-white text-center mb-3">Join Room</h2>
-            <p className="text-center text-gray-300 mb-8">Enter Room ID to join the game</p>
-
-            <form onSubmit={handleJoinSubmit}>
-              <input
-                type="text"
-                value={roomCode}
-                placeholder="Enter Room ID"
-                autoFocus
-                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                className=" w-full bg-black/30 border border-blue-500/40 rounded-2xl px-5 py-4 text-lg text-white outline-none focus:border-blue-500 transition mb-6 "
-              />
-
-              <div className="flex gap-4">
-                <GameButton
-                  title={joining ? "Joining..." : "Join"}
-                  color="bg-blue-500  hover:bg-blue-600 shadow-blue-500/40"
-                  type="submit"
-                />
-
-                <GameButton
-                  title="Cancel"
-                  color="bg-gray-600 hover:bg-gray-700 shadow-gray-500/40"
-                  onClick={() => {
-                    setShowJoinModal(false);
-                    setRoomCode("");
-                  }}
-                />
-              </div>
-            </form>
+    <PageShell>
+      <div className="gz-select-card w-full">
+        <div className="mb-5 flex flex-col items-center">
+          <GameZoneLogo className="mb-3 h-10 w-10" />
+          <h1 className="text-2xl font-bold text-gz-text sm:text-3xl">Gaming Room</h1>
+          <div className="gz-divider mt-3 w-full max-w-[200px] justify-center">
+            <FaGamepad className="text-gz-primary-cyan" size={12} />
           </div>
+          <p className="mt-2 text-center text-sm text-gz-text-secondary">
+            Create a room or join with Room ID
+            <br />
+            and start playing together!
+          </p>
         </div>
-      )}
-    </div>
+
+        <ModeOption
+          icon={FaPlusCircle}
+          label={loading ? "Creating..." : "Create Room"}
+          tone="cyan"
+          onClick={handleCreateRoom}
+        />
+
+        <div className="gz-divider my-4">
+          <span className="text-xs font-semibold tracking-widest text-gz-text-secondary">OR</span>
+        </div>
+
+        <form onSubmit={handleJoinSubmit} className="flex flex-col gap-2.5">
+          <TextField
+            placeholder="Enter Room ID"
+            value={roomCode}
+            onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+            leftIcon={<FaBorderAll size={14} className="text-gz-primary-cyan" />}
+          />
+
+          <ModeOption
+            icon={FaSignInAlt}
+            label={joining ? "Joining..." : "Join Room"}
+            tone="purple"
+            onClick={handleJoinRoom}
+          />
+        </form>
+      </div>
+    </PageShell>
   );
 };
 
-export default Home;
+export default LudoCreateJoinRoom;

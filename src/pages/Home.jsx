@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaGamepad, FaPlusCircle, FaSignInAlt } from "react-icons/fa";
 import { createRoom } from "../services/roomService";
 import { useSnackbar } from "../context/SnackbarContext";
 import { useAuth } from "../context/AuthContext";
 import PageShell from "../components/layout/PageShell";
 import GameZoneLogo from "../components/brand/GameZoneLogo";
-import Button from "../components/ui/Button";
+import ModeOption from "../components/ui/ModeOption";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -15,24 +16,16 @@ const Home = () => {
 
   const handleCreateRoom = async () => {
     if (loading) return;
-
     setLoading(true);
-
     try {
-      const hostUserId = auth?.userId;
-
       const res = await createRoom({
         tenantId: "test-1",
-        userId: hostUserId,
+        userId: auth?.userId,
         gameType: "TIC_TAC_TOE",
         matchType: "PVP",
       });
-
       showSnackbar(res.message, "success");
-
-      const roomCode = res.data.roomCode;
-
-      navigate(`/waiting-room/${roomCode}`);
+      navigate(`/waiting-room/${res.data.roomCode}`);
     } catch (error) {
       console.error("Failed to create room:", error);
       showSnackbar(error.message || "Failed to create room", "error");
@@ -44,19 +37,41 @@ const Home = () => {
   return (
     <PageShell>
       <div className="gz-select-card w-full">
-        <div className="mb-6 flex flex-col items-center sm:mb-8">
-          <GameZoneLogo className="mb-4 h-12 w-12 sm:h-14 sm:w-14" />
-          <h1 className="text-3xl font-bold text-gz-text sm:text-4xl">Welcome!</h1>
-          <p className="mt-2 text-sm text-gz-text-secondary sm:text-base">Gaming Room</p>
+        {/* Header */}
+        <div className="mb-5 flex flex-col items-center">
+          <GameZoneLogo className="mb-3 h-10 w-10" />
+          <h1 className="text-2xl font-bold text-gz-text sm:text-3xl">Gaming Room</h1>
+          <div className="gz-divider mt-3 w-full max-w-[200px] justify-center">
+            <FaGamepad className="text-gz-primary-cyan" size={12} />
+          </div>
+          <p className="mt-2 text-center text-sm text-gz-text-secondary">
+            Create a room or join with Room ID
+            <br />
+            and start playing together!
+          </p>
         </div>
 
-        <div className="flex flex-col gap-3 sm:gap-4">
-          <Button onClick={handleCreateRoom} disabled={loading}>
-            {loading ? "Creating..." : "Create Room"}
-          </Button>
-          <Button variant="accent" onClick={() => navigate("/join-room")}>
-            Join Room
-          </Button>
+        {/* Create Room */}
+        <ModeOption
+          icon={FaPlusCircle}
+          label={loading ? "Creating..." : "Create Room"}
+          tone="cyan"
+          onClick={handleCreateRoom}
+        />
+
+        {/* OR divider */}
+        <div className="gz-divider my-4">
+          <span className="text-xs font-semibold tracking-widest text-gz-text-secondary">OR</span>
+        </div>
+
+        {/* Join Room — navigates to dedicated join page */}
+        <div className="flex flex-col gap-2.5">
+          <ModeOption
+            icon={FaSignInAlt}
+            label="Join Room"
+            tone="purple"
+            onClick={() => navigate("/join-room")}
+          />
         </div>
       </div>
     </PageShell>
