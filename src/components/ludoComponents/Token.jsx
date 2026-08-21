@@ -1,10 +1,9 @@
-const Token = ({
-  color,
-  selected = false,
-  onHandleClick,
-  isMovable = false,
-  isOverlapping = false,
-}) => {
+const Token = ({color, selected = false, onHandleClick, isMovable = false, isOverlapping = false, scaleFactor = 1,}) => {
+
+  // Token responsiveness
+  const emphasisScale = selected ? 1.25 : isMovable ? 1.1 : 1;
+  const totalScale = scaleFactor * emphasisScale;
+
   return (
     <div
       onClick={onHandleClick}
@@ -14,13 +13,14 @@ const Token = ({
         flex
         items-center
         justify-center
-        transition-all
+        transition-transform
         duration-200
         h-6
         ${isOverlapping ? "w-3.5" : "w-5"}
-        ${isMovable ? "cursor-pointer scale-110" : "cursor-default"}
-        ${selected ? "scale-125 drop-shadow-[0_0_12px_white]" : ""}
+        ${isMovable ? "cursor-pointer" : "cursor-default"}
+        ${selected ? "drop-shadow-[0_0_12px_white]" : ""}
       `}
+      style={{transform: `scale(${totalScale})`,}}
     >
       {isMovable && (
         <>
@@ -35,38 +35,25 @@ const Token = ({
 
           {/* Golden glow */}
           <div
-            className="
-              absolute
-              inset-0
-              rounded-full
-              pointer-events-none
-            "
-            style={{
-              filter: "drop-shadow(0 0 8px gold)",
-            }}
+            className="absolute inset-0 rounded-full pointer-events-none"
+            style={{filter: "drop-shadow(0 0 8px gold)",}}
           />
         </>
       )}
 
       <div
         className="absolute z-[100] bottom-0 w-4 h-1.5 rounded-full border border-black/40"
-        style={{
-          background: `linear-gradient(to bottom,#ffffff88,${color})`,
-        }}
+        style={{background: `linear-gradient(to bottom,#ffffff88,${color})`,}}
       />
 
       <div
         className="absolute z-[100] bottom-1 w-3.5 h-3 rounded-t-full rounded-b-[35%] border border-black/40"
-        style={{
-          background: `linear-gradient(to bottom,#ffffffaa,${color})`,
-        }}
+        style={{background: `linear-gradient(to bottom,#ffffffaa,${color})`,}}
       />
 
       <div
         className="absolute z-[100] top-0 w-2.5 h-2.5 rounded-full border border-black/40"
-        style={{
-          background: `linear-gradient(to bottom,#ffffffdd,${color})`,
-        }}
+        style={{background: `linear-gradient(to bottom,#ffffffdd,${color})`,}}
       />
     </div>
   );

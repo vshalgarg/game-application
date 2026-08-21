@@ -1,13 +1,17 @@
+import { useRef, useState, useLayoutEffect } from "react";
 import Token from "./Token";
 import LudoCell from "./LudoCell";
 import CenterHome from "./CenterHome";
 import HighlightLayer from "./HighlightLayer";
 
+// Board responsiveness
+const BASE_BOARD_SIZE = 450;
+
 // Token overlapping without gap in a horizontal line
-const getLineOffsets = (count) => {
+const getLineOffsets = (count, scaleFactor = 1) => {
   if (count <= 1) return [{ x: 0, y: 0 }];
 
-  const spacing = Math.max(3, 10 - count * 1.2);
+  const spacing = Math.max(3, 10 - count * 1.2) * scaleFactor;
   const totalWidth = spacing * (count - 1);
   const startX = -totalWidth / 2;
 
@@ -23,10 +27,33 @@ const getStackScale = (count) => {
   if (count === 2) return { x: 0.8, y: 0.9 };
   if (count === 3) return { x: 0.68, y: 0.8 };
   if (count === 4) return { x: 0.58, y: 0.72 };
-  return { x: 0.5, y: 0.65 }; 
+  return { x: 0.5, y: 0.65 };
 };
 
 const LudoBoard = ({boardData, gameState, selectedToken, setSelectedToken, handleTokenClick, legalMoves, movableTokenIds, currentTurnColorIndex}) => {
+  const boardRef = useRef(null);
+  const [scaleFactor, setScaleFactor] = useState(1);
+
+  // Board scaling
+  useLayoutEffect(() => {
+    const el = boardRef.current;
+    if (!el) return;
+
+    const updateScale = (width) => {
+      setScaleFactor(width / BASE_BOARD_SIZE);
+    };
+
+    updateScale(el.getBoundingClientRect().width);
+
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect?.width;
+      if (width) updateScale(width);
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   if (!boardData) return null;
 
   const { metadata, centerArea, grid, paths } = boardData;
@@ -90,7 +117,10 @@ const LudoBoard = ({boardData, gameState, selectedToken, setSelectedToken, handl
   };
 
   return (
-    <div className="relative w-[450px] h-[450px]">
+    <div
+      ref={boardRef}
+      className="relative w-[clamp(280px,min(90vw,75vh),650px)] aspect-square mx-auto"
+    >
       {/* Board (grid, cells, tokens) */}
       <div
         className="grid w-full h-full"
@@ -119,7 +149,7 @@ const LudoBoard = ({boardData, gameState, selectedToken, setSelectedToken, handl
                 <div className="absolute inset-0 flex items-center justify-center">
                   {(() => {
                     const count = tokensToRender.length;
-                    const offsets = getLineOffsets(count);
+                    const offsets = getLineOffsets(count, scaleFactor);
                     const scale = getStackScale(count);
 
                     return tokensToRender.map((tokenData, index) => {
@@ -142,6 +172,7 @@ const LudoBoard = ({boardData, gameState, selectedToken, setSelectedToken, handl
                             selected={selectedToken === tokenData.token.tokenId}
                             isMovable={isMovable}
                             isOverlapping={isOverlapping}
+                            scaleFactor={scaleFactor}
                             onHandleClick={
                               isMovable
                                 ? () => {

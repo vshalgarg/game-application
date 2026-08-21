@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect} from "react";
 import { useParams } from "react-router-dom";
 import LudoBoard from "../../components/ludoComponents/LudoBoard";
 import DiceHolder from "../../components/ludoComponents/DiceHolder";
@@ -20,12 +20,13 @@ const LudoGameRoom = () => {
   const [diceOptions, setDiceOptions] = useState([]);
   const [animationComplete, setAnimationComplete] = useState(true);
   const [moveInProgress, setMoveInProgress] = useState(false);
+  const [boardScale, setBoardScale] = useState(1);
 
   const previousBoardRef = useRef(null);
   const animatingRef = useRef(false);
   const autoMovingRef = useRef(false);
   const autoMoveKeyRef = useRef(null);
-  // const moveInProgressRef = useRef(false);
+  const gameAreaRef = useRef(null);
 
   const currentUserId = auth?.userId;
 
@@ -97,28 +98,31 @@ const LudoGameRoom = () => {
 return () => clearTimeout(timer);
   }, [legalMoves, playerTurnStage, isMyTurn, currentTurnUserId, roomCode, animationComplete, moveInProgress]);
 
+
+// Gamearena responsiveness
+useLayoutEffect(() => {
+  const el = gameAreaRef.current;
+  if (!el) return;
+
+  const updateScale = (width) => setBoardScale(width / 450);
+  updateScale(el.getBoundingClientRect().width);
+
+  const observer = new ResizeObserver((entries) => {
+    const width = entries[0]?.contentRect?.width;
+    if (width) updateScale(width);
+  });
+
+  observer.observe(el);
+  return () => observer.disconnect();
+}, []);
+
   // Dice position according to player color
   const dicePositions = {
-    1: {
-      right: "-28%",
-      bottom: "3%",
-    },
-
-    2: {
-      left: "-28%",
-      bottom: "3%",
-    },
-
-    3: {
-      left: "-28%",
-      top: "3%",
-    },
-
-    4: {
-      right: "-28%",
-      top: "3%",
-    },
-  };
+  1: { right: "-28%", bottom: "1%", transformOrigin: "bottom right" },
+  2: { left: "-28%", bottom: "1%", transformOrigin: "bottom left" },
+  3: { left: "-28%", top: "1%", transformOrigin: "top left" },
+  4: { right: "-28%", top: "1%", transformOrigin: "top right" },
+};
 
   // Roll Dice handler
   const handleRollDice = async () => {
@@ -233,10 +237,9 @@ return () => clearTimeout(timer);
           (latestToken.state === "TRACK" || latestToken.state === "FINISHED") &&
           !latestToken.tokenKilled
         ) {
+
           const previousLength = currentToken.forwardJourney?.length ?? 0;
-
           const journey = latestToken.forwardJourney ?? [];
-
           const newSteps = journey.slice(previousLength);
 
           for (const cellId of newSteps) {
@@ -328,29 +331,10 @@ return () => clearTimeout(timer);
   // if (!boardData) {
   return (
     <div
-      className="
-      min-h-screen
-      w-full
-      bg-gradient-to-br
-      from-black
-      via-gray-900
-      to-black
-      flex
-      items-center
-      justify-center
-      p-2
-      sm:p-4
-      md:p-6
-    "
+      className="min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center p-2 sm:p-4 md:p-6"
     >
       <div
-        className="
-        flex
-        flex-col
-        items-center
-        gap-4
-        w-full
-      "
+        className="flex flex-col items-center gap-4 w-full"
       >
         {/* Turn Info */}
         <div className="text-center text-white">
@@ -364,8 +348,9 @@ return () => clearTimeout(timer);
 
         {/* Game Area */}
         <div className="relative">
+          <div ref={gameAreaRef} className="relative w-fit">
           {/* Board */}
-          <div
+          {/* <div
             className="
             bg-white/10
             backdrop-blur-lg
@@ -376,6 +361,9 @@ return () => clearTimeout(timer);
             p-2
             sm:p-4
           "
+          > */}
+          <div
+            className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl md:rounded-3xl p-2 sm:p-4 w-fit"
           >
           
             <LudoBoard
@@ -391,7 +379,9 @@ return () => clearTimeout(timer);
           </div>
 
           {/* Dice */}
-          <div className="absolute z-30" style={dicePositions[currentTurnColorIndex]}>
+          <div className="absolute z-30" 
+          style={{...dicePositions[currentTurnColorIndex], transform: `scale(${boardScale})`,}}
+          >
             <div className="relative">
               <DiceHolder
                 turnColorIndex={currentTurnColorIndex}
@@ -403,93 +393,47 @@ return () => clearTimeout(timer);
                 isCurrentTurn={isMyTurn}
               />
 
-              {diceOptions.length > 0 && (
-                <div
-                  className="
-                  absolute
-                  top-full
-                  left-1/2
-                  -translate-x-1/2
-                  mt-2
-                  flex
-                  flex-nowrap
-                  justify-center
-                  gap-2
-                  bg-white
-                  rounded-lg
-                  shadow-lg
-                  p-2
-                  max-w-[180px]
-                  z-50
-                "
-                >
-                  {diceOptions.map((move, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleDiceSelection(move.dice)}
-                      className="
-                      w-8
-                      h-8
-                      sm:w-9
-                      sm:h-9
-                      rounded
-                      bg-yellow-500
-                      hover:bg-yellow-600
-                      font-bold
-                      text-black
-                    "
-                    >
-                      {move.dice}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {/* Dice numbers — options bubble for current-turn player, pending-dice boxes for everyone else */}
+                {playerTurnStage === "TOKEN_MOVE" && pendingDice.length > 0 && (
+                  <>     
+                    {isMyTurn ? (
+                      diceOptions.length > 1 && (
+                        <div
+                          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 flex flex-nowrap justify-center gap-2 bg-white rounded-lg shadow-lg p-2 max-w-[180px] z-50"
+                        >
+                          {diceOptions.map((move, index) => (
+                            <button
+                              key={index}
+                              onClick={() => handleDiceSelection(move.dice)}
+                              className="w-8 h-8 sm:w-9 sm:h-9 rounded bg-yellow-500 hover:bg-yellow-600 font-bold text-black"
+                            >
+                              {move.dice}
+                            </button>
+                          ))}
+                        </div>
+                      )
+                    ) : (
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 flex flex-nowrap justify-center gap-2 z-50">
+                        {pendingDice.map((dice, index) => (
+                          <div
+                            key={index}
+                            className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-yellow-500 text-black flex items-center justify-center font-bold text-xs"
+                          >
+                            {dice}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
             </div>
-          </div>
-
-          {/* Pending Dice */}
-          {pendingDice.length > 0 && (
-            <div
-              className="
-              absolute
-              left-1/2
-              -translate-x-1/2
-              -bottom-12
-              flex
-              gap-2
-            "
-            >
-              {pendingDice.map((dice, index) => (
-                <div
-                  key={index}
-                  className="
-                  w-7
-                  h-7
-                  sm:w-8
-                  sm:h-8
-                  rounded
-                  bg-yellow-500
-                  text-black
-                  flex
-                  items-center
-                  justify-center
-                  font-bold
-                  text-xs
-                "
-                >
-                  {dice}
-                </div>
-              ))}
-            </div>
-          )}
+          </div> 
         </div>
       </div>
     </div>
+  </div>
   );
 };
 // };
 
 export default LudoGameRoom;
-
-
-
