@@ -267,7 +267,7 @@
     height: auto;
     min-height: 0;
     flex: 0 0 auto;
-    align-self: flex-start;
+    align-self: center;
     box-shadow:
       0 20px 60px rgba(0, 0, 0, 0.45),
       0 0 32px rgb(0 217 232 / 18%);
@@ -435,6 +435,8 @@
 
   @media (min-width: 640px) {
     .gz-page-shell.gz-page-shell--dashboard {
+      align-items: center;
+      justify-content: center;
       padding-left: 1.5rem;
       padding-right: 1.5rem;
     }
@@ -443,7 +445,7 @@
       height: auto;
       max-height: none;
       flex: 0 0 auto;
-      align-self: flex-start;
+      align-self: center;
     }
 
     .gz-carousel-panel {
