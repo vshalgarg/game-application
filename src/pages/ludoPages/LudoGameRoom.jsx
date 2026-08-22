@@ -6,6 +6,7 @@ import { rollDice, makeMove } from "../../services/ludoService.js";
 import useGameRealtime from "../../hooks/useGameRealtime";
 import boardData from "../../data/board.json";
 import { useAuth } from "../../context/AuthContext";
+import PlayerCard from "../../components/ludoComponents/PlayerCard";
 
 const LudoGameRoom = () => {
   const { auth } = useAuth();
@@ -117,12 +118,20 @@ useLayoutEffect(() => {
 }, []);
 
   // Dice position according to player color
-  const dicePositions = {
-  1: { right: "-28%", bottom: "1%", transformOrigin: "bottom right" },
-  2: { left: "-28%", bottom: "1%", transformOrigin: "bottom left" },
-  3: { left: "-28%", top: "1%", transformOrigin: "top left" },
-  4: { right: "-28%", top: "1%", transformOrigin: "top right" },
-};
+  // const dicePositions = {
+  //   1: { right: "-28%", bottom: "14%", transformOrigin: "bottom right" },
+  //   2: { left: "-28%", bottom: "14%", transformOrigin: "bottom left" },
+  //   3: { left: "-28%", top: "14%", transformOrigin: "top left" },
+  //   4: { right: "-28%", top: "14%", transformOrigin: "top right" },
+  // };
+
+  // Player card position according to player color/corner
+  const playerCardPositions = {
+    1: { right: "-32%", bottom: "1%", transformOrigin: "bottom right" },
+    2: { left: "-32%", bottom: "1%", transformOrigin: "bottom left" },
+    3: { left: "-32%", top: "1%", transformOrigin: "top left" },
+    4: { right: "-32%", top: "1%", transformOrigin: "top right" },
+  };
 
   // Roll Dice handler
   const handleRollDice = async () => {
@@ -336,6 +345,7 @@ useLayoutEffect(() => {
       <div
         className="flex flex-col items-center gap-4 w-full"
       >
+
         {/* Turn Info */}
         <div className="text-center text-white">
           <h2 className="font-bold text-sm sm:text-base md:text-lg">
@@ -349,91 +359,83 @@ useLayoutEffect(() => {
         {/* Game Area */}
         <div className="relative">
           <div ref={gameAreaRef} className="relative w-fit">
-          {/* Board */}
-          {/* <div
-            className="
-            bg-white/10
-            backdrop-blur-lg
-            border
-            border-white/20
-            rounded-2xl
-            md:rounded-3xl
-            p-2
-            sm:p-4
-          "
-          > */}
-          <div
-            className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl md:rounded-3xl p-2 sm:p-4 w-fit"
-          >
-          
-            <LudoBoard
-              boardData={boardData}
-              gameState={gameState}
-              selectedToken={selectedToken}
-              setSelectedToken={setSelectedToken}
-              handleTokenClick={handleTokenClick}
-              legalMoves={legalMoves}
-              movableTokenIds={movableTokenIds}
-              currentTurnColorIndex={currentTurnColorIndex}
-            />
-          </div>
-
-          {/* Dice */}
-          <div className="absolute z-30" 
-          style={{...dicePositions[currentTurnColorIndex], transform: `scale(${boardScale})`,}}
-          >
-            <div className="relative">
-              <DiceHolder
-                turnColorIndex={currentTurnColorIndex}
-                diceValue={diceValue ?? 1}
-                rolling={rolling}
-                onRoll={handleRollDice}
-                colors={boardData.metadata.colors}
-                // colors={boardData?.metadata?.colors ?? []}
-                isCurrentTurn={isMyTurn}
+            {/* Board */}
+            <div
+              className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl md:rounded-3xl p-2 sm:p-4 w-fit"
+            >
+              <LudoBoard
+                boardData={boardData}
+                gameState={gameState}
+                selectedToken={selectedToken}
+                setSelectedToken={setSelectedToken}
+                handleTokenClick={handleTokenClick}
+                legalMoves={legalMoves}
+                movableTokenIds={movableTokenIds}
+                currentTurnColorIndex={currentTurnColorIndex}
               />
-
-              {/* Dice numbers — options bubble for current-turn player, pending-dice boxes for everyone else */}
-                {playerTurnStage === "TOKEN_MOVE" && pendingDice.length > 0 && (
-                  <>     
-                    {isMyTurn ? (
-                      diceOptions.length > 1 && (
-                        <div
-                          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 flex flex-nowrap justify-center gap-2 bg-white rounded-lg shadow-lg p-2 max-w-[180px] z-50"
-                        >
-                          {diceOptions.map((move, index) => (
-                            <button
-                              key={index}
-                              onClick={() => handleDiceSelection(move.dice)}
-                              className="w-8 h-8 sm:w-9 sm:h-9 rounded bg-yellow-500 hover:bg-yellow-600 font-bold text-black"
-                            >
-                              {move.dice}
-                            </button>
-                          ))}
-                        </div>
-                      )
-                    ) : (
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 flex flex-nowrap justify-center gap-2 z-50">
-                        {pendingDice.map((dice, index) => (
-                          <div
-                            key={index}
-                            className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-yellow-500 text-black flex items-center justify-center font-bold text-xs"
-                          >
-                            {dice}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
             </div>
-          </div> 
+
+            {/* Player Cards + Dice — combined per corner so they move together */}
+            {(board?.players ?? []).map((player) => {
+              const isTurnPlayer = player.playerId === currentTurnUserId;
+              const isTopPlayer = player.colorIndex === 3 || player.colorIndex === 4;
+
+              const diceElement = isTurnPlayer && (
+                <DiceHolder
+                  turnColorIndex={currentTurnColorIndex}
+                  diceValue={diceValue ?? 1}
+                  rolling={rolling}
+                  onRoll={handleRollDice}
+                  colors={boardData.metadata.colors}
+                  isCurrentTurn={isMyTurn}
+                />
+              );
+
+              const cardElement = (
+                <PlayerCard
+                  name={`Player ${player.colorIndex}`}
+                  userId={player.playerId}
+                  color={boardData.metadata.colors?.[player.colorIndex]}
+                  currentUserId={currentUserId}
+                  isCurrentTurnPlayer={isTurnPlayer}
+                  isMyTurn={isMyTurn}
+                  playerTurnStage={playerTurnStage}
+                  pendingDice={pendingDice}
+                  diceOptions={diceOptions}
+                  onDiceSelect={handleDiceSelection}
+                  avatarUrl="https://plus.unsplash.com/premium_photo-1739786996022-5ed5b56834e2?q=80&w=2080&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                />
+              );
+
+              return (
+                <div
+                  key={player.playerId}
+                  className="absolute z-20 flex flex-col items-center gap-2"
+                  style={{
+                    ...playerCardPositions[player.colorIndex],
+                    transform: `scale(${boardScale})`,
+                  }}
+                >
+                  {isTopPlayer ? (
+                    <>
+                      {cardElement}
+                      {diceElement}
+                    </>
+                  ) : (
+                    <>
+                      {diceElement}
+                      {cardElement}
+                    </>
+                  )}
+                </div>
+              );
+            })}
+
+          </div>
         </div>
       </div>
     </div>
-  </div>
   );
 };
-// };
 
 export default LudoGameRoom;
