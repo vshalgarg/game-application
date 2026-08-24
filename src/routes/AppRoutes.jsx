@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Navigate, Routes, Route } from "react-router-dom";
 
 import MainLayout from "../layouts/MainLayout";
 import ProtectedRoute from "./ProtectedRoute";
@@ -14,7 +14,6 @@ import GameRoom from "../pages/GameRoom";
 import GameMode from "../pages/GameMode";
 import ComputerRoom from "../pages/ComputerRoom";
 
-import LudoGameMode from "../pages/ludoPages/LudoGameMode";
 import LudoCreateJoinRoom from "../pages/ludoPages/LudoCreateJoinRoom";
 import LudoBotCreateRoom from "../pages/ludoPages/LudoBotCreateRoom";
 import LudoWaitingRoom from "../pages/ludoPages/LudoWaitingRoom";
@@ -52,7 +51,7 @@ const AppRoutes = () => {
 
                 {/* Ludo */}
                   
-                  <Route path="/ludoGame-mode" element={<LudoGameMode/>} />    {/* Play With Person / Play With Computer */}
+                  <Route path="/ludoGame-mode" element={<Navigate to="/createjoin-room" replace />} />
                   <Route path="/createjoin-room" element={<LudoCreateJoinRoom/>} />     {/*create and join room button page */}
                   <Route path="/ludobotcreate-room" element={<LudoBotCreateRoom/>} />   {/* Play with computer room created and start game button page */}
                   <Route path="/ludowaiting-room/:roomCode" element={<LudoWaitingRoom/>} />
