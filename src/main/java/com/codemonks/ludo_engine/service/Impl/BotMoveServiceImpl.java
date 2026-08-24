@@ -111,6 +111,7 @@ public class BotMoveServiceImpl implements BotMoveService {
                             GameStateDTO.class
                     );
                     needsRoll = false;
+                    Thread.sleep(GameConstants.DICE_VISIBLE_DELAY_MS);
                 }
 
 
