@@ -8,8 +8,6 @@ export const createRoom = async ({tenantId, userId, gameType}) => {
       tenantId,
       userId,
       gameType,
-      // matchType,
-      // botDifficulty,
     });
 
     const result = checkLogicalError(res.data);
@@ -83,22 +81,6 @@ export const restartRoom = async ({ roomCode, userId }) => {
 
     const result = checkLogicalError(res.data);
     return result;
-  } catch (error) {
-    throw new Error(handleApiError(error));
-  }
-};
-
-// 6. DICE ROLL IN LUDO
-export const rollDice = async ({ roomCode, userId }) => {
-  try {
-    const res = await api.post(
-      `/rooms/${roomCode}/roll-dice`,
-      {
-        userId,
-      }
-    );
-
-    return checkLogicalError(res.data);
   } catch (error) {
     throw new Error(handleApiError(error));
   }

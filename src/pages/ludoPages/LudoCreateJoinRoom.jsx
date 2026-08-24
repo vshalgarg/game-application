@@ -49,7 +49,9 @@ const LudoCreateJoinRoom = () => {
         tenantId: "test-1",
         userId: auth?.userId,
       });
+
       showSnackbar(res.message, "success");
+
       navigate(`/ludowaiting-room/${roomCode}`);
     } catch (error) {
       console.error("Failed to join room:", error);

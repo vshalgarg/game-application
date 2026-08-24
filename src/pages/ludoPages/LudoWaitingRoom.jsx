@@ -20,6 +20,7 @@ const LudoWaitingRoom = () => {
   const currentUserId = auth?.userId;
 
   const { players } = useWaitingRoomRealtime(roomCode);
+  console.info("Players in waiting room", players);
 
   useRoomRealtime({
     roomCode,

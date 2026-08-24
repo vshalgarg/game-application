@@ -10,7 +10,7 @@ const LudoCell = ({ type, color, arrowDirection, arrowColor }) => {
 
       case "SS":
         return (
-          <span className="text-xs font-bold">
+          <span className="text-gray-600 text-xs font-bold">
             ★
           </span>
         );
@@ -20,7 +20,7 @@ const LudoCell = ({ type, color, arrowDirection, arrowColor }) => {
 
       case "GE":
         return (
-          <span className="text-xl font-bold leading-none select-none"
+          <span className="text-xl leading-none select-none"
             style={{ color: arrowColor }}
           >
             {{
@@ -48,12 +48,8 @@ const LudoCell = ({ type, color, arrowDirection, arrowColor }) => {
   };
 
   return (
-    <div
-      className="border border-gray-400 flex items-center justify-center box-border w-full h-full"
-      style={{
-        backgroundColor: color,
-      }}
-    >
+    <div className="border border-gray-400 flex items-center justify-center box-border w-full h-full"
+      style={{backgroundColor: color,}}>
       {renderSymbol()}
     </div>
   );
