@@ -7,15 +7,7 @@ const Token = ({color, selected = false, onHandleClick, isMovable = false, isOve
   return (
     <div
       onClick={onHandleClick}
-      className={`
-        relative
-        z-[100]
-        flex
-        items-center
-        justify-center
-        transition-transform
-        duration-200
-        h-6
+      className={`relative z-[100] flex items-center justify-center transition-transform duration-200 h-6
         ${isOverlapping ? "w-3.5" : "w-5"}
         ${isMovable ? "cursor-pointer" : "cursor-default"}
         ${selected ? "drop-shadow-[0_0_12px_white]" : ""}

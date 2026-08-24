@@ -37,7 +37,7 @@ const LudoGameRoom = () => {
 
     onGameUpdate: async (game) => {
       const board = game.game_state_data.board;
-      console.log("Realtime received:", game);
+      console.info("Realtime received:", game);
 
       setCurrentTurnUserId(game.current_turn_user_id);
       setWinnerUserId(game.winner_user_id);
@@ -375,7 +375,7 @@ useLayoutEffect(() => {
               />
             </div>
 
-            {/* Player Cards + Dice — combined per corner so they move together */}
+            {/* Player Cards and Dice */}
             {(board?.players ?? []).map((player) => {
               const isTurnPlayer = player.playerId === currentTurnUserId;
               const isTopPlayer = player.colorIndex === 3 || player.colorIndex === 4;

@@ -2,7 +2,7 @@ const HighlightLayer = ({ cells, metadata, currentTurnColorIndex }) => {
   const { columns, rows } = metadata.boardSize;
   const colors = metadata.colors ?? [];
 
-  // Only player path cells — colorIndex 0 is white/neutral, skip it
+  // Only player path cells highlight
   const allHighlighted = cells.filter(
     (cell) => cell.type === null && cell.colorIndex != null && cell.colorIndex !== 0
   );

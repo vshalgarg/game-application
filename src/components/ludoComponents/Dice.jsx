@@ -27,12 +27,7 @@ const faces = [
   { className: "dice-bottom", number: 4 },
 ];
 
-const Dice = ({
-  value = 0,
-  onRoll,
-  rolling,
-  isCurrentTurn,
-}) => {
+const Dice = ({value = 0, onRoll, rolling, isCurrentTurn,}) => {
 
 const [cubeRotation, setCubeRotation] = useState(faceRotations[1]);
 const prevRolling = useRef(rolling);
@@ -44,7 +39,7 @@ useEffect(() => {
 
   if (justStoppedRolling) {
 
-    // Roll from wherever the cube currently, not from a stale old value
+    // Roll from wherever the cube currently is
     const cur = currentRotation.current;
     const newRotation = {
       x: cur.x - (cur.x % 360) + target.x + 720,
@@ -57,12 +52,11 @@ useEffect(() => {
     currentRotation.current = target;
     setCubeRotation(target);
   }
-  // while rolling is true nothing done here, CSS handle animation
 
+  // while rolling is true CSS handle animation
   prevRolling.current = rolling;
 }, [value, rolling]);
 
-  // Other players
   if (!isCurrentTurn) {
     return (
       <div className="relative overflow-hidden w-[58px] h-[58px] rounded-2xl border-2 border-gray-500 bg-gradient-to-br from-white via-gray-100 to-gray-300 shadow-2xl p-1 opacity-80 cursor-not-allowed">

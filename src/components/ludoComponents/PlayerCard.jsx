@@ -1,19 +1,8 @@
-const PlayerCard = ({
-  name,
-  userId,
-  color,
-  avatarUrl,
-  isCurrentTurnPlayer = false,
-  isMyTurn = false,
-  playerTurnStage,
-  pendingDice = [],
-  diceOptions = [],
-  onDiceSelect,
-  currentUserId
-}) => {
-  const showDiceSection =
-    isCurrentTurnPlayer && playerTurnStage === "TOKEN_MOVE" && pendingDice.length > 0;
-    const isCurrentUser = userId === currentUserId;
+const PlayerCard = ({name, userId, color, avatarUrl, isCurrentTurnPlayer = false, isMyTurn = false,
+  playerTurnStage, pendingDice = [], diceOptions = [], onDiceSelect, currentUserId}) => {
+
+  const showDiceSection = isCurrentTurnPlayer && playerTurnStage === "TOKEN_MOVE" && pendingDice.length > 0;
+  const isCurrentUser = userId === currentUserId;
 
   return (
     <div
@@ -37,30 +26,12 @@ const PlayerCard = ({
           <img
             src={avatarUrl}
             alt={name}
-            className="
-            w-10
-            h-10
-            sm:w-8
-            sm:h-8
-            rounded-full
-            border-2
-            shrink-0
-            object-cover
-          "
+            className="w-10 h-10 sm:w-8 sm:h-8 rounded-full border-2 shrink-0 object-cover"
             style={{ borderColor: color }}
           />
         ) : (
           <div
-            className="
-            w-10
-            h-10
-            sm:w-12
-            sm:h-12
-            rounded-full
-            border-2
-            shrink-0
-            bg-white/10
-          "
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 shrink-0 bg-white/10"
             style={{ borderColor: color }}
           />
         )}
@@ -69,20 +40,22 @@ const PlayerCard = ({
           <span className="font-semibold text-white text-sm truncate">
             {name}
           </span>
-          <span className="text-xs text-white/50 truncate">{isCurrentUser ? "You" : ""}</span>
+          <span className="text-xs text-white truncate text-bold">{isCurrentUser ? "You" : ""}</span>
         </div>
       </div>
 
-      {/* Dice numbers — options for the active player's own view, read-only for everyone else */}
+      {/* Dice numbers selection to current turn user and others*/}
       {showDiceSection && (
         <div>
-          <span className="text-[10px] uppercase tracking-wide text-white/40">
-            Dice Rolled
-          </span>
+          {/* {isCurrentUser && (
+            <span className="w-full text-[9px] uppercase tracking-wide text-white text-center">
+              Select number
+            </span>
+          )} */}
 
           {isMyTurn ? (
             diceOptions.length > 1 && (
-              <div className="flex flex-nowrap gap-2 bg-white rounded-lg shadow-lg p-2 max-w-[180px] mt-1">
+              <div className="flex flex-nowrap gap-1 bg-grey rounded-lg shadow-lg p-1 max-w-[180px] mt-1">
                 {diceOptions.map((move, index) => (
                   <button
                     key={index}

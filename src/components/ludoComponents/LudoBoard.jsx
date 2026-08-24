@@ -56,7 +56,7 @@ const LudoBoard = ({boardData, gameState, selectedToken, setSelectedToken, handl
 
   if (!boardData) return null;
 
-  const { metadata, centerArea, grid, paths } = boardData;
+  const { metadata, centerArea, grid } = boardData;
   const colors = metadata?.colors ?? [];
 
   // Convert object of cells into array
@@ -94,6 +94,7 @@ const LudoBoard = ({boardData, gameState, selectedToken, setSelectedToken, handl
     return null;
   };
 
+  // Show tokens at track cells
   const getTrackTokenAtCell = (cell) => {
     if (!gameState?.board?.players) return [];
 

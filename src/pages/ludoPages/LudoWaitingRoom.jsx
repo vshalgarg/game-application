@@ -20,7 +20,7 @@ const WaitingRoom = () => {
 
   // Supabase WaitingRealtime Hook
   const { players } = useWaitingRoomRealtime(roomCode);
-  console.log("Players in waiting room", players);
+  console.info("Players in waiting room", players);
 
   // Supabase RoomRealtime Hook
   useRoomRealtime({
@@ -36,8 +36,7 @@ const WaitingRoom = () => {
       if (players.length < 2) {
         showSnackbar("Waiting for another player...", "error");
         return;
-      } else if (players.length >= 2 && players.length <= 4)
-        console.log("Starting game for room:", roomCode);
+      } 
 
       const result = await startRoom({
         roomCode,
@@ -66,8 +65,6 @@ const WaitingRoom = () => {
 
   // Add bot handler 
   const handleAddBot = async () => {
-    console.log("Current User ID:", currentUserId);
-    console.log("Room Code:", roomCode);
 
   try {
     const result = await addBot({

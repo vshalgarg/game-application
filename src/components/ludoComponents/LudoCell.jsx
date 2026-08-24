@@ -1,4 +1,4 @@
-const LudoCell = ({ type, color, arrowDirection, arrowColor, highlight}) => {
+const LudoCell = ({ type, color, arrowDirection, arrowColor }) => {
   const renderSymbol = () => {
     switch (type) {
       case "SC":

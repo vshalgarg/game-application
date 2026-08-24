@@ -5,10 +5,7 @@ const useWaitingRoomRealtime = (roomCode) => {
   const [players, setPlayers] = useState([]);
 
   useEffect(() => {
-    console.log("Hook Running:", roomCode);
     if (!roomCode) return;
-
-    console.log("Hook Running:", roomCode);
 
     //  Fetch existing players initially
     const fetchPlayers = async () => {
@@ -22,7 +19,7 @@ const useWaitingRoomRealtime = (roomCode) => {
     return;
   }
 
-  console.log("Fetched Data:", data);
+  console.info("Fetched Data:", data);
 
   setPlayers(data[0]?.players || []);
 };
@@ -43,13 +40,13 @@ const useWaitingRoomRealtime = (roomCode) => {
           filter: `room_code=eq.${roomCode}`,
         },
         (payload) => {
-          console.log("Player Joined:", payload.new);
+          console.info("Player Joined:", payload.new);
 
           setPlayers(payload.new.players || []);
         }
       )
 
-      // Player left (optional)
+      // Player left 
       .on(
         "postgres_changes",
         {
@@ -59,7 +56,7 @@ const useWaitingRoomRealtime = (roomCode) => {
           filter: `room_code=eq.${roomCode}`,
         },
         (payload) => {
-          console.log("Player Left:", payload.old);
+          console.info("Player Left:", payload.old);
 
           setPlayers((prev) =>
             prev.filter(
@@ -70,7 +67,7 @@ const useWaitingRoomRealtime = (roomCode) => {
       )
 
       .subscribe((status) => {
-  console.log("Subscription Status:", status);
+  console.info("Subscription Status:", status);
 });
 
     return () => {
