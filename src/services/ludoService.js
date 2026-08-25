@@ -30,15 +30,15 @@ export const makeMove = async ({ roomCode, userId, tokenId, consumedDice }) => {
 };
 
 // 3. Get Board api
-// export const getBoard = async (roomCode) => {
-//   try {
-//     const res = await api.get(`/rooms/${roomCode}/board-layout`);
+export const getBoard = async (roomCode) => {
+  try {
+    const res = await api.get(`/rooms/${roomCode}/board-layout`);
 
-//     return checkLogicalError(res.data);
-//   } catch (error) {
-//     throw new Error(handleApiError(error));
-//   }
-// };
+    return checkLogicalError(res.data);
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
 
 // 4. Add bot api 
 export const addBot = async ({ roomCode, hostUserId, botDifficulty }) => {
