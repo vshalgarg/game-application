@@ -7,7 +7,6 @@ import lombok.Data;
 @JsonPropertyOrder({"row", "col", "type", "colorIndex"})
 @Data
 public class Grid {
-
     private Integer row;
     private Integer col;
     private String type;
