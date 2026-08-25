@@ -116,7 +116,6 @@ const LudoBoard = ({boardData, gameState, selectedToken, setSelectedToken, handl
 
     return tokens;
   };
-
   return (
     <div
       ref={boardRef}

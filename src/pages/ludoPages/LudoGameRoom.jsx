@@ -1,16 +1,20 @@
-import { useState, useRef, useEffect, useLayoutEffect} from "react";
+//Board api integration
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useParams } from "react-router-dom";
 import LudoBoard from "../../components/ludoComponents/LudoBoard";
 import DiceHolder from "../../components/ludoComponents/DiceHolder";
-import { rollDice, makeMove } from "../../services/ludoService.js";
+import { rollDice, makeMove, getBoard } from "../../services/ludoService.js";
 import useGameRealtime from "../../hooks/useGameRealtime";
-import boardData from "../../data/board.json";
 import { useAuth } from "../../context/AuthContext";
 import PlayerCard from "../../components/ludoComponents/PlayerCard";
 
 const LudoGameRoom = () => {
   const { auth } = useAuth();
   const { roomCode } = useParams();
+
+  const [boardData, setBoardData] = useState(null);
+  const [boardLoading, setBoardLoading] = useState(true);
+  const [boardError, setBoardError] = useState(null);
   const [rolling, setRolling] = useState(false);
   const [selectedToken, setSelectedToken] = useState(null);
   const [diceValue, setDiceValue] = useState(null);
@@ -31,7 +35,40 @@ const LudoGameRoom = () => {
 
   const currentUserId = auth?.userId;
 
-  //Realtime game update
+  // Fetch board layout from API
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchBoard = async () => {
+      try {
+        setBoardLoading(true);
+        setBoardError(null);
+
+        const res = await getBoard(roomCode);
+        console.info("get board api", res);
+
+        if (!cancelled) {
+          setBoardData(res.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch board:", error);
+        if (!cancelled) {
+          setBoardError(error.message || "Failed to load board");
+        }
+      } finally {
+        if (!cancelled) 
+          setBoardLoading(false);
+      }
+    };
+
+    if (roomCode) fetchBoard();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [roomCode]);
+
+  // Realtime game update
   useGameRealtime({
     roomCode,
 
@@ -69,7 +106,7 @@ const LudoGameRoom = () => {
     if (!animationComplete) return;
 
     // Don't auto move while API call is running
-    if (moveInProgress) return;   
+    if (moveInProgress) return;
 
     if (!isMyTurn) {
       autoMoveKeyRef.current = null;
@@ -93,44 +130,35 @@ const LudoGameRoom = () => {
 
     // Dice animation duration when single token on track
     const timer = setTimeout(async () => {
-  await handleTokenClick(move.tokenId, move.dice);
-}, 1500);
+      await handleTokenClick(move.tokenId, move.dice);
+    }, 1500);
 
-return () => clearTimeout(timer);
+    return () => clearTimeout(timer);
   }, [legalMoves, playerTurnStage, isMyTurn, currentTurnUserId, roomCode, animationComplete, moveInProgress]);
 
+  // Gamearena responsiveness
+  useLayoutEffect(() => {
+    const el = gameAreaRef.current;
+    if (!el) return;
 
-// Gamearena responsiveness
-useLayoutEffect(() => {
-  const el = gameAreaRef.current;
-  if (!el) return;
+    const updateScale = (width) => setBoardScale(width / 450);
+    updateScale(el.getBoundingClientRect().width);
 
-  const updateScale = (width) => setBoardScale(width / 450);
-  updateScale(el.getBoundingClientRect().width);
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect?.width;
+      if (width) updateScale(width);
+    });
 
-  const observer = new ResizeObserver((entries) => {
-    const width = entries[0]?.contentRect?.width;
-    if (width) updateScale(width);
-  });
-
-  observer.observe(el);
-  return () => observer.disconnect();
-}, []);
-
-  // Dice position according to player color
-  // const dicePositions = {
-  //   1: { right: "-28%", bottom: "14%", transformOrigin: "bottom right" },
-  //   2: { left: "-28%", bottom: "14%", transformOrigin: "bottom left" },
-  //   3: { left: "-28%", top: "14%", transformOrigin: "top left" },
-  //   4: { right: "-28%", top: "14%", transformOrigin: "top right" },
-  // };
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   // Player card position according to player color/corner
   const playerCardPositions = {
-    1: { right: "-32%", bottom: "1%", transformOrigin: "bottom right" },
-    2: { left: "-32%", bottom: "1%", transformOrigin: "bottom left" },
-    3: { left: "-32%", top: "1%", transformOrigin: "top left" },
-    4: { right: "-32%", top: "1%", transformOrigin: "top right" },
+    1: { right: "-34%", bottom: "1%", transformOrigin: "bottom right" },
+    2: { left: "-34%", bottom: "1%", transformOrigin: "bottom left" },
+    3: { left: "-34%", top: "1%", transformOrigin: "top left" },
+    4: { right: "-34%", top: "1%", transformOrigin: "top right" },
   };
 
   // Roll Dice handler
@@ -156,7 +184,6 @@ useLayoutEffect(() => {
 
   // Make move api
   const moveToken = async (tokenId, consumedDice) => {
-
     // Prevent duplicate API calls
     if (moveInProgress) return;
     setMoveInProgress(true);
@@ -246,7 +273,6 @@ useLayoutEffect(() => {
           (latestToken.state === "TRACK" || latestToken.state === "FINISHED") &&
           !latestToken.tokenKilled
         ) {
-
           const previousLength = currentToken.forwardJourney?.length ?? 0;
           const journey = latestToken.forwardJourney ?? [];
           const newSteps = journey.slice(previousLength);
@@ -337,15 +363,29 @@ useLayoutEffect(() => {
     animatingRef.current = false;
     setAnimationComplete(true);
   };
-  // if (!boardData) {
-  return (
-    <div
-      className="min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center p-2 sm:p-4 md:p-6"
-    >
-      <div
-        className="flex flex-col items-center gap-4 w-full"
-      >
 
+  // Guard: don't render board UI until layout is fetched
+  if (boardLoading) {
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
+        <p className="text-white text-sm sm:text-base">Loading board...</p>
+      </div>
+    );
+  }
+
+  if (boardError || !boardData) {
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
+        <p className="text-red-400 text-sm sm:text-base">
+          {boardError || "Board not found"}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center p-2 sm:p-4 md:p-6">
+      <div className="flex flex-col items-center gap-4 w-full">
         {/* Turn Info */}
         <div className="text-center text-white">
           <h2 className="font-bold text-sm sm:text-base md:text-lg">
@@ -360,9 +400,7 @@ useLayoutEffect(() => {
         <div className="relative">
           <div ref={gameAreaRef} className="relative w-fit">
             {/* Board */}
-            <div
-              className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl md:rounded-3xl p-2 sm:p-4 w-fit"
-            >
+            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl md:rounded-3xl p-2 sm:p-4 w-fit">
               <LudoBoard
                 boardData={boardData}
                 gameState={gameState}
@@ -430,7 +468,6 @@ useLayoutEffect(() => {
                 </div>
               );
             })}
-
           </div>
         </div>
       </div>
