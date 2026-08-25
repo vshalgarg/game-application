@@ -9,20 +9,11 @@ import lombok.Data;
 public class Grid {
 
     private Integer row;
-
     private Integer col;
-
     private String type;
-
     private Integer colorIndex;
-
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Integer tokenColorIndex;
-
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String arrowDirection;
-
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String arrowColorIndex;
 
 }

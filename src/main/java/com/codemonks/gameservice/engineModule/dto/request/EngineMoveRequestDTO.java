@@ -14,9 +14,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class EngineMoveRequestDTO {
     private Long roomId;
-   // private Map<String, Object> gameState;
-    //private Long currentTurnUserId;
-    private String roomCode; // added new
+    private String roomCode;
     private Long userId;
     private Map<String, Object> moveData;
     private List<PlayerDTO> players;

@@ -69,7 +69,6 @@ public class RoomServiceImpl implements RoomService {
 
         log.info("Room created. roomId={}, roomCode={}, hostUserId={}",
                 room.getId(), room.getRoomCode(), request.getUserId());
-
         return RoomMapper.toRoomResponse(room, host);
     }
 
@@ -91,8 +90,7 @@ public class RoomServiceImpl implements RoomService {
                 .findByIdTenantIdAndIdGameType(room.getTenantId(), room.getGameType())
                 .orElseThrow(() -> new GameException(GAME_CONFIG_NOT_FOUND));
 
-        List<PlayerEntity> players =
-                playerRepository.findByRoom_Id(room.getId());
+        List<PlayerEntity> players = playerRepository.findByRoom_Id(room.getId());
 
         if (players.size() >= config.getMaxPlayers()) {
             throw new GameException(ROOM_FULL);
@@ -113,8 +111,7 @@ public class RoomServiceImpl implements RoomService {
                         ? RoomRealtimeStatusEnum.READY
                         : RoomRealtimeStatusEnum.WAITING;
 
-        RealtimeLobbyDTO lobbyDTO =
-                LobbyMapper.toLobbyDTO(
+        RealtimeLobbyDTO lobbyDTO = LobbyMapper.toLobbyDTO(
                         room,
                         players,
                         status
