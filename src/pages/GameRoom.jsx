@@ -2,14 +2,25 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Confetti from "react-confetti";
 import { useWindowSize } from "react-use";
+import { FaRedo } from "react-icons/fa";
+import { TbMoodSad, TbMoodSmileBeam } from "react-icons/tb";
 import TicTacToeBoard from "../components/TicTacToeBoard";
-import GameButton from "../components/GameButton";
 import { makeMove, restartRoom } from "../services/roomService";
 import useGameRealtime from "../hooks/useGameRealtime";
 import { supabase } from "../utils/supabaseClient";
 import { useSnackbar } from "../context/SnackbarContext";
-import { TbMoodSad, TbMoodSmileBeam } from "react-icons/tb";
 import { useAuth } from "../context/AuthContext";
+import PageShell from "../components/layout/PageShell";
+import Button from "../components/ui/Button";
+
+const RestartGameButton = ({ onClick }) => (
+  <Button onClick={onClick}>
+    <span className="flex items-center justify-center gap-2">
+      <FaRedo size={13} />
+      Restart Game
+    </span>
+  </Button>
+);
 
 const GameRoom = () => {
   const { roomCode } = useParams();
@@ -218,123 +229,36 @@ const GameRoom = () => {
     oActive = effectiveCurrentTurn === currentUserId;
     xActive = effectiveCurrentTurn !== currentUserId;
   }
+
   return (
-    <div
-      className="
-        min-h-screen
-        bg-gradient-to-br
-        from-black
-        via-gray-900
-        to-black
-        flex
-        items-center
-        justify-center
-        px-4
-      "
-    >
+    <PageShell className="gz-page-shell--ttt">
       {showDrawPopup && (
-        <>
-          {/* Overlay */}
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" />
-
-          {/* Popup */}
-          <div
-            className="
-        fixed
-        top-1/2
-        left-1/2
-        -translate-x-1/2
-        -translate-y-1/2
-        z-50
-        w-[90%]
-        max-w-sm
-        rounded-3xl
-        bg-white/10
-        backdrop-blur-xl
-        border
-        border-cyan-400/30
-        shadow-2xl
-        shadow-cyan-500/20
-        p-8
-        text-center
-      "
-          >
-            {/* Top Icon */}
-            <div
-              className="
-          mx-auto
-          mb-6
-          flex
-          h-20
-          w-20
-          items-center
-          justify-center
-          rounded-full
-          border-2
-          border-cyan-400
-          bg-cyan-400/10
-          text-4xl
-          shadow-lg
-          shadow-cyan-400/40
-        "
-            >
-              <TbMoodSad className="text-[42px] text-cyan-300" />
+        <div className="gz-exit-overlay">
+          <div className="gz-exit-modal">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border-2 border-gz-primary-cyan bg-gz-primary-cyan/10 shadow-lg shadow-gz-primary-cyan/30 sm:h-20 sm:w-20">
+              <TbMoodSad className="text-[36px] text-gz-primary-cyan sm:text-[42px]" />
             </div>
-
-            {/* Heading */}
-            <h2
-              className="
-          text-4xl
-          font-bold
-          tracking-widest
-          text-cyan-300
-        "
-            >
+            <h2 className="text-3xl font-bold tracking-widest text-gz-primary-cyan sm:text-4xl">
               DRAW
             </h2>
-
-            {/* Divider */}
-            <div className="flex items-center justify-center gap-3 my-5">
-              <div className="h-px w-16 bg-cyan-400/40" />
-              <div className="h-2 w-2 rounded-full bg-cyan-300" />
-              <div className="h-px w-16 bg-cyan-400/40" />
+            <div className="gz-divider my-5 justify-center">
+              <span className="h-1.5 w-1.5 rounded-full bg-gz-primary-cyan" />
             </div>
-
-            {/* Message */}
-
-            <p className="text-cyan-200 mt-2 mb-8">Ready for another battle?</p>
-
-            {/* Buttons */}
-
-            <div className="space-y-4">
-              {isHost && (
-                <GameButton
-                  title="Restart Game"
-                  color="
-              bg-red-500
-              hover:bg-red-600
-              shadow-red-500/40
-            "
-                  onClick={handleRestart}
-                />
-              )}
-
-              <GameButton
-                title="Back To Home"
-                color="
-            bg-blue-500
-            hover:bg-blue-600
-            shadow-blue-500/40
-          "
-                onClick={() => navigate("/")}
-              />
+            <p className="mb-6 text-sm text-gz-text-secondary sm:text-base">
+              Ready for another battle?
+            </p>
+            <div className="flex flex-col gap-3">
+              {isHost && <RestartGameButton onClick={handleRestart} />}
+              <Button variant="secondary" onClick={() => navigate("/")}>
+                Back To Home
+              </Button>
             </div>
           </div>
-        </>
+        </div>
       )}
-      {/* confetti */}
+
       {showWinnerPopup && winner === currentUserId && (
-        <div className="fixed inset-0 z-45 pointer-events-none">
+        <div className="pointer-events-none fixed inset-0 z-[61]">
           <Confetti
             width={width}
             height={height}
@@ -344,235 +268,92 @@ const GameRoom = () => {
           />
         </div>
       )}
-      {/* pop up */}
+
       {showWinnerPopup && (
-        <>
-          {/* Overlay */}
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" />
-
-          {/* Popup */}
-          <div
-            className="
-        fixed
-        top-1/2
-        left-1/2
-        -translate-x-1/2
-        -translate-y-1/2
-        z-50
-
-        w-[90%]
-        max-w-sm
-
-        rounded-3xl
-
-        bg-white/10
-        backdrop-blur-xl
-
-        border
-        border-cyan-400/30
-
-        shadow-2xl
-        shadow-cyan-500/20
-
-        p-8
-
-        text-center
-      "
-          >
-            {/* Result Icon */}
+        <div className="gz-exit-overlay">
+          <div className="gz-exit-modal">
             <div
-              className={`
-          mx-auto
-          mb-6
-
-          flex
-          h-20
-          w-20
-
-          items-center
-          justify-center
-
-          rounded-full
-
-          border-2
-
-          ${
-            winner === currentUserId
-              ? `
-                border-green-400
-                bg-green-400/15
-                shadow-[0_0_30px_rgba(74,222,128,0.8)]
-              `
-              : `
-                border-red-400
-                bg-red-400/15
-                shadow-[0_0_30px_rgba(248,113,113,0.8)]
-              `
-          }
-        `}
+              className={`mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border-2 sm:h-20 sm:w-20 ${
+                winner === currentUserId
+                  ? "border-green-400 bg-green-400/15 shadow-[0_0_30px_rgba(74,222,128,0.7)]"
+                  : "border-red-400 bg-red-400/15 shadow-[0_0_30px_rgba(248,113,113,0.7)]"
+              }`}
             >
               {winner === currentUserId ? (
-                <TbMoodSmileBeam className="text-[46px] text-green-300" />
+                <TbMoodSmileBeam className="text-[40px] text-green-300 sm:text-[46px]" />
               ) : (
-                <TbMoodSad className="text-[46px] text-red-300" />
+                <TbMoodSad className="text-[40px] text-red-300 sm:text-[46px]" />
               )}
             </div>
-
-            {/* Heading */}
             <h2
-              className={`
-          text-4xl
-          font-extrabold
-          tracking-[0.2em]
-
-          ${
-            winner === currentUserId
-              ? "text-green-300 drop-shadow-[0_0_12px_rgba(74,222,128,0.9)]"
-              : "text-red-300 drop-shadow-[0_0_12px_rgba(248,113,113,0.9)]"
-          }
-        `}
+              className={`text-3xl font-extrabold tracking-[0.18em] sm:text-4xl ${
+                winner === currentUserId ? "text-green-300" : "text-red-300"
+              }`}
             >
               {winner === currentUserId ? "YOU WIN" : "YOU LOSE"}
             </h2>
-
-            {/* Divider */}
-            <div className="flex items-center justify-center gap-3 my-5">
+            <div className="my-5 flex items-center justify-center gap-3">
               <div
-                className={`h-px w-16 ${
-                  winner === currentUserId ? "bg-green-400/50" : "bg-red-400/50"
-                }`}
+                className={`h-px w-14 ${winner === currentUserId ? "bg-green-400/50" : "bg-red-400/50"}`}
               />
-
               <div
-                className={`h-2 w-2 rounded-full ${
-                  winner === currentUserId ? "bg-green-300" : "bg-red-300"
-                }`}
+                className={`h-1.5 w-1.5 rounded-full ${winner === currentUserId ? "bg-green-300" : "bg-red-300"}`}
               />
-
               <div
-                className={`h-px w-16 ${
-                  winner === currentUserId ? "bg-green-400/50" : "bg-red-400/50"
-                }`}
+                className={`h-px w-14 ${winner === currentUserId ? "bg-green-400/50" : "bg-red-400/50"}`}
               />
             </div>
-
-            {/* Message */}
-            <p className="text-lg text-white">
+            <p className="text-base text-gz-text sm:text-lg">
               {winner === currentUserId ? "Congratulations!" : "Better luck next time!"}
             </p>
-
-            <p className="mt-2 mb-8 text-gray-300">
+            <p className="mt-1 mb-6 text-sm text-gz-text-secondary">
               {winner === currentUserId
-                ? "🏆 You played brilliantly."
-                : "🎮 Ready for another challenge?"}
+                ? "You played brilliantly."
+                : "Ready for another challenge?"}
             </p>
-
-            {/* Buttons */}
-            <div className="space-y-4">
-              {isHost && (
-                <GameButton
-                  title="Restart Game"
-                  color="
-              bg-red-500
-              hover:bg-red-600
-              shadow-red-500/40
-            "
-                  onClick={handleRestart}
-                />
-              )}
-
-              <GameButton
-                title="Back To Home"
-                color="
-            bg-blue-500
-            hover:bg-blue-600
-            shadow-blue-500/40
-          "
-                onClick={() => navigate("/")}
-              />
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* game card */}
-      <div
-        className="
-          w-full
-          max-w-md
-          bg-white/10
-          backdrop-blur-lg
-          border
-          border-white/20
-          rounded-2xl
-          shadow-xl
-          p-5
-          text-center
-        "
-      >
-        <p
-          className="
-            text-cyan-400
-            mb-2
-            text-sm
-            tracking-widest
-          "
-        >
-          ROOM ID : {roomCode}
-        </p>
-
-        <h1
-          className="
-            text-2xl
-            font-bold
-            text-white
-            mb-3
-          "
-        >
-          Tic Tac Toe
-        </h1>
-
-        <div className="mb-5">
-          <div className="flex justify-around items-center">
-            {/* X */}
-
-            <div className="flex flex-col items-center">
-              <span
-                className={`text-6xl font-bold transition-all duration-300 ${
-                  xActive ? "text-cyan-400 scale-125 animate-pulse" : "text-gray-500"
-                }`}
-              >
-                X
-              </span>
-
-              <p className="text-gray-300 mt-2 text-sm">{mySide === "X" ? "You" : "Opponent"}</p>
-            </div>
-
-            {/* O */}
-
-            <div className="flex flex-col items-center">
-              <span
-                className={`text-6xl font-bold transition-all duration-300 ${
-                  oActive ? "text-cyan-400 scale-125 animate-pulse" : "text-gray-500"
-                }`}
-              >
-                O
-              </span>
-
-              <p className="text-gray-300 mt-2 text-sm">
-                {mySide === "O" ? "You" : currentTurn === -1 ? "Bot is thinking.." : "Opponent"}
-              </p>
+            <div className="flex flex-col gap-3">
+              {isHost && <RestartGameButton onClick={handleRestart} />}
+              <Button variant="secondary" onClick={() => navigate("/")}>
+                Back To Home
+              </Button>
             </div>
           </div>
         </div>
+      )}
 
-        {winner && (
-          <p className=" text-white text-lg mb-4">
-            {winner === currentUserId ? "🎉 You Won!" : "😔 You Lose!"}
-          </p>
-        )}
+      <div className="gz-ttt-card">
+        <p className="text-xs font-semibold tracking-[0.22em] text-gz-primary-cyan sm:text-sm">
+          ROOM ID : {roomCode}
+        </p>
+        <h1 className="mt-1.5 text-2xl font-bold text-gz-text sm:text-[1.75rem]">Tic Tac Toe</h1>
 
-        <div className="flex justify-center mb-5">
+        <div className="gz-ttt-versus">
+          <div className="flex min-w-0 flex-1 flex-col items-center">
+            <span className={`gz-ttt-mark gz-ttt-mark--x ${xActive ? "gz-ttt-mark--active" : ""}`}>
+              X
+            </span>
+            <p className="mt-1 text-xs text-gz-text sm:text-sm">
+              {mySide === "X" ? "You" : "Opponent"}
+            </p>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="h-8 w-px bg-gz-input-border/70" />
+            <span className="gz-ttt-vs">vs</span>
+            <span className="h-8 w-px bg-gz-input-border/70" />
+          </div>
+
+          <div className="flex min-w-0 flex-1 flex-col items-center">
+            <span className={`gz-ttt-mark gz-ttt-mark--o ${oActive ? "gz-ttt-mark--active" : ""}`}>
+              O
+            </span>
+            <p className="mt-1 text-xs text-gz-text sm:text-sm">
+              {mySide === "O" ? "You" : currentTurn === -1 ? "Bot is thinking.." : "Opponent"}
+            </p>
+          </div>
+        </div>
+
+        <div className="gz-ttt-board-wrap">
           <TicTacToeBoard
             board={board}
             handleClick={handleCellClick}
@@ -580,20 +361,9 @@ const GameRoom = () => {
           />
         </div>
 
-        {/* Normal Restart Button visible only while game is running */}
-        {isHost && !winner && (
-          <GameButton
-            title="Restart Game"
-            color="
-            bg-red-500
-            hover:bg-red-600
-            shadow-red-500/40
-          "
-            onClick={handleRestart}
-          />
-        )}
+        {isHost && !winner && <RestartGameButton onClick={handleRestart} />}
       </div>
-    </div>
+    </PageShell>
   );
 };
 
