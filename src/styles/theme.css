@@ -160,6 +160,13 @@
     @apply relative flex min-h-full items-center justify-center px-4 py-6 sm:px-6;
   }
 
+  .gz-page-shell--ttt {
+    height: 100%;
+    min-height: 0;
+    overflow: auto;
+    padding-block: 0.75rem;
+  }
+
   .gz-page-shell__bg {
     @apply pointer-events-none fixed inset-0 bg-cover bg-center bg-no-repeat;
   }
@@ -513,5 +520,123 @@
     @apply flex cursor-pointer flex-col items-center justify-center rounded-xl
       bg-linear-to-r from-gz-login-from to-gz-purple-accent px-3 py-3 text-white
       shadow-lg shadow-gz-purple-accent/30 transition hover:brightness-110 active:scale-[0.99];
+  }
+
+  /* Tic Tac Toe game card */
+  .gz-ttt-card {
+    @apply relative z-10 w-full text-center backdrop-blur-xl;
+    max-width: min(100%, 25rem);
+    padding: 1.15rem 1.35rem 1.25rem;
+    border-radius: 1.35rem;
+    background:
+      linear-gradient(var(--gz-popup-dark), var(--gz-popup-dark)) padding-box,
+      linear-gradient(135deg, var(--gz-primary-cyan), var(--gz-login-to), var(--gz-purple-accent)) border-box;
+    border: 1px solid transparent;
+    box-shadow:
+      0 20px 56px rgba(0, 0, 0, 0.5),
+      0 0 36px rgb(0 217 232 / 24%),
+      0 0 28px rgb(45 100 245 / 16%);
+  }
+
+  .gz-ttt-mark {
+    @apply inline-block font-extrabold leading-none;
+    font-size: clamp(2.15rem, 5.8dvh, 2.85rem);
+  }
+
+  .gz-ttt-mark--x {
+    background: linear-gradient(180deg, #9ef6ff, var(--gz-primary-cyan), var(--gz-login-to));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 12px rgb(0 217 232 / 55%));
+  }
+
+  .gz-ttt-mark--o {
+    background: linear-gradient(180deg, #ddd6fe, var(--gz-purple-accent), var(--gz-purple-glow));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 12px rgb(139 92 246 / 55%));
+  }
+
+  .gz-ttt-mark--active {
+    animation: gzTttPulse 1.6s ease-in-out infinite;
+  }
+
+  .gz-ttt-mark--cell {
+    font-size: clamp(1.65rem, 5.2dvh, 2.15rem);
+  }
+
+  .gz-ttt-versus {
+    @apply mt-3 mb-4 flex items-center justify-between gap-2;
+  }
+
+  .gz-ttt-vs {
+    @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-full
+      text-[10px] font-semibold tracking-wider text-gz-text-secondary uppercase;
+    border: 1px solid rgb(70 106 145 / 70%);
+    box-shadow: 0 0 12px rgb(0 217 232 / 12%);
+  }
+
+  .gz-ttt-board-wrap {
+    @apply mb-4 flex justify-center;
+  }
+
+  .gz-ttt-board {
+    @apply relative mx-auto w-full;
+  }
+
+  .gz-ttt-cell {
+    @apply flex aspect-square w-full items-center justify-center rounded-xl
+      font-extrabold transition duration-200;
+    border: 1px solid rgb(48 107 228 / 45%);
+    background: rgb(32 55 87 / 42%);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 3%);
+  }
+
+  .gz-ttt-cell:not(:disabled) {
+    cursor: pointer;
+  }
+
+  .gz-ttt-cell:not(:disabled):hover {
+    border-color: rgb(0 217 232 / 55%);
+    background: rgb(0 217 232 / 10%);
+    box-shadow: 0 0 14px rgb(0 217 232 / 22%);
+  }
+
+  .gz-ttt-cell:disabled {
+    cursor: default;
+  }
+
+  .gz-ttt-cell--win {
+    border-color: rgb(74 222 128 / 80%);
+    background: rgb(34 197 94 / 28%);
+    box-shadow: 0 0 16px rgb(74 222 128 / 45%);
+  }
+
+  @media (max-width: 379px) {
+    .gz-ttt-card {
+      padding: 0.95rem 0.9rem 1.05rem;
+      border-radius: 1.15rem;
+    }
+  }
+
+  @media (max-height: 620px) {
+    .gz-ttt-card {
+      padding: 0.85rem 1.1rem 0.95rem;
+    }
+
+    .gz-ttt-versus {
+      margin-top: 0.55rem;
+      margin-bottom: 0.7rem;
+    }
+
+    .gz-ttt-board-wrap {
+      margin-bottom: 0.7rem;
+    }
+
+    .gz-ttt-board {
+      width: min(100%, 38dvh);
+    }
   }
 }

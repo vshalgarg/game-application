@@ -1,50 +1,19 @@
-const Square = ({ value, onClick, isWinningCell, disabled}) => {
- 
+const Square = ({ value, onClick, isWinningCell, disabled }) => {
+  const markClass =
+    value === "X"
+      ? "gz-ttt-mark gz-ttt-mark--x gz-ttt-mark--cell"
+      : value === "O"
+        ? "gz-ttt-mark gz-ttt-mark--o gz-ttt-mark--cell"
+        : "";
+
   return (
     <button
-       onClick={disabled ? undefined : onClick}
+      type="button"
+      onClick={disabled ? undefined : onClick}
       disabled={disabled}
-      className={`
-        w-14
-        h-14
-        md:w-16
-        md:h-16
-        bg-white/10
-        border
-        border-cyan-400/30
-        rounded-xl
-        text-2xl
-        font-bold
-        text-white
-        hover:bg-cyan-500/20
-        transition
-        duration-300
-        shadow-md
-
-         ${
-      disabled
-        ? "cursor-not-allowed"
-        : "cursor-pointer hover:bg-cyan-500/20"
-          }
-         ${
-      isWinningCell
-        ? `
-          bg-green-500
-          border-green-300
-          text-white
-          scale-110
-          shadow-lg
-          shadow-green-400/70
-        `
-        : `
-          bg-white/10
-          border-cyan-400/30
-          text-white
-          hover:bg-cyan-500/20
-        ` }
-      `}
+      className={`gz-ttt-cell ${disabled ? "" : "cursor-pointer"} ${isWinningCell ? "gz-ttt-cell--win" : ""}`}
     >
-      {value}          
+      {value ? <span className={markClass}>{value}</span> : null}
     </button>
   );
 };

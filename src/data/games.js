@@ -5,7 +5,7 @@ export const popularGames = [
     id: "tic-tac-toe",
     title: "Tic Tac Toe",
     genre: "Puzzle",
-    path: "/game-mode",
+    path: "/tic-tac-toe",
     icon: FaTimes,
     accent: "cyan",
   },
