@@ -1,17 +1,19 @@
-//Board api integration
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import LudoBoard from "../../components/ludoComponents/LudoBoard";
 import DiceHolder from "../../components/ludoComponents/DiceHolder";
 import { rollDice, makeMove, getBoard } from "../../services/ludoService.js";
 import useGameRealtime from "../../hooks/useGameRealtime";
 import { useAuth } from "../../context/AuthContext";
 import PlayerCard from "../../components/ludoComponents/PlayerCard";
+import WinModal from "../../modals/FinalWinner.jsx";
 
 const LudoGameRoom = () => {
   const { auth } = useAuth();
   const { roomCode } = useParams();
+  const navigate = useNavigate();
 
+  // for get board api
   const [boardData, setBoardData] = useState(null);
   const [boardLoading, setBoardLoading] = useState(true);
   const [boardError, setBoardError] = useState(null);
@@ -26,6 +28,15 @@ const LudoGameRoom = () => {
   const [animationComplete, setAnimationComplete] = useState(true);
   const [moveInProgress, setMoveInProgress] = useState(false);
   const [boardScale, setBoardScale] = useState(1);
+
+  // for delay in dice roll when all token at base refs
+  const previousTurnUserIdRef = useRef(null);
+  const previousPlayerTurnStageRef = useRef(null);
+  const turnTransitionTimeoutRef = useRef(null);
+
+  // for winning players confetti
+  const [celebratingPlayers, setCelebratingPlayers] = useState([]);
+  const previousFinishedRef = useRef({});
 
   const previousBoardRef = useRef(null);
   const animatingRef = useRef(false);
@@ -56,7 +67,7 @@ const LudoGameRoom = () => {
           setBoardError(error.message || "Failed to load board");
         }
       } finally {
-        if (!cancelled) 
+        if (!cancelled)
           setBoardLoading(false);
       }
     };
@@ -76,10 +87,46 @@ const LudoGameRoom = () => {
       const board = game.game_state_data.board;
       console.info("Realtime received:", game);
 
-      setCurrentTurnUserId(game.current_turn_user_id);
+      board.players.forEach((player) => {
+        const wasFinished = previousFinishedRef.current[player.playerId] ?? false;
+
+        if (!wasFinished && player.hasFinished) {
+          triggerCelebration(player.playerId);
+        }
+        previousFinishedRef.current[player.playerId] = player.hasFinished;
+      });
+
+      const newTurnUserId = game.current_turn_user_id;
+      const newDiceValue = board.lastDice;
+      const newPlayerTurnStage = board.playerTurnStage;
+
+      const rollerId = previousTurnUserIdRef.current;
+      const previousStage = previousPlayerTurnStageRef.current;
+      const turnChanged = rollerId !== null && newTurnUserId !== rollerId;
+
+      // hold the switch when the current player rolls dice during all 4 base slot condition
+      const isAutoSkipAfterRoll = turnChanged && previousStage === "ROLL_DICE";
+
+      previousTurnUserIdRef.current = newTurnUserId;
+      previousPlayerTurnStageRef.current = newPlayerTurnStage;
+
+      clearTimeout(turnTransitionTimeoutRef.current);
+
+      if (isAutoSkipAfterRoll) {
+
+        // the current player see their rolled number 
+        setDiceValue(newDiceValue);
+
+        turnTransitionTimeoutRef.current = setTimeout(() => {
+          setCurrentTurnUserId(newTurnUserId);
+        }, 2000); 
+      } else {
+        setCurrentTurnUserId(newTurnUserId);
+        setDiceValue(newDiceValue);
+      }
+
       setWinnerUserId(game.winner_user_id);
       setStatus(game.game_status);
-      setDiceValue(board.lastDice);
 
       if (!previousBoardRef.current) {
         previousBoardRef.current = structuredClone(board);
@@ -90,6 +137,11 @@ const LudoGameRoom = () => {
       }
     },
   });
+
+  // Cleanup any pending turn-transition timeout on unmount
+  useEffect(() => {
+    return () => clearTimeout(turnTransitionTimeoutRef.current);
+  }, []);
 
   const board = gameState?.board;
   const legalMoves = board?.legalMoves ?? [];
@@ -364,7 +416,17 @@ const LudoGameRoom = () => {
     setAnimationComplete(true);
   };
 
-  // Guard: don't render board UI until layout is fetched
+  // player celebration delay
+  const triggerCelebration = (playerId) => {
+    setCelebratingPlayers((prev) => [...prev, playerId]);
+    setTimeout(() => {
+      setCelebratingPlayers((prev) =>
+        prev.filter((id) => id !== playerId)
+      );
+    }, 3500);
+  };
+
+  // while loading board through api
   if (boardLoading) {
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
@@ -441,6 +503,7 @@ const LudoGameRoom = () => {
                   pendingDice={pendingDice}
                   diceOptions={diceOptions}
                   onDiceSelect={handleDiceSelection}
+                  celebrating={celebratingPlayers.includes(player.playerId)}
                   avatarUrl="https://plus.unsplash.com/premium_photo-1739786996022-5ed5b56834e2?q=80&w=2080&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                 />
               );
@@ -470,6 +533,20 @@ const LudoGameRoom = () => {
             })}
           </div>
         </div>
+
+        {winnerUserId && (
+          <WinModal
+            winnerId={winnerUserId}
+            isHost={winnerUserId === currentUserId}
+            avatarUrl={null}
+            onPlayAgain={() => {
+              setWinnerUserId(null);
+              // navigate(`/ludo-waiting-room/${roomCode}`);
+            }}
+            onClose={() => setWinnerUserId(null)}
+            onBackToHome={() => navigate("/")}
+          />
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 const PlayerCard = ({name, userId, color, avatarUrl, isCurrentTurnPlayer = false, isMyTurn = false,
-  playerTurnStage, pendingDice = [], diceOptions = [], onDiceSelect, currentUserId}) => {
+  playerTurnStage, pendingDice = [], diceOptions = [], onDiceSelect, currentUserId, celebrating = false}) => {
 
   const showDiceSection = isCurrentTurnPlayer && playerTurnStage === "TOKEN_MOVE" && pendingDice.length > 0;
   const isCurrentUser = userId === currentUserId;
@@ -20,6 +20,30 @@ const PlayerCard = ({name, userId, color, avatarUrl, isCurrentTurnPlayer = false
     "
       style={{ borderColor: color }}
     >
+      {celebrating &&
+        [...Array(32)].map((_, i) => {
+          const angle = (360 / 32) * i;
+          const distance = 70 + (i % 4) * 18;
+
+          return (
+            <span
+              key={i}
+              className="celebration-piece"
+              style={{
+                "--angle": `${angle}deg`,
+                "--distance": `${distance}px`,
+                "--delay": `${i * 15}ms`,
+                backgroundColor: [
+                  "#FFD700",
+                  "#FF4081",
+                  "#00E5FF",
+                  "#7CFF6B",
+                  "#FFFFFF",
+                ][i % 5],
+              }}
+            />
+          );
+        })}
       <div className="flex items-center gap-3">
         {/* Avatar */}
         {avatarUrl ? (
