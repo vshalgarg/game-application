@@ -3,8 +3,6 @@ import { supabase } from "../utils/supabaseClient";
 
 const useRoomRealtime = ({ roomCode, onStartGame, onRoomUpdate }) => {
   useEffect(() => {
-    console.log("ROOM REALTIME HOOK RUNNING");
-    console.log("ROOM CODE:", roomCode);
     if (!roomCode) return;
 
     const channel = supabase
@@ -18,19 +16,17 @@ const useRoomRealtime = ({ roomCode, onStartGame, onRoomUpdate }) => {
           filter: `room_code=eq.${roomCode}`,
         },
         (payload) => {
-          console.log("REALTIME PAYLOAD:", payload);
+          console.info("REALTIME PAYLOAD:", payload);
           const gameState = payload.new;
-          console.log("GAME STATE:", gameState);
+          console.info("GAME STATE:", gameState);
           if (onRoomUpdate) {
             onRoomUpdate(gameState);
           }
-          console.log("CALLING NAVIGATION");
-
           onStartGame?.(gameState);
 }
       )
       .subscribe((status) => {
-        console.log("SUBSCRIBE STATUS:", status);
+        console.info("SUBSCRIBE STATUS:", status);
 });
 
     return () => {

@@ -1,56 +1,46 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaGamepad } from "react-icons/fa";
-import gameBg from "../assets/images/game_bg.jpg";
-import GameZoneLogo from "../components/brand/GameZoneLogo";
-import SelectField from "../components/ui/SelectField";
-
-const gameOptions = [
-  { label: "Select a game", value: "", path: null },
-  { label: "Tic Tac Toe", value: "Tic Tac Toe", path: "/game-mode" },
-  { label: "Ludo", value: "Ludo", path: "/ludoGame-mode" },
-];
+import { popularGames } from "../data/games";
+import PageShell from "../components/layout/PageShell";
+import CircuitMark from "../components/brand/CircuitMark";
+import GameCarousel from "../components/games/GameCarousel";
+import FeatureStrip from "../components/games/FeatureStrip";
 
 const Landing = () => {
   const navigate = useNavigate();
-  const [selectedGame, setSelectedGame] = useState("");
 
-  const handleSelect = (value) => {
-    setSelectedGame(value);
-
-    const selected = gameOptions.find((option) => option.value === value);
-    if (selected?.path) {
-      navigate(selected.path);
+  const handleSelect = (game) => {
+    if (game.path) {
+      navigate(game.path);
     }
   };
 
   return (
-    <div className="gz-page-shell">
-      <div
-        className="gz-page-shell__bg"
-        style={{ backgroundImage: `url(${gameBg})` }}
-        aria-hidden="true"
-      />
+    <PageShell className="gz-page-shell--dashboard">
+      <div className="gz-dashboard">
+        <header className="flex shrink-0 flex-col items-center gap-2 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex-1 text-center lg:text-left">
+            <p className="text-[11px] font-semibold tracking-[0.22em] text-gz-primary-cyan">
+              CHOOSE YOUR ADVENTURE
+            </p>
+            <h1 className="mt-1 text-xl font-bold text-gz-text sm:text-2xl md:text-3xl xl:text-4xl">
+              Select Game
+            </h1>
+            <div className="gz-divider mx-auto mt-1.5 max-w-[220px] justify-center lg:mx-0">
+              <FaGamepad className="text-gz-primary-cyan" size={14} />
+            </div>
+            <p className="mt-1 hidden text-sm text-gz-text-secondary sm:block">
+              Choose a game to continue
+            </p>
+          </div>
 
-      <div className="gz-select-card">
-        <div className="mb-6 flex flex-col items-center">
-          <GameZoneLogo className="mb-4 h-14 w-14 text-gz-primary-cyan" />
-          <h1 className="text-3xl font-bold text-gz-text sm:text-4xl">Select Game</h1>
-          <p className="mt-2 text-sm text-gz-text-secondary sm:text-base">
-            Choose a game to continue
-          </p>
-        </div>
+          <CircuitMark className="hidden lg:block h-16 w-16 xl:h-20 xl:w-20" />
+        </header>
 
-        <SelectField
-          id="select-game"
-          value={selectedGame}
-          onChange={(e) => handleSelect(e.target.value)}
-          options={gameOptions}
-          leftIcon={<FaGamepad size={16} />}
-          aria-label="Select a game"
-        />
+        <GameCarousel games={popularGames} onSelect={handleSelect} />
+        <FeatureStrip />
       </div>
-    </div>
+    </PageShell>
   );
 };
 

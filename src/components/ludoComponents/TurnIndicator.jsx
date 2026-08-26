@@ -12,9 +12,7 @@ const TurnIndicator = ({ color }) => {
         items-center
         justify-center
       "
-      style={{
-        backgroundColor: color || "white",
-      }}
+      style={{backgroundColor: color || "white"}}
     >
       <div
         className="

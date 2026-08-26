@@ -1,15 +1,23 @@
-import { useState, useRef, useEffect } from "react";
+//Board api integration
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import LudoBoard from "../../components/ludoComponents/LudoBoard";
 import DiceHolder from "../../components/ludoComponents/DiceHolder";
-import { rollDice, makeMove } from "../../services/ludoService.js";
+import { rollDice, makeMove, getBoard } from "../../services/ludoService.js";
 import useGameRealtime from "../../hooks/useGameRealtime";
-import boardData from "../../data/board.json";
 import { useAuth } from "../../context/AuthContext";
+import PlayerCard from "../../components/ludoComponents/PlayerCard";
+import ExitGamePopup from "../../components/ui/ExitGamePopup";
+import useBackExitGuard from "../../hooks/useBackExitGuard";
+import { LuX } from "react-icons/lu";
 
 const LudoGameRoom = () => {
   const { auth } = useAuth();
   const { roomCode } = useParams();
+
+  const [boardData, setBoardData] = useState(null);
+  const [boardLoading, setBoardLoading] = useState(true);
+  const [boardError, setBoardError] = useState(null);
   const [rolling, setRolling] = useState(false);
   const [selectedToken, setSelectedToken] = useState(null);
   const [diceValue, setDiceValue] = useState(null);
@@ -19,22 +27,62 @@ const LudoGameRoom = () => {
   const [status, setStatus] = useState(null);
   const [diceOptions, setDiceOptions] = useState([]);
   const [animationComplete, setAnimationComplete] = useState(true);
+  const [moveInProgress, setMoveInProgress] = useState(false);
+  const [boardScale, setBoardScale] = useState(1);
+  const [showExitPopup, setShowExitPopup] = useState(false);
+  const closeExitPopup = useCallback(() => setShowExitPopup(false), []);
+  const openExitPopup = useCallback(() => setShowExitPopup(true), []);
+
+  useBackExitGuard(openExitPopup);
 
   const previousBoardRef = useRef(null);
   const animatingRef = useRef(false);
   const autoMovingRef = useRef(false);
   const autoMoveKeyRef = useRef(null);
-  const moveInProgressRef = useRef(false);
+  const gameAreaRef = useRef(null);
 
   const currentUserId = auth?.userId;
 
-  //REALTIME GAME UPDATE
+  // Fetch board layout from API
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchBoard = async () => {
+      try {
+        setBoardLoading(true);
+        setBoardError(null);
+
+        const res = await getBoard(roomCode);
+        console.info("get board api", res);
+
+        if (!cancelled) {
+          setBoardData(res.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch board:", error);
+        if (!cancelled) {
+          setBoardError(error.message || "Failed to load board");
+        }
+      } finally {
+        if (!cancelled) 
+          setBoardLoading(false);
+      }
+    };
+
+    if (roomCode) fetchBoard();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [roomCode]);
+
+  // Realtime game update
   useGameRealtime({
     roomCode,
 
     onGameUpdate: async (game) => {
       const board = game.game_state_data.board;
-      console.log("Realtime received:", game);
+      console.info("Realtime received:", game);
 
       setCurrentTurnUserId(game.current_turn_user_id);
       setWinnerUserId(game.winner_user_id);
@@ -66,7 +114,7 @@ const LudoGameRoom = () => {
     if (!animationComplete) return;
 
     // Don't auto move while API call is running
-    if (moveInProgressRef.current) return;
+    if (moveInProgress) return;
 
     if (!isMyTurn) {
       autoMoveKeyRef.current = null;
@@ -81,40 +129,44 @@ const LudoGameRoom = () => {
     }
 
     const move = legalMoves[0];
-
     const moveKey = `${roomCode}-${currentTurnUserId}-${move.tokenId}-${move.dice}`;
 
-    // Already processed this exact move
+    // Already processed exact move
     if (autoMoveKeyRef.current === moveKey) return;
 
     autoMoveKeyRef.current = moveKey;
 
-    (async () => {
+    // Dice animation duration when single token on track
+    const timer = setTimeout(async () => {
       await handleTokenClick(move.tokenId, move.dice);
-    })();
-  }, [legalMoves, playerTurnStage, isMyTurn, currentTurnUserId, roomCode, animationComplete]);
+    }, 1500);
 
-  // Dice position according to player color
-  const dicePositions = {
-    1: {
-      right: "-28%",
-      bottom: "3%",
-    },
+    return () => clearTimeout(timer);
+  }, [legalMoves, playerTurnStage, isMyTurn, currentTurnUserId, roomCode, animationComplete, moveInProgress]);
 
-    2: {
-      left: "-28%",
-      bottom: "3%",
-    },
+  // Gamearena responsiveness
+  useLayoutEffect(() => {
+    const el = gameAreaRef.current;
+    if (!el) return;
 
-    3: {
-      left: "-28%",
-      top: "3%",
-    },
+    const updateScale = (width) => setBoardScale(width / 450);
+    updateScale(el.getBoundingClientRect().width);
 
-    4: {
-      right: "-28%",
-      top: "3%",
-    },
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect?.width;
+      if (width) updateScale(width);
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Player card position according to player color/corner
+  const playerCardPositions = {
+    1: { right: "-34%", bottom: "1%", transformOrigin: "bottom right" },
+    2: { left: "-34%", bottom: "1%", transformOrigin: "bottom left" },
+    3: { left: "-34%", top: "1%", transformOrigin: "top left" },
+    4: { right: "-34%", top: "1%", transformOrigin: "top right" },
   };
 
   // Roll Dice handler
@@ -141,8 +193,8 @@ const LudoGameRoom = () => {
   // Make move api
   const moveToken = async (tokenId, consumedDice) => {
     // Prevent duplicate API calls
-    if (moveInProgressRef.current) return;
-    moveInProgressRef.current = true;
+    if (moveInProgress) return;
+    setMoveInProgress(true);
 
     try {
       await makeMove({
@@ -158,11 +210,11 @@ const LudoGameRoom = () => {
     } catch (error) {
       console.error(error);
     } finally {
-      moveInProgressRef.current = false;
+      setMoveInProgress(false);
     }
   };
 
-  // make move api when token is clicked
+  // Make move api when token is clicked
   const handleTokenClick = async (tokenId, selectedDice = null) => {
     if (currentTurnUserId !== currentUserId) return;
     if (playerTurnStage !== "TOKEN_MOVE") return;
@@ -175,7 +227,7 @@ const LudoGameRoom = () => {
     // Token can move using multiple dice number
     if (tokenMoves.length > 1 && selectedDice === null) {
       setSelectedToken(tokenId);
-      // setDiceOptions(tokenMoves);
+
       const uniqueDiceOptions = tokenMoves.filter(
         (move, index, self) => index === self.findIndex((m) => m.dice === move.dice),
       );
@@ -195,11 +247,12 @@ const LudoGameRoom = () => {
     await moveToken(tokenId, consumedDice);
   };
 
-  // make move api when a number is clicked
+  // Make move api when a number is clicked
   const handleDiceSelection = async (dice) => {
     if (selectedToken === null) return;
     await moveToken(selectedToken, dice);
   };
+
   // Find current player's color
   const currentTurnColorIndex = currentPlayer?.colorIndex;
 
@@ -222,16 +275,14 @@ const LudoGameRoom = () => {
 
         if (!currentToken) continue;
 
-        // FORWARD ANIMATION
+        // Forward Animation
         if (
           currentToken.state === "TRACK" &&
           (latestToken.state === "TRACK" || latestToken.state === "FINISHED") &&
           !latestToken.tokenKilled
         ) {
           const previousLength = currentToken.forwardJourney?.length ?? 0;
-
           const journey = latestToken.forwardJourney ?? [];
-
           const newSteps = journey.slice(previousLength);
 
           for (const cellId of newSteps) {
@@ -251,7 +302,7 @@ const LudoGameRoom = () => {
           currentToken.tokenKilled = latestToken.tokenKilled;
         }
 
-        // TOKEN REACHED HOME
+        // Token Reached Center Home
         if (currentToken.state !== "FINISHED" && latestToken.state === "FINISHED") {
           currentToken.state = "FINISHED";
           currentToken.pathId = latestToken.pathId;
@@ -265,7 +316,7 @@ const LudoGameRoom = () => {
           }));
         }
 
-        // COLLECT KILLED TOKEN
+        // Killed Token Animation
         if (
           currentToken.state === "TRACK" &&
           latestToken.state === "BASE" &&
@@ -279,7 +330,7 @@ const LudoGameRoom = () => {
       }
     }
 
-    // PLAY KILLED TOKEN ANIMATIONS
+    // Player Killed Backward Animation
     for (const { currentToken, latestToken } of killedAnimations) {
       const backwardJourney = latestToken.backwardJourney?.length
         ? latestToken.backwardJourney
@@ -311,7 +362,7 @@ const LudoGameRoom = () => {
       }));
     }
 
-    // FINAL SYNC
+    // Final Sync
     setGameState((prev) => ({
       ...prev,
       board: structuredClone(newBoard),
@@ -320,39 +371,42 @@ const LudoGameRoom = () => {
     animatingRef.current = false;
     setAnimationComplete(true);
   };
-  // if (!boardData) {
-  console.log("currentTurnUserId:", currentTurnUserId);
-  console.log("currentTurnColorIndex:", currentTurnColorIndex);
-  console.log("board players:", board?.players);
-  console.log("currentTurnUserId:", currentTurnUserId);
-  console.log("currentPlayer:", currentPlayer);
-  console.log("currentTurnColorIndex:", currentTurnColorIndex);
+
+  // Guard: don't render board UI until layout is fetched
+  if (boardLoading) {
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
+        <ExitGamePopup open={showExitPopup} onClose={closeExitPopup} />
+        <p className="text-white text-sm sm:text-base">Loading board...</p>
+      </div>
+    );
+  }
+
+  if (boardError || !boardData) {
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
+        <ExitGamePopup open={showExitPopup} onClose={closeExitPopup} />
+        <p className="text-red-400 text-sm sm:text-base">
+          {boardError || "Board not found"}
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div
-      className="
-      min-h-screen
-      w-full
-      bg-gradient-to-br
-      from-black
-      via-gray-900
-      to-black
-      flex
-      items-center
-      justify-center
-      p-2
-      sm:p-4
-      md:p-6
-    "
-    >
-      <div
-        className="
-        flex
-        flex-col
-        items-center
-        gap-4
-        w-full
-      "
+    <div className="min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center p-2 sm:p-4 md:p-6">
+      <button
+        type="button"
+        className="gz-exit-trigger"
+        onClick={() => setShowExitPopup(true)}
+        aria-label="Exit game"
       >
+        <LuX />
+      </button>
+
+      <ExitGamePopup open={showExitPopup} onClose={closeExitPopup} />
+
+      <div className="flex flex-col items-center gap-4 w-full">
         {/* Turn Info */}
         <div className="text-center text-white">
           <h2 className="font-bold text-sm sm:text-base md:text-lg">
@@ -360,130 +414,86 @@ const LudoGameRoom = () => {
           </h2>
 
           <p className="text-xs sm:text-sm break-all">Your User ID: {currentUserId}</p>
+          <p className="text-xs sm:text-sm break-all">Current Turn Player: {currentTurnUserId}</p>
         </div>
 
         {/* Game Area */}
         <div className="relative">
-          {/* Board */}
-          <div
-            className="
-            bg-white/10
-            backdrop-blur-lg
-            border
-            border-white/20
-            rounded-2xl
-            md:rounded-3xl
-            p-2
-            sm:p-4
-          "
-          >
-            <LudoBoard
-              boardData={boardData}
-              gameState={gameState}
-              selectedToken={selectedToken}
-              setSelectedToken={setSelectedToken}
-              handleTokenClick={handleTokenClick}
-              legalMoves={legalMoves}
-              movableTokenIds={movableTokenIds}
-            />
-          </div>
-
-          {/* Dice */}
-          <div className="absolute z-30" style={dicePositions[currentTurnColorIndex]}>
-            <div className="relative">
-              <DiceHolder
-                turnColorIndex={currentTurnColorIndex}
-                diceValue={diceValue ?? 1}
-                rolling={rolling}
-                onRoll={handleRollDice}
-                colors={boardData.metadata.colors}
-                // colors={boardData?.metadata?.colors ?? []}
+          <div ref={gameAreaRef} className="relative w-fit">
+            {/* Board */}
+            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl md:rounded-3xl p-2 sm:p-4 w-fit">
+              <LudoBoard
+                boardData={boardData}
+                gameState={gameState}
+                selectedToken={selectedToken}
+                setSelectedToken={setSelectedToken}
+                handleTokenClick={handleTokenClick}
+                legalMoves={legalMoves}
+                movableTokenIds={movableTokenIds}
+                currentTurnColorIndex={currentTurnColorIndex}
               />
-
-              {diceOptions.length > 0 && (
-                <div
-                  className="
-                  absolute
-                  top-full
-                  left-1/2
-                  -translate-x-1/2
-                  mt-2
-                  flex
-                  flex-wrap
-                  justify-center
-                  gap-2
-                  bg-white
-                  rounded-lg
-                  shadow-lg
-                  p-2
-                  max-w-[180px]
-                  z-50
-                "
-                >
-                  {diceOptions.map((move, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleDiceSelection(move.dice)}
-                      className="
-                      w-8
-                      h-8
-                      sm:w-9
-                      sm:h-9
-                      rounded
-                      bg-yellow-500
-                      hover:bg-yellow-600
-                      font-bold
-                      text-black
-                    "
-                    >
-                      {move.dice}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
+
+            {/* Player Cards and Dice */}
+            {(board?.players ?? []).map((player) => {
+              const isTurnPlayer = player.playerId === currentTurnUserId;
+              const isTopPlayer = player.colorIndex === 3 || player.colorIndex === 4;
+
+              const diceElement = isTurnPlayer && (
+                <DiceHolder
+                  turnColorIndex={currentTurnColorIndex}
+                  diceValue={diceValue ?? 1}
+                  rolling={rolling}
+                  onRoll={handleRollDice}
+                  colors={boardData.metadata.colors}
+                  isCurrentTurn={isMyTurn}
+                />
+              );
+
+              const cardElement = (
+                <PlayerCard
+                  name={`Player ${player.colorIndex}`}
+                  userId={player.playerId}
+                  color={boardData.metadata.colors?.[player.colorIndex]}
+                  currentUserId={currentUserId}
+                  isCurrentTurnPlayer={isTurnPlayer}
+                  isMyTurn={isMyTurn}
+                  playerTurnStage={playerTurnStage}
+                  pendingDice={pendingDice}
+                  diceOptions={diceOptions}
+                  onDiceSelect={handleDiceSelection}
+                  avatarUrl="https://plus.unsplash.com/premium_photo-1739786996022-5ed5b56834e2?q=80&w=2080&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                />
+              );
+
+              return (
+                <div
+                  key={player.playerId}
+                  className="absolute z-20 flex flex-col items-center gap-2"
+                  style={{
+                    ...playerCardPositions[player.colorIndex],
+                    transform: `scale(${boardScale})`,
+                  }}
+                >
+                  {isTopPlayer ? (
+                    <>
+                      {cardElement}
+                      {diceElement}
+                    </>
+                  ) : (
+                    <>
+                      {diceElement}
+                      {cardElement}
+                    </>
+                  )}
+                </div>
+              );
+            })}
           </div>
-
-          {/* Pending Dice */}
-          {pendingDice.length > 0 && (
-            <div
-              className="
-              absolute
-              left-1/2
-              -translate-x-1/2
-              -bottom-12
-              flex
-              gap-2
-            "
-            >
-              {pendingDice.map((dice, index) => (
-                <div
-                  key={index}
-                  className="
-                  w-7
-                  h-7
-                  sm:w-8
-                  sm:h-8
-                  rounded
-                  bg-yellow-500
-                  text-black
-                  flex
-                  items-center
-                  justify-center
-                  font-bold
-                  text-xs
-                "
-                >
-                  {dice}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>
   );
 };
-// };
 
 export default LudoGameRoom;

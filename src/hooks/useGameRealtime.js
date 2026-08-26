@@ -8,7 +8,7 @@ const useGameRealtime = ({ roomCode, onGameUpdate }) => {
     let channel;
 
     const initializeRealtime = async () => {
-      // STEP 1: Fetch current game state
+      // Step 1: Fetch current game state
       const { data, error } = await supabase
         .from("realtime_game_state")
         .select("*")
@@ -18,17 +18,17 @@ const useGameRealtime = ({ roomCode, onGameUpdate }) => {
       if (error) {
         console.error("Failed to fetch game state:", error);
       } else {
-        console.log("Initial Game State:", data);
+        console.info("Initial Game State:", data);
 
         if (onGameUpdate) {
           onGameUpdate(data);
         }
       }
 
-      // STEP 2: Subscribe to realtime updates
+      // Step 2: Subscribe to realtime updates
       channel = supabase
-        .channel(`game-${roomCode}-${Date.now()}`) // useeffect runs this twice hence it shows duplicacy  
-        // .channel(`game-${roomCode}`)  
+      // useeffect duplicacy removal
+        .channel(`game-${roomCode}-${Date.now()}`)  
         .on(
           "postgres_changes",
           {
@@ -38,7 +38,7 @@ const useGameRealtime = ({ roomCode, onGameUpdate }) => {
             filter: `room_code=eq.${roomCode}`,
           },
           (payload) => {
-            console.log("Realtime Update:", payload.new);
+            console.info("Realtime Update:", payload.new);
 
             if (onGameUpdate) {
               onGameUpdate(payload.new);
@@ -46,7 +46,7 @@ const useGameRealtime = ({ roomCode, onGameUpdate }) => {
           }
         )
         .subscribe((status) => {
-          console.log("Realtime status:", status);
+          console.info("Realtime status:", status);
         });
     };
 
