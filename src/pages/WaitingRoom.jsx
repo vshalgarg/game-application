@@ -24,7 +24,7 @@ const WaitingRoom = () => {
     roomCode,
 
     onStartGame: () => {
-      navigate(`/game-room/${roomCode}`);
+      navigate(`/game-room/${roomCode}`, { replace: true });
     },
   });
 

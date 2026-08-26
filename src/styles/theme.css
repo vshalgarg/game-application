@@ -452,4 +452,66 @@
       flex: none;
     }
   }
+
+  .gz-exit-trigger {
+    @apply fixed z-40 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full
+      bg-linear-to-r from-gz-login-from to-gz-login-to shadow-md shadow-gz-login-to/30
+      transition hover:brightness-110 active:scale-[0.99];
+    top: calc(var(--gz-navbar-height) + 0.75rem);
+    right: 1rem;
+  }
+
+  .gz-exit-trigger svg {
+    @apply h-4 w-4 text-white;
+  }
+
+  .gz-exit-overlay {
+    @apply fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm;
+    animation: gzExitFadeIn 0.18s ease-out;
+  }
+
+  .gz-exit-modal {
+    @apply relative w-full max-w-[400px] rounded-gz-card px-6 pt-10 pb-6 text-center;
+    background:
+      linear-gradient(var(--gz-popup-dark), var(--gz-popup-dark)) padding-box,
+      linear-gradient(135deg, var(--gz-primary-cyan), var(--gz-purple-accent)) border-box;
+    border: 1px solid transparent;
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.55),
+      0 0 32px rgb(0 217 232 / 22%),
+      0 0 28px rgb(139 92 246 / 20%);
+    animation: gzExitScaleIn 0.2s ease-out;
+  }
+
+  .gz-exit-modal__close {
+    @apply absolute top-3 right-3 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full
+      border border-white/10 bg-gz-popup transition hover:border-gz-primary-cyan/50 hover:brightness-125;
+  }
+
+  .gz-exit-modal__close svg {
+    @apply h-3.5 w-3.5 text-gz-icon;
+  }
+
+  .gz-exit-modal__icon {
+    @apply mx-auto mb-4 h-14 w-14;
+  }
+
+  .gz-exit-modal__actions {
+    @apply mt-6 grid grid-cols-2 gap-3;
+  }
+
+  .gz-exit-modal__no {
+    @apply flex cursor-pointer flex-col items-center justify-center rounded-xl px-3 py-3
+      transition hover:brightness-110 active:scale-[0.99];
+    background:
+      linear-gradient(var(--gz-popup-dark), var(--gz-popup-dark)) padding-box,
+      linear-gradient(135deg, var(--gz-primary-cyan), var(--gz-purple-accent)) border-box;
+    border: 1px solid transparent;
+  }
+
+  .gz-exit-modal__yes {
+    @apply flex cursor-pointer flex-col items-center justify-center rounded-xl
+      bg-linear-to-r from-gz-login-from to-gz-purple-accent px-3 py-3 text-white
+      shadow-lg shadow-gz-purple-accent/30 transition hover:brightness-110 active:scale-[0.99];
+  }
 }
