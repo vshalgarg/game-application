@@ -1,5 +1,5 @@
 const PlayerCard = ({name, userId, color, avatarUrl, isCurrentTurnPlayer = false, isMyTurn = false,
-  playerTurnStage, pendingDice = [], diceOptions = [], onDiceSelect, currentUserId}) => {
+  playerTurnStage, pendingDice = [], diceOptions = [], onDiceSelect, currentUserId, celebrating = false}) => {
 
   const showDiceSection = isCurrentTurnPlayer && playerTurnStage === "TOKEN_MOVE" && pendingDice.length > 0;
   const isCurrentUser = userId === currentUserId;
@@ -20,6 +20,30 @@ const PlayerCard = ({name, userId, color, avatarUrl, isCurrentTurnPlayer = false
     "
       style={{ borderColor: color }}
     >
+      {celebrating &&
+        [...Array(32)].map((_, i) => {
+          const angle = (360 / 32) * i;
+          const distance = 70 + (i % 4) * 18;
+
+          return (
+            <span
+              key={i}
+              className="celebration-piece"
+              style={{
+                "--angle": `${angle}deg`,
+                "--distance": `${distance}px`,
+                "--delay": `${i * 15}ms`,
+                backgroundColor: [
+                  "#FFD700",
+                  "#FF4081",
+                  "#00E5FF",
+                  "#7CFF6B",
+                  "#FFFFFF",
+                ][i % 5],
+              }}
+            />
+          );
+        })}
       <div className="flex items-center gap-3">
         {/* Avatar */}
         {avatarUrl ? (
@@ -53,32 +77,34 @@ const PlayerCard = ({name, userId, color, avatarUrl, isCurrentTurnPlayer = false
             </span>
           )} */}
 
-          {isMyTurn ? (
-            diceOptions.length > 1 && (
-              <div className="flex flex-nowrap gap-1 bg-grey rounded-lg shadow-lg p-1 max-w-[180px] mt-1">
-                {diceOptions.map((move, index) => (
-                  <button
-                    key={index}
-                    onClick={() => onDiceSelect(move.dice)}
-                    className="w-8 h-8 sm:w-9 sm:h-9 rounded bg-yellow-500 hover:bg-yellow-600 font-bold text-black cursor-pointer"
-                  >
-                    {move.dice}
-                  </button>
-                ))}
-              </div>
-            )
-          ) : (
-            <div className="flex flex-nowrap gap-2 mt-1">
-              {pendingDice.map((dice, index) => (
-                <div
+          <div className="flex flex-nowrap gap-1 bg-grey rounded-lg shadow-lg p-1 max-w-[180px] mt-1">
+            {pendingDice.map((dice, index) => {
+              // Is this dice currently selectable?
+              const isSelectable =
+                isMyTurn &&
+                diceOptions.some((move) => move.dice === dice);
+
+              return (
+                <button
                   key={index}
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-yellow-500 text-black flex items-center justify-center font-bold text-xs cursor-not-allowed"
+                  disabled={!isSelectable}
+                  onClick={() => {
+                    if (isSelectable) {
+                      onDiceSelect(dice);
+                    }
+                  }}
+                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded font-bold text-black transition-all
+                    ${isSelectable
+                        ? "bg-yellow-500 hover:bg-yellow-600 cursor-pointer"
+                        : "bg-yellow-500/60 cursor-not-allowed opacity-70"
+                    }
+                  `}
                 >
                   {dice}
-                </div>
-              ))}
-            </div>
-          )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

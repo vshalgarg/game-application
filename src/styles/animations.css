@@ -125,6 +125,57 @@
     transform: rotateX(-90deg) translateZ(29px);
 }
 
+/* confetti for player */
+.celebration-piece {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 8px;
+  height: 8px;
+
+  border-radius: 2px;
+
+  pointer-events: none;
+
+  transform:
+    translate(-50%, -50%)
+    rotate(var(--angle));
+
+  animation: confettiBurst 1s ease-out forwards;
+  animation-delay: var(--delay);
+
+  box-shadow: 0 0 6px currentColor;
+}
+
+@keyframes confettiBurst {
+  0% {
+    opacity: 1;
+
+    transform:
+      translate(-50%, -50%)
+      rotate(var(--angle))
+      translateX(0)
+      rotate(0deg)
+      scale(1);
+  }
+
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+
+    transform:
+      translate(-50%, -50%)
+      rotate(var(--angle))
+      translateX(var(--distance))
+      rotate(540deg)
+      scale(0.2);
+  }
+}
 @keyframes gzExitFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

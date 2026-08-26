@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const dotPositions = {
   1: [5],
@@ -27,75 +27,109 @@ const faces = [
   { className: "dice-bottom", number: 4 },
 ];
 
-const Dice = ({value = 0, onRoll, rolling, isCurrentTurn,}) => {
+const Dice = ({
+  value = 0,
+  onRoll,
+  rolling,
+  isCurrentTurn,
+}) => {
+  const [cubeRotation, setCubeRotation] = useState(faceRotations[1]);
 
-const [cubeRotation, setCubeRotation] = useState(faceRotations[1]);
-const prevRolling = useRef(rolling);
-const currentRotation = useRef(faceRotations[1]);
+  const [spectatorRolling, setSpectatorRolling] = useState(false);
+  const [displayedValue, setDisplayedValue] = useState(value || 1);
 
-useEffect(() => {
-  const justStoppedRolling = prevRolling.current && !rolling;
-  const target = faceRotations[value] || faceRotations[1];
+  const previousValue = useRef(value);
 
-  if (justStoppedRolling) {
+  const currentRotation = useRef(faceRotations[1]);
+  const prevRolling = useRef(false);
 
-    // Roll from wherever the cube currently is
-    const cur = currentRotation.current;
-    const newRotation = {
-      x: cur.x - (cur.x % 360) + target.x + 720,
-      y: cur.y - (cur.y % 360) + target.y + 720,
-    };
-    currentRotation.current = newRotation;
-    setCubeRotation(newRotation);
-  } else if (!rolling) {
-    // Not rolling and not just finished 
-    currentRotation.current = target;
-    setCubeRotation(target);
-  }
+  // Current player uses backend rolling and others simulate rolling.
+  const actualRolling = isCurrentTurn ? rolling : spectatorRolling;
 
-  // while rolling is true CSS handle animation
-  prevRolling.current = rolling;
-}, [value, rolling]);
+  useEffect(() => {
+    if (isCurrentTurn) {
+      setDisplayedValue(value || 1);
+      previousValue.current = value;
+      return;
+    }
 
-  if (!isCurrentTurn) {
-    return (
-      <div className="relative overflow-hidden w-[58px] h-[58px] rounded-2xl border-2 border-gray-500 bg-gradient-to-br from-white via-gray-100 to-gray-300 shadow-2xl p-1 opacity-80 cursor-not-allowed">
-        <div className="grid h-full w-full grid-cols-3 grid-rows-3">
-          {Array.from({ length: 9 }, (_, index) => {
-            const cell = index + 1;
+    if (previousValue.current === undefined) {
+      previousValue.current = value;
+      return;
+    }
 
-            return (
-              <div
-                key={cell}
-                className="flex items-center justify-center"
-              >
-                {dotPositions[value]?.includes(cell) && (
-                  <div className="w-2.5 h-2.5 rounded-full bg-black" />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
+    if (previousValue.current !== value) {
+      previousValue.current = value;
+
+      setSpectatorRolling(true);
+
+      const timer = setTimeout(() => {
+        setDisplayedValue(value || 1);
+        setSpectatorRolling(false);
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [value, isCurrentTurn]);
+
+  useEffect(() => {
+    const justStoppedRolling =
+      prevRolling.current && !actualRolling;
+
+    const target =
+      faceRotations[displayedValue] || faceRotations[1];
+
+    if (justStoppedRolling) {
+      const cur = currentRotation.current;
+
+      const newRotation = {
+        x: cur.x - (cur.x % 360) + target.x + 720,
+        y: cur.y - (cur.y % 360) + target.y + 720,
+      };
+
+      currentRotation.current = newRotation;
+      setCubeRotation(newRotation);
+    } else if (!actualRolling) {
+      currentRotation.current = target;
+      setCubeRotation(target);
+    }
+
+    prevRolling.current = actualRolling;
+  }, [displayedValue, actualRolling]);
 
   return (
     <div
-      onClick={!rolling ? onRoll : undefined}
-      className={`dice-scene cursor-pointer ${!rolling ? "dice-active" : ""}`}
+      onClick={
+        isCurrentTurn && !actualRolling
+          ? onRoll
+          : undefined
+      }
+      className={`dice-scene ${
+        isCurrentTurn ? "cursor-pointer" : "cursor-not-allowed"
+      } ${
+        isCurrentTurn && !actualRolling
+          ? "dice-active"
+          : ""
+      }`}
     >
-      <div className={`dice-cube ${rolling ? "rolling" : ""}`}
-        style={rolling? undefined
-                : { transform: `rotateX(${cubeRotation.x}deg) rotateY(${cubeRotation.y}deg)` }
+      <div
+        className={`dice-cube ${
+          actualRolling ? "rolling" : ""
+        }`}
+        style={
+          actualRolling
+            ? undefined
+            : {
+                transform: `rotateX(${cubeRotation.x}deg) rotateY(${cubeRotation.y}deg)`,
               }
+        }
       >
         {faces.map(({ className, number }) => (
           <div
             key={number}
             className={`dice-face ${className}`}
           >
-            {!rolling && (
+            {isCurrentTurn && !actualRolling && (
               <div className="dice-shine" />
             )}
 
@@ -123,4 +157,3 @@ useEffect(() => {
 };
 
 export default Dice;
-
