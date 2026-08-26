@@ -28,3 +28,13 @@ export const loginUser = async ({ email, password }) => {
     throw new Error(handleApiError(error));
   }
 };
+
+export const socialLogin = async (payload) => {
+  try {
+    const res = await authApi.post("/login/social", payload);
+    const result = checkLogicalError(res.data);
+    return result;
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};

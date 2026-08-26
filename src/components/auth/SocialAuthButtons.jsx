@@ -1,10 +1,9 @@
-import { FaDiscord, FaGoogle, FaSteam } from "react-icons/fa";
+import { FaGoogle, FaFacebookF } from "react-icons/fa";
 import Button from "../ui/Button";
 
 const providers = [
   { id: "google", label: "Continue with Google", Icon: FaGoogle },
-  { id: "discord", label: "Continue with Discord", Icon: FaDiscord },
-  { id: "steam", label: "Continue with Steam", Icon: FaSteam },
+  { id: "facebook", label: "Continue with facebook", Icon: FaFacebookF },
 ];
 
 const SocialAuthButtons = ({ onSelect }) => {
@@ -16,12 +15,7 @@ const SocialAuthButtons = ({ onSelect }) => {
 
       <div className="flex items-center justify-center gap-4">
         {providers.map(({ id, label, Icon }) => (
-          <Button
-            key={id}
-            variant="social"
-            aria-label={label}
-            onClick={() => onSelect?.(id)}
-          >
+          <Button key={id} variant="social" aria-label={label} onClick={() => onSelect?.(id)}>
             <Icon size={20} />
           </Button>
         ))}
