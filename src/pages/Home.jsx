@@ -25,7 +25,7 @@ const Home = () => {
         matchType: "PVP",
       });
       showSnackbar(res.message, "success");
-      navigate(`/waiting-room/${res.data.roomCode}`);
+      navigate(`/waiting-room/${res.data.roomCode}`, { replace: true });
     } catch (error) {
       console.error("Failed to create room:", error);
       showSnackbar(error.message || "Failed to create room", "error");

@@ -46,7 +46,7 @@ const ComputerRoom = () => {
   }, []);
 
   const handleStartGame = async () => {
-    navigate(`/ludogame-room/${roomCode}`);
+    navigate(`/ludogame-room/${roomCode}`, { replace: true });
   };
 
   return (

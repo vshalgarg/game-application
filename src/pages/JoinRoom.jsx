@@ -26,7 +26,7 @@ const JoinRoom = () => {
         userId: auth?.userId,
       });
       showSnackbar(res.message, "success");
-      navigate(`/waiting-room/${roomCode}`);
+      navigate(`/waiting-room/${roomCode}`, { replace: true });
     } catch (error) {
       showSnackbar(error.message || "Failed to join room.", "error");
       console.error("Failed to join room:", error);
