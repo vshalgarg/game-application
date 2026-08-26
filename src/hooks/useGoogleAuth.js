@@ -5,6 +5,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 export const useGoogleAuth = ({ onSuccess, onError }) => {
   const clientRef = useRef(null);
   const providerRef = useRef(null);
+  const buttonHostRef = useRef(null);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -14,35 +15,51 @@ export const useGoogleAuth = ({ onSuccess, onError }) => {
     }
 
     const initializeGoogle = () => {
-      if (!window.google?.accounts?.oauth2) {
+      if (!window.google?.accounts?.id) {
         return;
       }
 
-      clientRef.current = window.google.accounts.oauth2.initCodeClient({
+      window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         scope: "openid email profile",
         ux_mode: "popup",
-
         callback: (response) => {
           if (response.error) {
             onError?.(response);
             return;
           }
 
-          onSuccess?.(providerRef.current, response.code);
+          onSuccess?.(providerRef.current, response.credential);
         },
       });
 
+      if (!buttonHostRef.current) {
+        const host = document.createElement("div");
+        host.style.position = "fixed";
+        host.style.left = "-9999px";
+        host.style.top = "0";
+        host.setAttribute("aria-hidden", "true");
+        document.body.appendChild(host);
+        buttonHostRef.current = host;
+      }
+
+      buttonHostRef.current.innerHTML = "";
+      window.google.accounts.id.renderButton(buttonHostRef.current, {
+        type: "standard",
+        size: "large",
+      });
+
+      clientRef.current = window.google.accounts.id;
       setIsReady(true);
     };
 
-    if (window.google?.accounts?.oauth2) {
+    if (window.google?.accounts?.id) {
       initializeGoogle();
       return;
     }
 
     const interval = setInterval(() => {
-      if (window.google?.accounts?.oauth2) {
+      if (window.google?.accounts?.id) {
         clearInterval(interval);
         initializeGoogle();
       }
@@ -59,8 +76,18 @@ export const useGoogleAuth = ({ onSuccess, onError }) => {
         });
         return;
       }
+
       providerRef.current = provider;
-      clientRef.current.requestCode();
+
+      const googleButton =
+        buttonHostRef.current?.querySelector("div[role='button']");
+
+      if (googleButton) {
+        googleButton.click();
+        return;
+      }
+
+      clientRef.current.prompt();
     },
     [onError],
   );
