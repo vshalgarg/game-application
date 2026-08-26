@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import LudoBoard from "../../components/ludoComponents/LudoBoard";
 import DiceHolder from "../../components/ludoComponents/DiceHolder";
@@ -7,6 +7,9 @@ import useGameRealtime from "../../hooks/useGameRealtime";
 import { useAuth } from "../../context/AuthContext";
 import PlayerCard from "../../components/ludoComponents/PlayerCard";
 import WinModal from "../../modals/FinalWinner.jsx";
+import ExitGamePopup from "../../components/ui/ExitGamePopup";
+import useBackExitGuard from "../../hooks/useBackExitGuard";
+import { LuX } from "react-icons/lu";
 
 const LudoGameRoom = () => {
   const { auth } = useAuth();
@@ -28,6 +31,11 @@ const LudoGameRoom = () => {
   const [animationComplete, setAnimationComplete] = useState(true);
   const [moveInProgress, setMoveInProgress] = useState(false);
   const [boardScale, setBoardScale] = useState(1);
+  const [showExitPopup, setShowExitPopup] = useState(false);
+  const closeExitPopup = useCallback(() => setShowExitPopup(false), []);
+  const openExitPopup = useCallback(() => setShowExitPopup(true), []);
+
+  useBackExitGuard(openExitPopup);
 
   // for delay in dice roll when all token at base refs
   const previousTurnUserIdRef = useRef(null);
@@ -430,6 +438,7 @@ const LudoGameRoom = () => {
   if (boardLoading) {
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
+        <ExitGamePopup open={showExitPopup} onClose={closeExitPopup} />
         <p className="text-white text-sm sm:text-base">Loading board...</p>
       </div>
     );
@@ -438,6 +447,7 @@ const LudoGameRoom = () => {
   if (boardError || !boardData) {
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
+        <ExitGamePopup open={showExitPopup} onClose={closeExitPopup} />
         <p className="text-red-400 text-sm sm:text-base">
           {boardError || "Board not found"}
         </p>
@@ -447,6 +457,17 @@ const LudoGameRoom = () => {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center p-2 sm:p-4 md:p-6">
+      <button
+        type="button"
+        className="gz-exit-trigger"
+        onClick={() => setShowExitPopup(true)}
+        aria-label="Exit game"
+      >
+        <LuX />
+      </button>
+
+      <ExitGamePopup open={showExitPopup} onClose={closeExitPopup} />
+
       <div className="flex flex-col items-center gap-4 w-full">
         {/* Turn Info */}
         <div className="text-center text-white">

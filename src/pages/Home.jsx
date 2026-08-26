@@ -1,18 +1,21 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaGamepad, FaPlusCircle, FaSignInAlt } from "react-icons/fa";
-import { createRoom } from "../services/roomService";
+import { FaBorderAll, FaGamepad, FaPlusCircle, FaSignInAlt } from "react-icons/fa";
+import { createRoom, joinRoom } from "../services/roomService";
 import { useSnackbar } from "../context/SnackbarContext";
 import { useAuth } from "../context/AuthContext";
 import PageShell from "../components/layout/PageShell";
 import GameZoneLogo from "../components/brand/GameZoneLogo";
 import ModeOption from "../components/ui/ModeOption";
+import TextField from "../components/ui/TextField";
 
 const Home = () => {
   const navigate = useNavigate();
   const { showSnackbar } = useSnackbar();
   const { auth } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [roomCode, setRoomCode] = useState("");
+  const [joining, setJoining] = useState(false);
 
   const handleCreateRoom = async () => {
     if (loading) return;
@@ -25,13 +28,41 @@ const Home = () => {
         matchType: "PVP",
       });
       showSnackbar(res.message, "success");
-      navigate(`/waiting-room/${res.data.roomCode}`);
+      navigate(`/waiting-room/${res.data.roomCode}`, { replace: true });
     } catch (error) {
       console.error("Failed to create room:", error);
       showSnackbar(error.message || "Failed to create room", "error");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleJoinRoom = async () => {
+    if (joining) return;
+    if (!roomCode) {
+      showSnackbar("Please enter room ID", "error");
+      return;
+    }
+    try {
+      setJoining(true);
+      const res = await joinRoom({
+        roomCode,
+        tenantId: "test-1",
+        userId: auth?.userId,
+      });
+      showSnackbar(res.message, "success");
+      navigate(`/waiting-room/${roomCode}`, { replace: true });
+    } catch (error) {
+      showSnackbar(error.message || "Failed to join room.", "error");
+      console.error("Failed to join room:", error);
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  const handleJoinSubmit = (e) => {
+    e.preventDefault();
+    handleJoinRoom();
   };
 
   return (
@@ -64,15 +95,21 @@ const Home = () => {
           <span className="text-xs font-semibold tracking-widest text-gz-text-secondary">OR</span>
         </div>
 
-        {/* Join Room — navigates to dedicated join page */}
-        <div className="flex flex-col gap-2.5">
+        <form onSubmit={handleJoinSubmit} className="flex flex-col gap-2.5">
+          <TextField
+            placeholder="Enter Room ID"
+            value={roomCode}
+            onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+            leftIcon={<FaBorderAll size={14} className="text-gz-primary-cyan" />}
+          />
+
           <ModeOption
             icon={FaSignInAlt}
-            label="Join Room"
+            label={joining ? "Joining..." : "Join Room"}
             tone="purple"
-            onClick={() => navigate("/join-room")}
+            onClick={handleJoinRoom}
           />
-        </div>
+        </form>
       </div>
     </PageShell>
   );

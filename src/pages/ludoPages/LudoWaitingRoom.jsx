@@ -1,15 +1,18 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { FaCopy, FaGamepad, FaRobot, FaUserCircle, FaTrash } from "react-icons/fa";
+import { LuX } from "react-icons/lu";
 import { useSnackbar } from "../../context/SnackbarContext";
 import { useAuth } from "../../context/AuthContext";
 import { startRoom } from "../../services/roomService";
 import { addBot, removePlayer } from "../../services/ludoService";
 import useWaitingRoomRealtime from "../../hooks/useWaitingRoomRealtime";
 import useRoomRealtime from "../../hooks/useRoomRealtime";
+import useBackExitGuard from "../../hooks/useBackExitGuard";
 import PageShell from "../../components/layout/PageShell";
 import GameZoneLogo from "../../components/brand/GameZoneLogo";
 import Button from "../../components/ui/Button";
+import ExitGamePopup from "../../components/ui/ExitGamePopup";
 
 const LudoWaitingRoom = () => {
   const navigate = useNavigate();
@@ -17,7 +20,12 @@ const LudoWaitingRoom = () => {
   const { auth } = useAuth();
   const { roomCode } = useParams();
   const [copied, setCopied] = useState(false);
+  const [showExitPopup, setShowExitPopup] = useState(false);
   const currentUserId = auth?.userId;
+  const closeExitPopup = useCallback(() => setShowExitPopup(false), []);
+  const openExitPopup = useCallback(() => setShowExitPopup(true), []);
+
+  useBackExitGuard(openExitPopup);
 
   const { players } = useWaitingRoomRealtime(roomCode);
   console.info("Players in waiting room", players);
@@ -25,7 +33,7 @@ const LudoWaitingRoom = () => {
   useRoomRealtime({
     roomCode,
     onStartGame: () => {
-      navigate(`/ludogame-room/${roomCode}`);
+      navigate(`/ludogame-room/${roomCode}`, { replace: true });
     },
   });
 
@@ -95,6 +103,25 @@ const LudoWaitingRoom = () => {
 
   return (
     <PageShell>
+      <button
+        type="button"
+        className="gz-exit-trigger"
+        onClick={openExitPopup}
+        aria-label="Exit room"
+      >
+        <LuX />
+      </button>
+
+      <ExitGamePopup
+        open={showExitPopup}
+        onClose={closeExitPopup}
+        title="Exit Room?"
+        message="Are you sure you want to exit?"
+        hint="You will leave the waiting room."
+        stayLabel="Stay in Room"
+        confirmLabel="Exit Room"
+      />
+
       <div className="gz-select-card w-full">
         {/* Header */}
         <div className="mb-5 flex flex-col items-center">

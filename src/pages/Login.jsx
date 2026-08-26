@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEnvelope, FaEye, FaEyeSlash, FaLock } from "react-icons/fa";
-import { loginUser } from "../services/authService";
+import { loginUser, socialLogin } from "../services/authService";
 import { useSnackbar } from "../context/SnackbarContext";
 import { useAuth } from "../context/AuthContext";
+import { useGoogleAuth } from "../hooks/useGoogleAuth";
+import { useFacebookAuth } from "../hooks/useFacebookAuth";
+
 import {
   clearRememberedEmail,
   loadRememberedEmail,
@@ -27,6 +30,28 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(Boolean(savedEmail));
   const [loading, setLoading] = useState(false);
 
+  const handleLoginSuccess = (response) => {
+    const { token, userId, username, roles, permissions, userProfile } = response;
+
+    login({
+      token,
+      userId,
+      username,
+      roles,
+      permissions,
+      userProfile,
+    });
+
+    if (rememberMe) {
+      updateRememberedEmail(email);
+    } else {
+      clearRememberedEmail();
+    }
+
+    showSnackbar(response.message || "Login Successful", "success");
+    navigate("/", { replace: true });
+  };
+
   const handleLogin = async () => {
     if (!email || !password) {
       showSnackbar("Both fields are required", "error");
@@ -36,18 +61,7 @@ const Login = () => {
     try {
       setLoading(true);
       const response = await loginUser({ email, password });
-      const { token, userId, username, roles, permissions, userProfile } = response;
-
-      login({ token, userId, username, roles, permissions, userProfile });
-
-      if (rememberMe) {
-        updateRememberedEmail(email);
-      } else {
-        clearRememberedEmail();
-      }
-
-      showSnackbar(response.message || "Login Successful", "success");
-      navigate("/", { replace: true });
+      handleLoginSuccess(response);
     } catch (error) {
       console.error("Login Error:", error);
       showSnackbar(error.message || "Login Failed.", "error");
@@ -61,7 +75,54 @@ const Login = () => {
     await handleLogin();
   };
 
+  const handleSocialSuccess = async (provider, credential) => {
+    try {
+      const payload = {
+        provider,
+        credential,
+      };
+
+      const response = await socialLogin(payload);
+      handleLoginSuccess(response);
+    } catch (error) {
+      console.error(`${provider} Login Error:`, error);
+      showSnackbar(`${provider} login failed.`, "error");
+    }
+  };
+
+  const handleGoogleError = (error) => {
+    console.error("Google Login Error:", error);
+    showSnackbar("Google login failed.", "error");
+  };
+
+  const handleFacebookError = (error) => {
+    console.error("Facebook Login Error:", error);
+
+    if (error?.error === "facebook_login_cancelled") {
+      return;
+    }
+
+    showSnackbar("Facebook login failed.", "error");
+  };
+
+  const { loginWithGoogle } = useGoogleAuth({
+    onSuccess: handleSocialSuccess,
+    onError: handleGoogleError,
+  });
+
+  const { loginWithFacebook, isReady: isFacebookReady } = useFacebookAuth({
+    onSuccess: handleSocialSuccess,
+    onError: handleFacebookError,
+  });
+
   const handleSocialSelect = (provider) => {
+    if (provider === "google") {
+      loginWithGoogle(provider);
+      return;
+    } else if (provider === "facebook") {
+      loginWithFacebook(provider);
+      return;
+    }
     showSnackbar(`${provider} login coming soon`, "info");
   };
 

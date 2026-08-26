@@ -28,7 +28,7 @@ const LudoCreateJoinRoom = () => {
         gameType: "LUDO",
       });
       showSnackbar(res.message, "success");
-      navigate(`/ludowaiting-room/${res.data.roomCode}`);
+      navigate(`/ludowaiting-room/${res.data.roomCode}`, { replace: true });
     } catch (error) {
       console.error("Failed to create room:", error);
       showSnackbar(error.message || "Failed to create room", "error");
@@ -52,7 +52,7 @@ const LudoCreateJoinRoom = () => {
 
       showSnackbar(res.message, "success");
 
-      navigate(`/ludowaiting-room/${roomCode}`);
+      navigate(`/ludowaiting-room/${roomCode}`, { replace: true });
     } catch (error) {
       console.error("Failed to join room:", error);
       showSnackbar(error.res?.message || "Failed to join room.", "error");
