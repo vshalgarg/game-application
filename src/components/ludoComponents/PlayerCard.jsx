@@ -77,32 +77,34 @@ const PlayerCard = ({name, userId, color, avatarUrl, isCurrentTurnPlayer = false
             </span>
           )} */}
 
-          {isMyTurn ? (
-            diceOptions.length > 1 && (
-              <div className="flex flex-nowrap gap-1 bg-grey rounded-lg shadow-lg p-1 max-w-[180px] mt-1">
-                {diceOptions.map((move, index) => (
-                  <button
-                    key={index}
-                    onClick={() => onDiceSelect(move.dice)}
-                    className="w-8 h-8 sm:w-9 sm:h-9 rounded bg-yellow-500 hover:bg-yellow-600 font-bold text-black cursor-pointer"
-                  >
-                    {move.dice}
-                  </button>
-                ))}
-              </div>
-            )
-          ) : (
-            <div className="flex flex-nowrap gap-2 mt-1">
-              {pendingDice.map((dice, index) => (
-                <div
+          <div className="flex flex-nowrap gap-1 bg-grey rounded-lg shadow-lg p-1 max-w-[180px] mt-1">
+            {pendingDice.map((dice, index) => {
+              // Is this dice currently selectable?
+              const isSelectable =
+                isMyTurn &&
+                diceOptions.some((move) => move.dice === dice);
+
+              return (
+                <button
                   key={index}
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-yellow-500 text-black flex items-center justify-center font-bold text-xs cursor-not-allowed"
+                  disabled={!isSelectable}
+                  onClick={() => {
+                    if (isSelectable) {
+                      onDiceSelect(dice);
+                    }
+                  }}
+                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded font-bold text-black transition-all
+                    ${isSelectable
+                        ? "bg-yellow-500 hover:bg-yellow-600 cursor-pointer"
+                        : "bg-yellow-500/60 cursor-not-allowed opacity-70"
+                    }
+                  `}
                 >
                   {dice}
-                </div>
-              ))}
-            </div>
-          )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
