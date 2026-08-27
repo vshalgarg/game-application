@@ -86,7 +86,7 @@ const WaitingRoom = () => {
   };
 
   const handleAddBot = async (difficulty) => {
-    if (addingBot) return;
+    if (addingBot || players.length >= 2) return;
     setSelectedDifficulty(difficulty);
     try {
       setAddingBot(true);
@@ -128,6 +128,8 @@ const WaitingRoom = () => {
       ? "Waiting for players to join..."
       : "All players joined. Ready to start!"
     : "Waiting for the host to start the game...";
+
+  const isRoomFull = players.length >= 2;
 
   return (
     <PageShell>
@@ -233,13 +235,23 @@ const WaitingRoom = () => {
         </div>
 
         {isHost && (
-          <div className="mb-4 rounded-xl border border-dashed border-gz-primary-cyan/60 px-3 py-3">
+          <div
+            className={`mb-4 rounded-xl border border-dashed px-3 py-3 ${
+              isRoomFull
+                ? "border-gz-input-border/50 opacity-45"
+                : "border-gz-primary-cyan/60"
+            }`}
+          >
             <div className="mb-3 flex flex-col items-center">
-              <div className="flex items-center gap-2 text-gz-primary-cyan">
+              <div
+                className={`flex items-center gap-2 ${isRoomFull ? "text-gz-text-secondary" : "text-gz-primary-cyan"}`}
+              >
                 <FaRobot size={16} />
                 <span className="text-sm font-bold">Add Bot</span>
               </div>
-              <p className="mt-1 text-xs text-gz-text-secondary">Choose bot difficulty</p>
+              <p className="mt-1 text-xs text-gz-text-secondary">
+                {isRoomFull ? "Room is full" : "Choose bot difficulty"}
+              </p>
             </div>
             <div className="grid grid-cols-3 gap-2">
               {BOT_DIFFICULTIES.map((option) => {
@@ -248,9 +260,9 @@ const WaitingRoom = () => {
                   <button
                     key={option.id}
                     type="button"
-                    disabled={addingBot}
+                    disabled={addingBot || isRoomFull}
                     onClick={() => handleAddBot(option.id)}
-                    className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${option.tone} ${isSelected ? option.selected : ""}`}
+                    className={`flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${isRoomFull ? "" : "cursor-pointer"} ${option.tone} ${isSelected ? option.selected : ""}`}
                   >
                     <FaSignal size={12} />
                     {option.label}

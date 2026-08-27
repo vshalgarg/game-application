@@ -564,7 +564,8 @@
   }
 
   .gz-ttt-mark--cell {
-    font-size: clamp(1.65rem, 5.2dvh, 2.15rem);
+    font-size: 72cqmin;
+    line-height: 1;
   }
 
   .gz-ttt-versus {
@@ -589,6 +590,7 @@
   .gz-ttt-cell {
     @apply flex aspect-square w-full items-center justify-center rounded-xl
       font-extrabold transition duration-200;
+    container-type: size;
     border: 1px solid rgb(48 107 228 / 45%);
     background: rgb(32 55 87 / 42%);
     box-shadow: inset 0 0 0 1px rgb(255 255 255 / 3%);
