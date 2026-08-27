@@ -28,7 +28,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(Boolean(savedEmail));
-  const [loading, setLoading] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
 
   const handleLoginSuccess = (response) => {
     const { token, userId, username, roles, permissions, userProfile } = response;
@@ -59,14 +59,14 @@ const Login = () => {
     }
 
     try {
-      setLoading(true);
+      setLoginLoading(true);
       const response = await loginUser({ email, password });
       handleLoginSuccess(response);
     } catch (error) {
       console.error("Login Error:", error);
       showSnackbar(error.message || "Login Failed.", "error");
     } finally {
-      setLoading(false);
+      setLoginLoading(false);
     }
   };
 
@@ -87,17 +87,20 @@ const Login = () => {
     } catch (error) {
       console.error(`${provider} Login Error:`, error);
       showSnackbar(`${provider} login failed.`, "error");
+    } finally {
+      setLoginLoading(false);
     }
   };
 
   const handleGoogleError = (error) => {
     console.error("Google Login Error:", error);
+    setLoginLoading(false);
     showSnackbar("Google login failed.", "error");
   };
 
   const handleFacebookError = (error) => {
     console.error("Facebook Login Error:", error);
-
+    setLoginLoading(false);
     if (error?.error === "facebook_login_cancelled") {
       return;
     }
@@ -116,10 +119,13 @@ const Login = () => {
   });
 
   const handleSocialSelect = (provider) => {
+    if (loginLoading) return;
     if (provider === "google") {
-      loginWithGoogle(provider);
+      setLoginLoading(true);
+      loginWithGoogle();
       return;
     } else if (provider === "facebook") {
+      setLoginLoading(true);
       loginWithFacebook(provider);
       return;
     }
@@ -202,12 +208,12 @@ const Login = () => {
             </button>
           </div>
 
-          <Button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+          <Button type="submit" disabled={loginLoading}>
+            {loginLoading ? "Logging in..." : "Login"}
           </Button>
         </form>
 
-        <SocialAuthButtons onSelect={handleSocialSelect} />
+        <SocialAuthButtons onSelect={handleSocialSelect} disabled={loginLoading} />
       </AuthCard>
     </AuthLayout>
   );

@@ -4,7 +4,6 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 export const useGoogleAuth = ({ onSuccess, onError }) => {
   const clientRef = useRef(null);
-  const providerRef = useRef(null);
   const buttonHostRef = useRef(null);
   const [isReady, setIsReady] = useState(false);
 
@@ -29,7 +28,7 @@ export const useGoogleAuth = ({ onSuccess, onError }) => {
             return;
           }
 
-          onSuccess?.(providerRef.current, response.credential);
+          onSuccess?.("google", response.credential);
         },
       });
 
@@ -69,15 +68,13 @@ export const useGoogleAuth = ({ onSuccess, onError }) => {
   }, [onSuccess, onError]);
 
   const loginWithGoogle = useCallback(
-    (provider) => {
+    () => {
       if (!clientRef.current) {
         onError?.({
           error: "google_not_ready",
         });
         return;
       }
-
-      providerRef.current = provider;
 
       const googleButton =
         buttonHostRef.current?.querySelector("div[role='button']");
