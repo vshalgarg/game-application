@@ -10,13 +10,9 @@ import java.util.List;
 public class Metadata {
 
     private String boardName;
-
     private BoardSize boardSize;
-
     private List<String> colors;
-
     private Integer maxPlayers;
-
     private Integer tokensPerPlayer;
 
 }
