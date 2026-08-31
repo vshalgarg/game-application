@@ -65,7 +65,7 @@ const LudoWaitingRoom = () => {
       const result = await addBot({
         roomCode,
         hostUserId: currentUserId,
-        botDifficulty: "EASY",
+        botDifficulty: "HARD",
       });
       showSnackbar(result.message, "success");
     } catch (error) {
