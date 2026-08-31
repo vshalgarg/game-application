@@ -14,7 +14,6 @@ public class SupabaseProperties {
 
     private String url;
     private String apiKey;
-
     private Tables tables;
 
     @Getter
