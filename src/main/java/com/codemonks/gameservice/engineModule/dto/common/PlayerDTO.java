@@ -15,4 +15,5 @@ public class PlayerDTO {
     private String side;
     private Boolean isBot;
     private BotDifficultyEnum botDifficulty;
+    private Integer consecutiveSixCount;
 }
