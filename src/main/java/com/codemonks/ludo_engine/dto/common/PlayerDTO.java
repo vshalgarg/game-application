@@ -11,7 +11,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PlayerDTO {
-
     private Long playerId;
     private Integer colorIndex;
     private List<TokenDTO> tokens;
@@ -20,4 +19,5 @@ public class PlayerDTO {
     private BotDifficultyEnum botDifficulty;
     private Boolean pendingExtraTurn;
     private Boolean hasFinished;
+    private Integer consecutiveSixCount;
 }

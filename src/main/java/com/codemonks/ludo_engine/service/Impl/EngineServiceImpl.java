@@ -189,7 +189,6 @@ public class EngineServiceImpl implements EngineService {
             events.add(eventService.createEvent(EventTypeEnum.TOKEN_REACHED_HOME,
                             "Player " + request.getUserId() + " reached home"));
         }
-
         PlayerDTO moverPlayer = null;
 
         for (PlayerDTO player : updatedGameState.getPlayers()) {
@@ -199,7 +198,12 @@ public class EngineServiceImpl implements EngineService {
             }
         }
 
+        if (moverPlayer != null) {
+            moverPlayer.setConsecutiveSixCount(0);
+        }
+
         boolean allTokensFinished = moverPlayer != null
+
                 && moverPlayer.getTokens().stream()
                 .allMatch(token -> token.getState() == TokenStateEnum.FINISHED);
         if (moverPlayer != null
@@ -439,51 +443,46 @@ public class EngineServiceImpl implements EngineService {
         int diceNumber = ThreadLocalRandom.current().nextInt(1, 7);
         log.info("[DICE_GENERATED] DiceNumber:{}", diceNumber);
 
+        int consecutiveSixCount = currentPlayer.getConsecutiveSixCount() == null
+                ? 0
+                : currentPlayer.getConsecutiveSixCount();
+
+        if (diceNumber == 6) {
+            consecutiveSixCount++;
+        } else {
+            consecutiveSixCount = 0;
+        }
+        currentPlayer.setConsecutiveSixCount(consecutiveSixCount);
 
         gameState.setLastDice(diceNumber);
         gameState.setLastDicePlayerId(request.getPlayerId());
 
         currentPlayer.getPendingDice().add(diceNumber);
         log.info(
-                "[DICE_BUFFER] Player:{} PendingDice:{}",
+                "[DICE_BUFFER] Player:{} PendingDice:{} ConsecutiveSixCount:{}",
                 request.getPlayerId(),
-                currentPlayer.getPendingDice()
+                currentPlayer.getPendingDice(),
+                consecutiveSixCount
         );
         List<Integer> pendingDice = currentPlayer.getPendingDice();
         boolean autoSkipHandled = false;
 
         boolean tripleSixForfeited = false;
 
-        // ── Triple 6 Check
-        if (pendingDice.size() >= 3) {
-            int size = pendingDice.size();
-            boolean tripleSix = pendingDice.get(size - 1) == 6
-                    && pendingDice.get(size - 2) == 6
-                    && pendingDice.get(size - 3) == 6;
+        if (consecutiveSixCount >= 3) {
 
-            if (tripleSix) {
+            tripleSixForfeited = true;
+            currentPlayer.getPendingDice().clear();
+            currentPlayer.setConsecutiveSixCount(0);
 
-                pendingDice.remove(size - 1);
-                pendingDice.remove(size - 2);
-                pendingDice.remove(size - 3);
-                tripleSixForfeited = true;
+            log.info("[TRIPLE_6_VOIDED] Player:{} rolled three consecutive sixes — entire pending buffer discarded.",
+                    request.getPlayerId());
 
-                log.info("[TRIPLE_6_VOIDED] Player:{} discarded last 3 sixes. Remaining PendingDice:{}",
-                        request.getPlayerId(), pendingDice);
+            gameState.setPlayerTurnStage(PlayerTurnStageEnum.ROLL_DICE);
+            gameState = turnRotationService.updateTurn(gameState, request.getPlayerId(), false);
 
-                if (pendingDice.isEmpty()) {
-
-                    gameState.setPlayerTurnStage(PlayerTurnStageEnum.ROLL_DICE);
-                    turnRotationService.updateTurn(gameState, request.getPlayerId(), false);
-                    log.info("[TRIPLE_6] Turn Forfeited (no dice left). PlayerId:{} | Next:{}",
-                            request.getPlayerId(), gameState.getCurrentTurnPlayerId());
-                } else {
-                    // Prior pending value(s) abhi bhi usable — turn retain
-                    gameState.setPlayerTurnStage(PlayerTurnStageEnum.TOKEN_MOVE);
-                    log.info("[TRIPLE_6] Prior pending dice retained. PlayerId:{} | Usable:{}",
-                            request.getPlayerId(), pendingDice);
-                }
-            }
+            log.info("[TRIPLE_6] Turn Forfeited. PlayerId:{} | Next:{}",
+                    request.getPlayerId(), gameState.getCurrentTurnPlayerId());
         }
 
         if (!tripleSixForfeited) {
