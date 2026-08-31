@@ -1,4 +1,4 @@
-const HighlightLayer = ({ cells, metadata, currentTurnColorIndex }) => {
+const HighlightLayer = ({ cells, metadata, currentTurnColorIndex, isMyTurn }) => {
   const { columns, rows } = metadata.boardSize;
   const colors = metadata.colors ?? [];
 
@@ -7,23 +7,25 @@ const HighlightLayer = ({ cells, metadata, currentTurnColorIndex }) => {
     (cell) => cell.type === null && cell.colorIndex != null && cell.colorIndex !== 0
   );
 
-  if (allHighlighted.length === 0) return null;
+  if (allHighlighted.length === 0) 
+    return null;
 
   return (
     <div className="absolute inset-0 pointer-events-none">
       {allHighlighted.map((cell) => {
-        const isCurrentTurn = cell.colorIndex === currentTurnColorIndex;
+        const shouldAnimate = isMyTurn && cell.colorIndex === currentTurnColorIndex;
 
         return (
           <div
             key={cell.cellId}
-            className={`absolute ${isCurrentTurn ? "current-turn-glow" : ""}`}
+            className={`absolute ${shouldAnimate ? "current-turn-glow" : ""}`}
             style={{
               left: `${(cell.col / columns) * 100}%`,
               top: `${(cell.row / rows) * 100}%`,
               width: `${(1 / columns) * 100}%`,
               height: `${(1 / rows) * 100}%`,
               backgroundColor: colors[cell.colorIndex],
+             
             }}
           />
         );
