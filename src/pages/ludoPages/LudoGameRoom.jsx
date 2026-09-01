@@ -42,10 +42,6 @@ const LudoGameRoom = () => {
   const previousPlayerTurnStageRef = useRef(null);
   const turnTransitionTimeoutRef = useRef(null);
 
-  // for gating the dice reveal to the true rolled value
-  const rollStartTimeRef = useRef(null);
-  const MIN_ROLL_DURATION = 800;
-
   // for winning players confetti
   const [celebratingPlayers, setCelebratingPlayers] = useState([]);
   const previousFinishedRef = useRef({});
@@ -91,24 +87,6 @@ const LudoGameRoom = () => {
     };
   }, [roomCode]);
 
-  // reveals a dice value waiting out the minimum spin time 
-  const revealDiceValue = useCallback((value, afterReveal) => {
-    if (rollStartTimeRef.current !== null) {
-      const elapsed = Date.now() - rollStartTimeRef.current;
-      const remaining = Math.max(MIN_ROLL_DURATION - elapsed, 0);
-      rollStartTimeRef.current = null;
-
-      setTimeout(() => {
-        setDiceValue(value);
-        setRolling(false);
-        afterReveal?.();
-      }, remaining);
-    } else {
-      setDiceValue(value);
-      afterReveal?.();
-    }
-  }, []);
-
   // Realtime game update
   useGameRealtime({
     roomCode,
@@ -129,6 +107,7 @@ const LudoGameRoom = () => {
       const newTurnUserId = game.current_turn_user_id;
       const newDiceValue = board.lastDice;
       const newPlayerTurnStage = board.playerTurnStage;
+
       const rollerId = previousTurnUserIdRef.current;
       const previousStage = previousPlayerTurnStageRef.current;
       const turnChanged = rollerId !== null && newTurnUserId !== rollerId;
@@ -143,15 +122,15 @@ const LudoGameRoom = () => {
 
       if (isAutoSkipAfterRoll) {
 
-        // the current player sees their rolled number first then the turn switches
-        revealDiceValue(newDiceValue, () => {
-          turnTransitionTimeoutRef.current = setTimeout(() => {
-            setCurrentTurnUserId(newTurnUserId);
-          }, 2000);
-        });
+        // the current player see their rolled number 
+        setDiceValue(newDiceValue);
+
+        turnTransitionTimeoutRef.current = setTimeout(() => {
+          setCurrentTurnUserId(newTurnUserId);
+        }, 2000); 
       } else {
         setCurrentTurnUserId(newTurnUserId);
-        revealDiceValue(newDiceValue);
+        setDiceValue(newDiceValue);
       }
 
       setWinnerUserId(game.winner_user_id);
@@ -243,20 +222,24 @@ const LudoGameRoom = () => {
   };
 
   // Roll Dice handler
-  const handleRollDice = () => {
+  const handleRollDice = async () => {
     if (!canRoll) return;
 
-    setRolling(true);
-    rollStartTimeRef.current = Date.now();
+    try {
+      setRolling(true);
 
-    rollDice({
-      roomCode,
-      userId: currentUserId,
-    }).catch((error) => {
+      await rollDice({
+        roomCode,
+        userId: currentUserId,
+      });
+
+      setTimeout(() => {
+        setRolling(false);
+      }, 800);
+    } catch (error) {
       console.error(error);
       setRolling(false);
-      rollStartTimeRef.current = null;
-    });
+    }
   };
 
   // Make move api
