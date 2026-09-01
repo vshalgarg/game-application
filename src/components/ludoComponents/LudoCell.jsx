@@ -1,15 +1,9 @@
-const LudoCell = ({ type, color, arrowDirection, arrowColor }) => {
+const LudoCell = ({ type, color, arrowDirection, arrowColor, hasToken = false }) => {
   const renderSymbol = () => {
     switch (type) {
       case "SC":
-        return (
-          <span className="text-gray-600 text-xs font-bold">
-            ★
-          </span>
-        );
-
       case "SS":
-        return (
+        return hasToken ? null : (
           <span className="text-gray-600 text-xs font-bold">
             ★
           </span>
@@ -19,7 +13,7 @@ const LudoCell = ({ type, color, arrowDirection, arrowColor }) => {
         return 
 
       case "GE":
-        return (
+        return  hasToken ? null : (
           <span className="text-xl leading-none select-none"
             style={{ color: arrowColor }}
           >
@@ -56,3 +50,4 @@ const LudoCell = ({ type, color, arrowDirection, arrowColor }) => {
 };
 
 export default LudoCell;
+

@@ -470,14 +470,14 @@ const LudoGameRoom = () => {
 
       <div className="flex flex-col items-center gap-4 w-full">
         {/* Turn Info */}
-        <div className="text-center text-white">
+        {/* <div className="text-center text-white">
           <h2 className="font-bold text-sm sm:text-base md:text-lg">
             {isMyTurn ? "Your Turn" : "Other Player's Turn"}
-          </h2>
+          </h2> */}
 
-          <p className="text-xs sm:text-sm break-all">Your User ID: {currentUserId}</p>
-          <p className="text-xs sm:text-sm break-all">Current Turn Player: {currentTurnUserId}</p>
-        </div>
+          {/* <p className="text-xs sm:text-sm break-all">Your User ID: {currentUserId}</p>
+          <p className="text-xs sm:text-sm break-all">Current Turn Player: {currentTurnUserId}</p> */}
+        {/* </div> */}
 
         {/* Game Area */}
         <div className="relative">
@@ -493,6 +493,7 @@ const LudoGameRoom = () => {
                 legalMoves={legalMoves}
                 movableTokenIds={movableTokenIds}
                 currentTurnColorIndex={currentTurnColorIndex}
+                isMyTurn={isMyTurn}
               />
             </div>
 

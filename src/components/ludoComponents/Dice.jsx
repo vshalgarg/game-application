@@ -27,19 +27,12 @@ const faces = [
   { className: "dice-bottom", number: 4 },
 ];
 
-const Dice = ({
-  value = 0,
-  onRoll,
-  rolling,
-  isCurrentTurn,
-}) => {
+const Dice = ({ value = 0, onRoll, rolling, isCurrentTurn }) => {
   const [cubeRotation, setCubeRotation] = useState(faceRotations[1]);
-
   const [spectatorRolling, setSpectatorRolling] = useState(false);
   const [displayedValue, setDisplayedValue] = useState(value || 1);
 
   const previousValue = useRef(value);
-
   const currentRotation = useRef(faceRotations[1]);
   const prevRolling = useRef(false);
 
@@ -73,11 +66,9 @@ const Dice = ({
   }, [value, isCurrentTurn]);
 
   useEffect(() => {
-    const justStoppedRolling =
-      prevRolling.current && !actualRolling;
 
-    const target =
-      faceRotations[displayedValue] || faceRotations[1];
+    const justStoppedRolling = prevRolling.current && !actualRolling;
+    const target = faceRotations[displayedValue] || faceRotations[1];
 
     if (justStoppedRolling) {
       const cur = currentRotation.current;
@@ -99,29 +90,20 @@ const Dice = ({
 
   return (
     <div
-      onClick={
-        isCurrentTurn && !actualRolling
-          ? onRoll
-          : undefined
-      }
+      onClick={ isCurrentTurn && !actualRolling ? onRoll : undefined}
       className={`dice-scene ${
         isCurrentTurn ? "cursor-pointer" : "cursor-not-allowed"
       } ${
         isCurrentTurn && !actualRolling
           ? "dice-active"
           : ""
-      }`}
+        }`
+      }
     >
       <div
-        className={`dice-cube ${
-          actualRolling ? "rolling" : ""
-        }`}
-        style={
-          actualRolling
-            ? undefined
-            : {
-                transform: `rotateX(${cubeRotation.x}deg) rotateY(${cubeRotation.y}deg)`,
-              }
+        className={`dice-cube ${actualRolling ? "rolling" : ""}`}
+        style={actualRolling ? undefined : 
+          {transform: `rotateX(${cubeRotation.x}deg) rotateY(${cubeRotation.y}deg)`,}
         }
       >
         {faces.map(({ className, number }) => (

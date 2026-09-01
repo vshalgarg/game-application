@@ -6,18 +6,7 @@ const PlayerCard = ({name, userId, color, avatarUrl, isCurrentTurnPlayer = false
 
   return (
     <div
-      className="
-      flex
-      flex-col
-      gap-2
-      bg-white/5
-      backdrop-blur-md
-      border
-      rounded-xl
-      px-1
-      py-2
-      w-35
-    "
+      className="flex flex-col gap-2 bg-white/5 backdrop-blur-md border rounded-xl px-1 py-2 w-35"
       style={{ borderColor: color }}
     >
       {celebrating &&
@@ -45,6 +34,7 @@ const PlayerCard = ({name, userId, color, avatarUrl, isCurrentTurnPlayer = false
           );
         })}
       <div className="flex items-center gap-3">
+
         {/* Avatar */}
         {avatarUrl ? (
           <img
@@ -80,9 +70,8 @@ const PlayerCard = ({name, userId, color, avatarUrl, isCurrentTurnPlayer = false
           <div className="flex flex-nowrap gap-1 bg-grey rounded-lg shadow-lg p-1 max-w-[180px] mt-1">
             {pendingDice.map((dice, index) => {
               // Is this dice currently selectable?
-              const isSelectable =
-                isMyTurn &&
-                diceOptions.some((move) => move.dice === dice);
+              const isSelectable = isMyTurn && 
+              diceOptions.some((move) => move.dice === dice);
 
               return (
                 <button

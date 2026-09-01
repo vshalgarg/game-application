@@ -30,7 +30,7 @@ const getStackScale = (count) => {
   return { x: 0.5, y: 0.65 };
 };
 
-const LudoBoard = ({boardData, gameState, selectedToken, setSelectedToken, handleTokenClick, legalMoves, movableTokenIds, currentTurnColorIndex}) => {
+const LudoBoard = ({boardData, gameState, selectedToken, setSelectedToken, handleTokenClick, legalMoves, movableTokenIds, currentTurnColorIndex, isMyTurn}) => {
   const boardRef = useRef(null);
   const [scaleFactor, setScaleFactor] = useState(1);
 
@@ -143,6 +143,7 @@ const LudoBoard = ({boardData, gameState, selectedToken, setSelectedToken, handl
                 arrowColor={
                   cell.arrowColorIndex != null ? colors[cell.arrowColorIndex] : undefined
                 }
+                hasToken={tokensToRender.length > 0}
               />
 
               {tokensToRender.length > 0 && (
@@ -199,6 +200,7 @@ const LudoBoard = ({boardData, gameState, selectedToken, setSelectedToken, handl
           cells={cells}
           metadata={metadata}
           currentTurnColorIndex={currentTurnColorIndex}
+           isMyTurn={isMyTurn}
         />
       </div>
 
