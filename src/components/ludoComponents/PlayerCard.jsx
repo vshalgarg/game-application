@@ -1,7 +1,7 @@
 const PlayerCard = ({name, userId, color, avatarUrl, isCurrentTurnPlayer = false, isMyTurn = false,
-  playerTurnStage, pendingDice = [], diceOptions = [], onDiceSelect, currentUserId, celebrating = false}) => {
+  playerTurnStage, pendingDice = [], diceOptions = [], onDiceSelect, currentUserId, celebrating = false, showPendingDice = false, }) => {
 
-  const showDiceSection = isCurrentTurnPlayer && playerTurnStage === "TOKEN_MOVE" && pendingDice.length > 0;
+  const showDiceSection = showPendingDice && isCurrentTurnPlayer && playerTurnStage === "TOKEN_MOVE" && pendingDice.length > 0;
   const isCurrentUser = userId === currentUserId;
 
   return (

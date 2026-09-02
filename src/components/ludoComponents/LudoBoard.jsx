@@ -30,7 +30,7 @@ const getStackScale = (count) => {
   return { x: 0.5, y: 0.65 };
 };
 
-const LudoBoard = ({boardData, gameState, selectedToken, setSelectedToken, handleTokenClick, legalMoves, movableTokenIds, currentTurnColorIndex, isMyTurn}) => {
+const LudoBoard = ({boardData, gameState, selectedToken, setSelectedToken, handleTokenClick, legalMoves, movableTokenIds, currentTurnColorIndex, isMyTurn, showMovableTokens,}) => {
   const boardRef = useRef(null);
   const [scaleFactor, setScaleFactor] = useState(1);
 
@@ -154,7 +154,7 @@ const LudoBoard = ({boardData, gameState, selectedToken, setSelectedToken, handl
                     const scale = getStackScale(count);
 
                     return tokensToRender.map((tokenData, index) => {
-                      const isMovable = movableTokenIds.includes(
+                      const isMovable = showMovableTokens && movableTokenIds.includes(
                         tokenData.token.tokenId
                       );
                       const isOverlapping = count > 1;

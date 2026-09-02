@@ -32,6 +32,8 @@ const LudoGameRoom = () => {
   const [moveInProgress, setMoveInProgress] = useState(false);
   const [boardScale, setBoardScale] = useState(1);
   const [showExitPopup, setShowExitPopup] = useState(false);
+  const [showPendingDice, setShowPendingDice] = useState(false);
+  const [showMovableTokens, setShowMovableTokens] = useState(false);
   const closeExitPopup = useCallback(() => setShowExitPopup(false), []);
   const openExitPopup = useCallback(() => setShowExitPopup(true), []);
 
@@ -214,18 +216,28 @@ const LudoGameRoom = () => {
   }, []);
 
   // Player card position according to player color/corner
-  const playerCardPositions = {
-    1: { right: "-34%", bottom: "1%", transformOrigin: "bottom right" },
-    2: { left: "-34%", bottom: "1%", transformOrigin: "bottom left" },
-    3: { left: "-34%", top: "1%", transformOrigin: "top left" },
-    4: { right: "-34%", top: "1%", transformOrigin: "top right" },
-  };
+  // const playerCardPositions = {
+  //   1: { right: "-34%", bottom: "1%", transformOrigin: "bottom right" },
+  //   2: { left: "-34%", bottom: "1%", transformOrigin: "bottom left" },
+  //   3: { left: "-34%", top: "1%", transformOrigin: "top left" },
+  //   4: { right: "-34%", top: "1%", transformOrigin: "top right" },
+  // };
+
+  // Player card position according to player color/corner
+const playerCardPositions = {
+  1: { right: "-34%", bottom: "1%", transformOrigin: "bottom left" },   // sits right of board → anchor on its LEFT edge (nearest the board)
+  2: { left: "-34%", bottom: "1%", transformOrigin: "bottom right" },   // sits left of board → anchor on its RIGHT edge (nearest the board)
+  3: { left: "-34%", top: "1%", transformOrigin: "top right" },
+  4: { right: "-34%", top: "1%", transformOrigin: "top left" },
+};
 
   // Roll Dice handler
   const handleRollDice = async () => {
     if (!canRoll) return;
 
     try {
+      setShowPendingDice(false);
+      setShowMovableTokens(false);
       setRolling(true);
 
       await rollDice({
@@ -234,7 +246,10 @@ const LudoGameRoom = () => {
       });
 
       setTimeout(() => {
+        setShowPendingDice(true);
+        setShowMovableTokens(true);
         setRolling(false);
+        
       }, 800);
     } catch (error) {
       console.error(error);
@@ -492,6 +507,7 @@ const LudoGameRoom = () => {
                 handleTokenClick={handleTokenClick}
                 legalMoves={legalMoves}
                 movableTokenIds={movableTokenIds}
+                showMovableTokens={showMovableTokens}
                 currentTurnColorIndex={currentTurnColorIndex}
                 isMyTurn={isMyTurn}
               />
@@ -525,6 +541,7 @@ const LudoGameRoom = () => {
                   pendingDice={pendingDice}
                   diceOptions={diceOptions}
                   onDiceSelect={handleDiceSelection}
+                  showPendingDice={showPendingDice}
                   celebrating={celebratingPlayers.includes(player.playerId)}
                   avatarUrl="https://plus.unsplash.com/premium_photo-1739786996022-5ed5b56834e2?q=80&w=2080&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                 />
