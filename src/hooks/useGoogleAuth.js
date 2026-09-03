@@ -66,7 +66,7 @@ export const useGoogleAuth = ({ onSuccess, onError }) => {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [onSuccess, onError]);
+  }, []);
 
   const loginWithGoogle = useCallback(
     (provider) => {
