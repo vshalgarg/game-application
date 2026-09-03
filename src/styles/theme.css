@@ -11,6 +11,7 @@
   --gz-bg: #a2b4f9;
   --gz-popup: #203757;
   --gz-popup-dark: #172a46;
+  --gz-about-bg: #080e1c;
   --gz-input-bg: #203755;
   --gz-input-border: #466a91;
   --gz-social-bg: #203757;
@@ -530,7 +531,8 @@
     border-radius: 1.35rem;
     background:
       linear-gradient(var(--gz-popup-dark), var(--gz-popup-dark)) padding-box,
-      linear-gradient(135deg, var(--gz-primary-cyan), var(--gz-login-to), var(--gz-purple-accent)) border-box;
+      linear-gradient(135deg, var(--gz-primary-cyan), var(--gz-login-to), var(--gz-purple-accent))
+        border-box;
     border: 1px solid transparent;
     box-shadow:
       0 20px 56px rgba(0, 0, 0, 0.5),
@@ -639,6 +641,473 @@
 
     .gz-ttt-board {
       width: min(100%, 38dvh);
+    }
+  }
+
+  .gz-text-purple {
+    color: var(--gz-purple-accent);
+    text-shadow:
+      0 0 8px rgba(139, 92, 246, 0.85),
+      0 0 18px rgba(139, 92, 246, 0.45),
+      0 1px 3px rgba(0, 0, 0, 0.55);
+  }
+
+  .gz-page-shell.gz-page-shell--about,
+  .gz-page-shell.gz-page-shell--contact {
+    display: block;
+    height: auto;
+    min-height: 100%;
+    padding: 1.5rem 1rem 2.5rem;
+    background-color: var(--gz-about-bg);
+  }
+
+  .gz-page-shell.gz-page-shell--contact {
+    padding-top: 0.7rem;
+    padding-bottom: 1rem;
+  }
+
+  .gz-page-shell.gz-page-shell--about::before,
+  .gz-page-shell.gz-page-shell--contact::before {
+    content: "";
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-color: var(--gz-about-bg);
+  }
+
+  .gz-about,
+  .gz-contact {
+    @apply relative z-10 mx-auto flex w-full max-w-5xl flex-col;
+  }
+
+  .gz-about {
+    gap: 1.75rem;
+  }
+
+  .gz-contact {
+    gap: 1.1rem;
+  }
+
+  .gz-about__hero {
+    @apply grid items-center gap-5 md:grid-cols-2 md:gap-8 lg:gap-10;
+  }
+
+  .gz-about__kicker {
+    @apply text-[11px] font-semibold tracking-[0.22em] text-gz-primary-cyan;
+  }
+
+  .gz-about__title {
+    @apply mt-2 text-3xl font-bold tracking-tight text-gz-text sm:text-4xl lg:text-[2.65rem];
+    line-height: 1.15;
+  }
+
+  .gz-about__cta {
+    @apply mt-5 inline-flex w-auto items-center justify-center gap-2 px-5 py-2;
+  }
+
+  .gz-about__hero-art {
+    @apply relative mx-auto flex w-full max-w-[22rem] items-center justify-center md:max-w-none;
+  }
+
+  .gz-about__hero-art img {
+    @apply relative z-10 w-full object-contain;
+    filter: drop-shadow(0 16px 40px rgb(0 217 232 / 28%));
+  }
+
+  .gz-about__float-icon {
+    @apply pointer-events-none absolute z-20;
+    filter: drop-shadow(0 0 10px currentColor);
+  }
+
+  .gz-about__float-icon--trophy {
+    @apply top-[8%] left-[4%] text-gz-purple-accent sm:left-[8%];
+  }
+
+  .gz-about__float-icon--star {
+    @apply top-[6%] right-[6%] text-gz-primary-cyan sm:right-[12%];
+  }
+
+  .gz-about__section {
+    @apply text-center;
+  }
+
+  .gz-about__heading {
+    @apply text-xl font-bold text-gz-text sm:text-2xl;
+  }
+
+  .gz-about__underline {
+    @apply mx-auto mt-1.5 h-0.5 w-12 rounded-full bg-gz-primary-cyan;
+    box-shadow: 0 0 10px rgb(0 217 232 / 70%);
+  }
+
+  .gz-about__features {
+    @apply mx-auto mt-4 grid w-full gap-3;
+    grid-template-columns: 1fr;
+  }
+
+  .gz-about-card {
+    @apply flex flex-col items-center rounded-xl border border-gz-card-border/45 bg-gz-popup-dark/82 px-3.5 py-4 text-center backdrop-blur-xl;
+    box-shadow:
+      0 8px 20px rgba(0, 0, 0, 0.3),
+      0 0 12px rgb(0 217 232 / 8%);
+  }
+
+  .gz-about-card__icon {
+    @apply mb-2.5 flex h-9 w-9 items-center justify-center rounded-full border;
+  }
+
+  .gz-about-card__icon svg {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  .gz-about-card__icon--cyan {
+    @apply border-gz-primary-cyan/50 text-gz-primary-cyan;
+    box-shadow: 0 0 12px rgb(0 217 232 / 28%);
+  }
+
+  .gz-about-card__icon--purple {
+    @apply border-gz-purple-accent/50 text-gz-purple-accent;
+    box-shadow: 0 0 12px rgb(139 92 246 / 28%);
+  }
+
+  .gz-about__games {
+    @apply mx-auto mt-4 grid w-full grid-cols-2 gap-2.5;
+  }
+
+  .gz-about-game {
+    @apply overflow-hidden rounded-xl border border-white/10 bg-gz-popup/45;
+    aspect-ratio: 16 / 10;
+  }
+
+  .gz-about-game img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .gz-about-game img:not([src]),
+  .gz-about-game img[src=""] {
+    visibility: hidden;
+  }
+
+  .gz-about-stats {
+    @apply grid grid-cols-2 gap-3 rounded-xl border border-white/10 bg-gz-popup-dark/88 px-3 py-4 backdrop-blur-xl sm:grid-cols-4 sm:gap-2 sm:px-5;
+    box-shadow:
+      0 8px 20px rgba(0, 0, 0, 0.3),
+      0 0 14px rgb(0 217 232 / 10%);
+  }
+
+  .gz-about-stats__item {
+    @apply flex flex-col items-center gap-1 text-center;
+  }
+
+  .gz-about-stats__item svg {
+    @apply text-gz-primary-cyan;
+    width: 1.05rem;
+    height: 1.05rem;
+    filter: drop-shadow(0 0 8px rgb(0 217 232 / 55%));
+  }
+
+  .gz-about-close {
+    @apply flex flex-col items-center gap-3 rounded-xl border border-white/10 bg-gz-popup-dark/88 px-4 py-4 text-center backdrop-blur-xl md:flex-row md:gap-4 md:px-5 md:py-3.5 md:text-left;
+    box-shadow:
+      0 8px 20px rgba(0, 0, 0, 0.3),
+      0 0 14px rgb(139 92 246 / 12%);
+  }
+
+  .gz-about-close__heart {
+    @apply shrink-0 text-gz-purple-accent;
+    filter: drop-shadow(0 0 12px rgb(139 92 246 / 65%));
+  }
+
+  .gz-about-close__art {
+    @apply w-full max-w-[9.5rem] shrink-0 md:max-w-[10.5rem];
+  }
+
+  .gz-about-close__art img {
+    @apply w-full object-contain;
+  }
+
+  .gz-about__mission {
+    max-width: 42rem;
+  }
+
+  .gz-contact__title {
+    @apply text-3xl font-bold tracking-tight text-gz-text sm:text-4xl lg:text-[2.5rem];
+    line-height: 1.15;
+  }
+
+  .gz-contact__us {
+    background: linear-gradient(90deg, var(--gz-primary-cyan), var(--gz-purple-accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .gz-contact__hero {
+    @apply grid items-center gap-3 md:grid-cols-2 md:gap-6 lg:gap-8;
+  }
+
+  .gz-contact__hero-art {
+    @apply relative mx-auto flex w-full max-w-[18rem] items-center justify-center sm:max-w-[20rem] md:max-w-[22rem] lg:max-w-[23.5rem] xl:max-w-[26rem] 2xl:max-w-[28rem];
+  }
+
+  .gz-contact__hero-art img {
+    @apply relative z-10 w-full object-contain;
+    filter: drop-shadow(0 12px 28px rgb(0 217 232 / 24%));
+  }
+
+  .gz-contact__grid {
+    @apply grid gap-2.5 sm:grid-cols-2;
+  }
+
+  .gz-contact-card {
+    @apply flex flex-row items-center gap-3 rounded-xl border border-gz-card-border/45 bg-gz-popup-dark/82 px-3 py-3 text-left backdrop-blur-xl;
+    box-shadow:
+      0 8px 20px rgba(0, 0, 0, 0.3),
+      0 0 12px rgb(0 217 232 / 8%);
+  }
+
+  .gz-contact-card__icon {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-full border;
+  }
+
+  .gz-contact-card__icon svg {
+    width: 0.9rem;
+    height: 0.9rem;
+  }
+
+  .gz-contact-card__icon--cyan {
+    @apply border-gz-primary-cyan/50 text-gz-primary-cyan;
+    box-shadow: 0 0 12px rgb(0 217 232 / 28%);
+  }
+
+  .gz-contact-card__icon--purple {
+    @apply border-gz-purple-accent/50 text-gz-purple-accent;
+    box-shadow: 0 0 12px rgb(139 92 246 / 28%);
+  }
+
+  .gz-contact-card__body {
+    @apply min-w-0 flex-1;
+  }
+
+  .gz-contact-banner {
+    @apply flex flex-row items-center gap-3 rounded-xl border border-white/10 bg-gz-popup-dark/88 px-3 py-2.5 text-left backdrop-blur-xl;
+    box-shadow:
+      0 8px 20px rgba(0, 0, 0, 0.3),
+      0 0 14px rgb(139 92 246 / 12%);
+  }
+
+  .gz-contact-banner__art {
+    @apply w-[8.5rem] shrink-0 sm:w-[10.5rem] md:w-[12.5rem] lg:w-[14rem];
+  }
+
+  .gz-contact-banner__art img {
+    @apply w-full object-contain;
+  }
+
+  .gz-contact-banner__heading {
+    @apply text-base font-bold sm:text-lg;
+    background: linear-gradient(90deg, var(--gz-purple-accent), var(--gz-primary-cyan));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  @media (max-width: 479px) {
+    .gz-contact-banner {
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 0.7rem 0.75rem;
+      text-align: center;
+    }
+
+    .gz-contact-banner__art {
+      width: 7.5rem;
+    }
+  }
+
+  @media (min-width: 640px) {
+    .gz-page-shell.gz-page-shell--about,
+    .gz-page-shell.gz-page-shell--contact {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+
+    .gz-about__features {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+    .gz-about__games {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .gz-about {
+      gap: 2rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .gz-page-shell.gz-page-shell--about,
+    .gz-page-shell.gz-page-shell--contact {
+      padding-left: 2.5rem;
+      padding-right: 2.5rem;
+    }
+
+    .gz-page-shell.gz-page-shell--about {
+      padding-top: 1.5rem;
+      padding-bottom: 2rem;
+    }
+
+    .gz-page-shell.gz-page-shell--contact {
+      padding-top: 0.85rem;
+      padding-bottom: 1.15rem;
+    }
+
+    .gz-about,
+    .gz-contact {
+      max-width: 72rem;
+    }
+
+    .gz-about {
+      gap: 2.15rem;
+    }
+
+    .gz-contact {
+      gap: 1.2rem;
+    }
+
+    .gz-about__features,
+    .gz-about__games,
+    .gz-contact__grid {
+      gap: 0.9rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .gz-page-shell.gz-page-shell--about,
+    .gz-page-shell.gz-page-shell--contact {
+      padding-left: 3rem;
+      padding-right: 3rem;
+    }
+
+    .gz-about,
+    .gz-contact {
+      max-width: 80rem;
+    }
+
+    .gz-about {
+      gap: 2.35rem;
+    }
+
+    .gz-contact {
+      gap: 1.25rem;
+    }
+
+    .gz-about__hero {
+      gap: 3rem;
+    }
+
+    .gz-about__title {
+      font-size: 3rem;
+    }
+
+    .gz-contact__title {
+      font-size: 2.65rem;
+    }
+
+    .gz-about__mission {
+      max-width: 48rem;
+    }
+
+    .gz-about__features,
+    .gz-about__games,
+    .gz-contact__grid {
+      gap: 1rem;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .gz-page-shell.gz-page-shell--about,
+    .gz-page-shell.gz-page-shell--contact {
+      padding-left: 4rem;
+      padding-right: 4rem;
+    }
+
+    .gz-about,
+    .gz-contact {
+      max-width: 90rem;
+    }
+
+    .gz-about {
+      gap: 2.5rem;
+    }
+
+    .gz-contact {
+      gap: 1.35rem;
+    }
+
+    .gz-about__hero {
+      gap: 4rem;
+    }
+
+    .gz-about__title {
+      font-size: 3.25rem;
+    }
+
+    .gz-contact__title {
+      font-size: 2.75rem;
+    }
+
+    .gz-about__mission {
+      max-width: 52rem;
+    }
+
+    .gz-about__features,
+    .gz-about__games,
+    .gz-contact__grid {
+      gap: 1.15rem;
+    }
+  }
+
+  @media (min-width: 1920px) {
+    .gz-page-shell.gz-page-shell--about,
+    .gz-page-shell.gz-page-shell--contact {
+      padding-left: 5rem;
+      padding-right: 5rem;
+    }
+
+    .gz-about,
+    .gz-contact {
+      max-width: 100rem;
+    }
+
+    .gz-about__hero {
+      gap: 5rem;
+    }
+
+    .gz-about__title {
+      font-size: 3.5rem;
+    }
+
+    .gz-contact__title {
+      font-size: 2.85rem;
+    }
+
+    .gz-contact-banner {
+      gap: 1.15rem;
+      padding: 0.85rem 1.25rem;
+    }
+
+    .gz-contact-banner__art {
+      width: 15.5rem;
     }
   }
 }
