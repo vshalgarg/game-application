@@ -32,7 +32,8 @@ const LudoGameRoom = () => {
   const [moveInProgress, setMoveInProgress] = useState(false);
   const [boardScale, setBoardScale] = useState(1);
   const [showExitPopup, setShowExitPopup] = useState(false);
-  const [showPendingDice, setShowPendingDice] = useState(false);
+  // const [showPendingDice, setShowPendingDice] = useState(false);
+  const [visiblePendingDiceCount, setVisiblePendingDiceCount] = useState(0);
   const [showMovableTokens, setShowMovableTokens] = useState(false);
   const closeExitPopup = useCallback(() => setShowExitPopup(false), []);
   const openExitPopup = useCallback(() => setShowExitPopup(true), []);
@@ -215,18 +216,10 @@ const LudoGameRoom = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Player card position according to player color/corner
-  // const playerCardPositions = {
-  //   1: { right: "-34%", bottom: "1%", transformOrigin: "bottom right" },
-  //   2: { left: "-34%", bottom: "1%", transformOrigin: "bottom left" },
-  //   3: { left: "-34%", top: "1%", transformOrigin: "top left" },
-  //   4: { right: "-34%", top: "1%", transformOrigin: "top right" },
-  // };
-
-  // Player card position according to player color/corner
+  // Player card position according to player corner
 const playerCardPositions = {
-  1: { right: "-34%", bottom: "1%", transformOrigin: "bottom left" },   // sits right of board → anchor on its LEFT edge (nearest the board)
-  2: { left: "-34%", bottom: "1%", transformOrigin: "bottom right" },   // sits left of board → anchor on its RIGHT edge (nearest the board)
+  1: { right: "-34%", bottom: "1%", transformOrigin: "bottom left" },  
+  2: { left: "-34%", bottom: "1%", transformOrigin: "bottom right" },   
   3: { left: "-34%", top: "1%", transformOrigin: "top right" },
   4: { right: "-34%", top: "1%", transformOrigin: "top left" },
 };
@@ -236,7 +229,7 @@ const playerCardPositions = {
     if (!canRoll) return;
 
     try {
-      setShowPendingDice(false);
+      // setShowPendingDice(false);
       setShowMovableTokens(false);
       setRolling(true);
 
@@ -246,7 +239,8 @@ const playerCardPositions = {
       });
 
       setTimeout(() => {
-        setShowPendingDice(true);
+        // setShowPendingDice(true);
+        setVisiblePendingDiceCount(pendingDice.length);
         setShowMovableTokens(true);
         setRolling(false);
         
@@ -449,6 +443,13 @@ const playerCardPositions = {
     }, 3500);
   };
 
+  // for displaying previous pendince dice number while next rolling in playercard
+  useEffect(() => {
+    if (!rolling) {
+      setVisiblePendingDiceCount(pendingDice.length);
+    }
+  }, [rolling, pendingDice]);
+
   // while loading board through api
   if (boardLoading) {
     return (
@@ -541,7 +542,8 @@ const playerCardPositions = {
                   pendingDice={pendingDice}
                   diceOptions={diceOptions}
                   onDiceSelect={handleDiceSelection}
-                  showPendingDice={showPendingDice}
+                  // showPendingDice={showPendingDice}
+                  visiblePendingDiceCount={visiblePendingDiceCount}
                   celebrating={celebratingPlayers.includes(player.playerId)}
                   avatarUrl="https://plus.unsplash.com/premium_photo-1739786996022-5ed5b56834e2?q=80&w=2080&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                 />
