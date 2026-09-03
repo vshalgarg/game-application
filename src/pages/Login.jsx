@@ -84,9 +84,10 @@ const Login = () => {
 
       const response = await socialLogin(payload);
       handleLoginSuccess(response);
+      showSnackbar(response.message || "Login Successful", "success")
     } catch (error) {
       console.error(`${provider} Login Error:`, error);
-      showSnackbar(`${provider} login failed.`, "error");
+      showSnackbar(error.message || `${provider} login failed.`, "error");
     }
   };
 
