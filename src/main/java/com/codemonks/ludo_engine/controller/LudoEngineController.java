@@ -40,7 +40,6 @@ public class LudoEngineController {
 
     @GetMapping(BOARD_LAYOUT)
     public ResponseEntity<BoardLayout> getBoardLayout() {
-
         BoardLayout boardLayout = boardService.getBoard();
         long gridCells = boardLayout.getGrid().stream().mapToLong(Map::size).sum();
         log.info(

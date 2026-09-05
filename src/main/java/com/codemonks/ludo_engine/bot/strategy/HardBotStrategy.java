@@ -26,13 +26,19 @@ public class HardBotStrategy implements BotStrategy {
 
     private static final double FINISH_WEIGHT = 1000;
     private static final double KILL_WEIGHT = 500;
+
+    private static final double FINISH_WEIGHT_WHEN_KILL_AVAILABLE = 400;
+
     private static final double SAFE_CELL_WEIGHT = 150;
     private static final double EXIT_BASE_WEIGHT = 100;
     private static final double ADVANCEMENT_WEIGHT = 1;
     private static final double TIE_BREAK_RANDOMNESS = 5;
     private static final double DIVERSIFICATION_WEIGHT = 2;
     private static final double AMBUSH_PRESERVATION_PENALTY = 8;
-    private static final int AMBUSH_DISTANCE_THRESHOLD = 10;
+
+    private static final int AMBUSH_BEHIND_THRESHOLD = 6;
+    private static final int AMBUSH_AHEAD_THRESHOLD = 7;
+
     private final AvailableMoveService availableMoveService;
     private final BoardService boardService;
     private final PathOrderService pathOrderService;
@@ -56,17 +62,21 @@ public class HardBotStrategy implements BotStrategy {
 
         double averageProgress = calculateAverageTrackProgress(botPlayer);
 
+        boolean anyKillAvailableThisTurn = legalMoves.stream()
+                .anyMatch(LegalMoveDTO::isKillsOpponent);
+
         LegalMoveDTO chosen = legalMoves.stream()
                 .max(Comparator.comparingDouble(move ->
-                        score(move, gameState, botPlayer, averageProgress)))
+                        score(move, gameState, botPlayer, averageProgress, anyKillAvailableThisTurn)))
                 .orElseThrow();
 
         log.info(
-                "[HARD_BOT_MOVE_SELECTED] Bot:{} Token:{} Dice:{} score={} finish={} kill={} exitBase={} safe={}",
+                "[HARD_BOT_MOVE_SELECTED] Bot:{} Token:{} Dice:{} score={} finish={} kill={} exitBase={} safe={} anyKillThisTurn={}",
                 botPlayerId, chosen.getTokenId(), chosen.getDice(),
-                score(chosen, gameState, botPlayer, averageProgress),
+                score(chosen, gameState, botPlayer, averageProgress, anyKillAvailableThisTurn),
                 chosen.isReachesHome(), chosen.isKillsOpponent(),
-                chosen.isExitsBase(), chosen.isLandsOnSafeCell()
+                chosen.isExitsBase(), chosen.isLandsOnSafeCell(),
+                anyKillAvailableThisTurn
         );
 
         return BotDecisionDTO.builder().moveAvailable(true).move(chosen).build();
@@ -76,16 +86,26 @@ public class HardBotStrategy implements BotStrategy {
             LegalMoveDTO move,
             GameStateDTO gameState,
             PlayerDTO botPlayer,
-            double averageProgress
+            double averageProgress,
+            boolean anyKillAvailableThisTurn
     ) {
 
         double score = 0;
 
-        if (move.isReachesHome()) score += FINISH_WEIGHT;
+        if (move.isReachesHome()) {
+            if (isWinningMove(move, botPlayer)) {
+
+                score += FINISH_WEIGHT;
+            } else if (anyKillAvailableThisTurn) {
+                score += FINISH_WEIGHT_WHEN_KILL_AVAILABLE;
+            } else {
+                score += FINISH_WEIGHT;
+            }
+        }
+
         if (move.isKillsOpponent()) score += KILL_WEIGHT;
         if (move.isLandsOnSafeCell()) score += SAFE_CELL_WEIGHT;
         if (move.isExitsBase()) score += EXIT_BASE_WEIGHT;
-
         if (move.getResultingPathIndex() != null) {
             score += move.getResultingPathIndex() * ADVANCEMENT_WEIGHT;
         }
@@ -93,7 +113,6 @@ public class HardBotStrategy implements BotStrategy {
         TokenDTO movingToken = findToken(botPlayer, move.getTokenId());
 
         if (movingToken != null && movingToken.getState() == TokenStateEnum.TRACK) {
-
             score += diversificationBonus(movingToken, averageProgress);
 
             if (!move.isReachesHome() && !move.isKillsOpponent()
@@ -101,10 +120,18 @@ public class HardBotStrategy implements BotStrategy {
                 score -= AMBUSH_PRESERVATION_PENALTY;
             }
         }
-
         score += ThreadLocalRandom.current().nextDouble() * TIE_BREAK_RANDOMNESS;
-
         return score;
+    }
+
+    private boolean isWinningMove(LegalMoveDTO move, PlayerDTO botPlayer) {
+
+        if (!move.isReachesHome()) {
+            return false;
+        }
+        return botPlayer.getTokens().stream()
+                .filter(token -> !token.getTokenId().equals(move.getTokenId()))
+                .allMatch(token -> token.getState() == TokenStateEnum.FINISHED);
     }
 
     private double diversificationBonus(TokenDTO movingToken, double averageProgress) {
@@ -118,7 +145,6 @@ public class HardBotStrategy implements BotStrategy {
         if (behindBy <= 0) {
             return 0;
         }
-
         return behindBy * DIVERSIFICATION_WEIGHT;
     }
 
@@ -134,7 +160,6 @@ public class HardBotStrategy implements BotStrategy {
 
         Set<Integer> safeCells = boardService.getSafeCells();
         boolean onSafeOrStart = safeCells.contains(myToken.getPathId());
-
         if (!onSafeOrStart) {
             return false;
         }
@@ -145,6 +170,9 @@ public class HardBotStrategy implements BotStrategy {
         if (myPath == null || myPath.isEmpty()) {
             return false;
         }
+
+        int myCellPositionOnOwnPath = myToken.getPathIndex();
+        boolean behindThreatFound = false;
 
         for (PlayerDTO opponent : gameState.getPlayers()) {
 
@@ -159,7 +187,6 @@ public class HardBotStrategy implements BotStrategy {
                     continue;
                 }
 
-
                 Integer opponentPathOrder =
                         pathOrderService.getPathOrder(gameState, opponent.getPlayerId());
                 List<Integer> opponentPath = boardService.getPath(opponentPathOrder);
@@ -173,22 +200,28 @@ public class HardBotStrategy implements BotStrategy {
                 }
 
                 Integer opponentCellId = opponentToken.getPathId();
-                int myCellPositionOnOwnPath = myToken.getPathIndex();
                 int opponentCellPositionOnOwnPath = myPath.indexOf(opponentCellId);
 
                 if (opponentCellPositionOnOwnPath == -1) {
                     continue;
                 }
 
-                int distanceBehind = myCellPositionOnOwnPath - opponentCellPositionOnOwnPath;
+                int relativePosition = opponentCellPositionOnOwnPath - myCellPositionOnOwnPath;
 
-                if (distanceBehind >= 1 && distanceBehind <= AMBUSH_DISTANCE_THRESHOLD) {
-                    return true;
+                if (relativePosition < 0) {
+                    int distanceBehind = -relativePosition;
+                    if (distanceBehind >= 1 && distanceBehind <= AMBUSH_BEHIND_THRESHOLD) {
+                        behindThreatFound = true;
+                    }
+                } else if (relativePosition > 0) {
+                    if (relativePosition <= AMBUSH_AHEAD_THRESHOLD) {
+                        return false;
+                    }
                 }
             }
         }
 
-        return false;
+        return behindThreatFound;
     }
 
     private double calculateAverageTrackProgress(PlayerDTO botPlayer) {

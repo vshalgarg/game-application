@@ -15,11 +15,11 @@ import com.codemonks.ludo_engine.enums.GameStatusEnum;
 import com.codemonks.ludo_engine.enums.PlayerTurnStageEnum;
 import com.codemonks.ludo_engine.service.BotMoveService;
 import com.codemonks.ludo_engine.service.BotRoomLockService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,6 +33,7 @@ public class BotMoveServiceImpl implements BotMoveService {
     private final EngineServiceImpl engineService;
     private final ObjectMapper objectMapper;
     private final BotRoomLockService botRoomLockService;
+
     @Override
     @Async("botMoveExecutor")
     public void processBotTurn(
@@ -47,162 +48,202 @@ public class BotMoveServiceImpl implements BotMoveService {
             Long activePlayerId = botPlayerId;
             boolean needsRoll = true;
             GameStateDTO currentState = gameState;
+            int safetySkipCount = 0;
 
             while (activePlayerId != null) {
-            try {
-                if (needsRoll) {
-                    Thread.sleep(BotConstants.BOT_DELAY_MS);
-                    DiceRollRequestDTO diceRequest = new DiceRollRequestDTO();
-                    diceRequest.setRoomId(roomId);
-                    diceRequest.setPlayerId(activePlayerId);
+                try {
+                    if (needsRoll) {
+                        Thread.sleep(BotConstants.BOT_DELAY_MS);
+                        DiceRollRequestDTO diceRequest = new DiceRollRequestDTO();
+                        diceRequest.setRoomId(roomId);
+                        diceRequest.setPlayerId(activePlayerId);
 
-                    DiceRollResponseDTO diceResponse = engineService.rollDice(diceRequest);
-                    log.info("[BOT_DICE_RESPONSE] {}", diceResponse.getGameState());
+                        DiceRollResponseDTO diceResponse = engineService.rollDice(diceRequest);
+                        log.info("[BOT_DICE_RESPONSE] {}", diceResponse.getGameState());
 
-                    if (diceResponse.isDelayedTurnRotationRequired()) {
+                        if (diceResponse.isDelayedTurnRotationRequired()) {
 
-                        log.info(
-                                "[BOT_NO_MOVE_ALREADY_ROTATED] Room:{} Bot:{}",
-                                roomCode,
-                                activePlayerId
-                        );
-                        Thread.sleep(GameConstants.TURN_DELAY_MS);
-                        GameStateDTO rotatedState = objectMapper.convertValue(
-                                        diceResponse.getGameState(),
-                                        GameStateDTO.class
-                                );
+                            log.info(
+                                    "[BOT_NO_MOVE_ALREADY_ROTATED] Room:{} Bot:{}",
+                                    roomCode,
+                                    activePlayerId
+                            );
+                            Thread.sleep(GameConstants.TURN_DELAY_MS);
+                            GameStateDTO rotatedState = objectMapper.convertValue(
+                                    diceResponse.getGameState(),
+                                    GameStateDTO.class
+                            );
 
-                        activePlayerId = nextBotIdOrNull(rotatedState);
-                        needsRoll = true;
-                        continue;
-                    }
+                            activePlayerId = nextBotIdOrNull(rotatedState);
+                            needsRoll = true;
+                            continue;
+                        }
 
-                    if (!activePlayerId.equals(diceResponse.getCurrentTurnPlayerId())) {
+                        if (!activePlayerId.equals(diceResponse.getCurrentTurnPlayerId())) {
 
-                        log.info(
-                                "[BOT_TRIPLE_SIX_FORFEITED_ROTATED] Room:{} PrevBot:{} NewTurn:{}",
-                                roomCode,
-                                activePlayerId,
-                                diceResponse.getCurrentTurnPlayerId()
-                        );
+                            log.info(
+                                    "[BOT_TRIPLE_SIX_FORFEITED_ROTATED] Room:{} PrevBot:{} NewTurn:{}",
+                                    roomCode,
+                                    activePlayerId,
+                                    diceResponse.getCurrentTurnPlayerId()
+                            );
 
-                        GameStateDTO rotatedState = objectMapper.convertValue(
+                            GameStateDTO rotatedState = objectMapper.convertValue(
+                                    diceResponse.getGameState(),
+                                    GameStateDTO.class
+                            );
+
+                            activePlayerId = nextBotIdOrNull(rotatedState);
+                            needsRoll = true;
+                            continue;
+                        }
+                        if (diceResponse.getPlayerTurnStage() != PlayerTurnStageEnum.TOKEN_MOVE) {
+                            log.info(
+                                    "[BOT_TURN_COMPLETED_AFTER_ROLL] Room:{} Bot:{} Stage:{}",
+                                    roomCode,
+                                    activePlayerId,
+                                    diceResponse.getPlayerTurnStage()
+                            );
+                            needsRoll = true;
+                            continue;
+                        }
+
+                        currentState = objectMapper.convertValue(
                                 diceResponse.getGameState(),
                                 GameStateDTO.class
                         );
-
-                        activePlayerId = nextBotIdOrNull(rotatedState);
-                        needsRoll = true;
-                        continue;
+                        needsRoll = false;
+                        Thread.sleep(GameConstants.DICE_VISIBLE_DELAY_MS);
                     }
-                    if (diceResponse.getPlayerTurnStage() != PlayerTurnStageEnum.TOKEN_MOVE) {
-                        log.info(
-                                "[BOT_TURN_COMPLETED_AFTER_ROLL] Room:{} Bot:{} Stage:{}",
+
+
+                    PlayerDTO botPlayerState = findPlayer(currentState, activePlayerId);
+
+                    if (botPlayerState == null) {
+                        log.warn(
+                                "[BOT_PLAYER_NOT_FOUND] Room:{} Bot:{} — skipping turn instead of freezing",
                                 roomCode,
-                                activePlayerId,
-                                diceResponse.getPlayerTurnStage()
-                        );
-                        needsRoll = true;
-                        continue;
-                    }
-
-                    currentState = objectMapper.convertValue(
-                            diceResponse.getGameState(),
-                            GameStateDTO.class
-                    );
-                    needsRoll = false;
-                    Thread.sleep(GameConstants.DICE_VISIBLE_DELAY_MS);
-                }
-
-
-                PlayerDTO botPlayerState = findPlayer(currentState, activePlayerId);
-
-                if (botPlayerState == null) {
-                    log.warn(
-                            "[BOT_PLAYER_NOT_FOUND] Room:{} Bot:{}",
-                            roomCode,
-                            activePlayerId
-                    );
-                    return;
-                }
-
-                BotStrategy strategy = botStrategyFactory.getStrategy(
-                                currentState,
                                 activePlayerId
                         );
+                        activePlayerId = skipTurnAndGetNextBot(roomId, roomCode, activePlayerId, safetySkipCount++);
+                        needsRoll = true;
+                        continue;
+                    }
 
-                BotDecisionDTO decision = strategy.chooseMove(
-                                currentState,
-                                activePlayerId,
-                                botPlayerState.getPendingDice()
-                        );
-
-                if (!decision.isMoveAvailable()) {
-                    log.info(
-                            "[BOT_NO_MOVE_AVAILABLE] Room:{} Bot:{}",
-                            roomCode,
+                    BotStrategy strategy = botStrategyFactory.getStrategy(
+                            currentState,
                             activePlayerId
                     );
-                    return;
-                }
 
-                Map<String, Object> moveData = new HashMap<>();
-                moveData.put("tokenId", decision.getMove().getTokenId());
-                moveData.put("consumedDice", decision.getMove().getDice());
-                EngineMoveRequestDTO moveRequest = new EngineMoveRequestDTO();
-                moveRequest.setRoomId(roomId);
-                moveRequest.setRoomCode(roomCode);
-                moveRequest.setUserId(activePlayerId);
-                moveRequest.setMoveData(moveData);
+                    BotDecisionDTO decision = strategy.chooseMove(
+                            currentState,
+                            activePlayerId,
+                            botPlayerState.getPendingDice()
+                    );
 
-                log.info(
-                        "[BOT_EXECUTING_MOVE] Room:{} Bot:{} Token:{} Dice:{}",
-                        roomCode,
-                        activePlayerId,
-                        decision.getMove().getTokenId(),
-                        decision.getMove().getDice()
-                );
+                    if (!decision.isMoveAvailable()) {
+                        log.info(
+                                "[BOT_NO_MOVE_AVAILABLE] Room:{} Bot:{} — skipping turn instead of freezing",
+                                roomCode,
+                                activePlayerId
+                        );
+                        activePlayerId = skipTurnAndGetNextBot(roomId, roomCode, activePlayerId, safetySkipCount++);
+                        needsRoll = true;
+                        continue;
+                    }
 
-                EngineGameStateResponseDTO moveResponse = engineService.processMove(moveRequest);
+                    Map<String, Object> moveData = new HashMap<>();
+                    moveData.put("tokenId", decision.getMove().getTokenId());
+                    moveData.put("consumedDice", decision.getMove().getDice());
+                    EngineMoveRequestDTO moveRequest = new EngineMoveRequestDTO();
+                    moveRequest.setRoomId(roomId);
+                    moveRequest.setRoomCode(roomCode);
+                    moveRequest.setUserId(activePlayerId);
+                    moveRequest.setMoveData(moveData);
 
-
-                if (moveResponse.getStatus() == GameStatusEnum.WIN) {
                     log.info(
-                            "[BOT_LOOP_STOPPED_GAME_OVER] Room:{} Bot:{} Winner:{}",
+                            "[BOT_EXECUTING_MOVE] Room:{} Bot:{} Token:{} Dice:{}",
                             roomCode,
                             activePlayerId,
-                            moveResponse.getWinnerUserId()
+                            decision.getMove().getTokenId(),
+                            decision.getMove().getDice()
                     );
-                    return;
-                }
 
-                GameStateDTO afterMoveState = objectMapper.convertValue(
-                        moveResponse.getGameState(),
-                        GameStateDTO.class
-                );
+                    EngineGameStateResponseDTO moveResponse = engineService.processMove(moveRequest);
 
-                if (activePlayerId.equals(afterMoveState.getCurrentTurnPlayerId())) {
+                    Thread.sleep(GameConstants.TURN_DELAY_MS);
 
-                    needsRoll = afterMoveState.getPlayerTurnStage()
-                            != PlayerTurnStageEnum.TOKEN_MOVE;
-                    currentState = afterMoveState;
+                    if (moveResponse.getStatus() == GameStatusEnum.WIN) {
+                        log.info(
+                                "[BOT_LOOP_STOPPED_GAME_OVER] Room:{} Bot:{} Winner:{}",
+                                roomCode,
+                                activePlayerId,
+                                moveResponse.getWinnerUserId()
+                        );
+                        return;
+                    }
 
-                } else {
-                    activePlayerId = nextBotIdOrNull(afterMoveState);
+                    GameStateDTO afterMoveState = objectMapper.convertValue(
+                            moveResponse.getGameState(),
+                            GameStateDTO.class
+                    );
+
+                    if (activePlayerId.equals(afterMoveState.getCurrentTurnPlayerId())) {
+
+                        needsRoll = afterMoveState.getPlayerTurnStage()
+                                != PlayerTurnStageEnum.TOKEN_MOVE;
+                        currentState = afterMoveState;
+
+                    } else {
+                        activePlayerId = nextBotIdOrNull(afterMoveState);
+                        needsRoll = true;
+                    }
+                } catch (Exception exception) {
+                    log.error(
+                            "[BOT_MOVE_FAILED] Room:{} Bot:{} — attempting to skip turn instead of freezing",
+                            roomCode,
+                            activePlayerId,
+                            exception
+                    );
+                    activePlayerId = skipTurnAndGetNextBot(roomId, roomCode, activePlayerId, safetySkipCount++);
                     needsRoll = true;
                 }
-            } catch (Exception exception) {
-                log.error(
-                        "[BOT_MOVE_FAILED] Room:{} Bot:{}",
-                        roomCode,
-                        activePlayerId,
-                        exception
-                );
-                return;
             }
         }
+        finally {
+            botRoomLockService.release(roomId);
+        }
     }
-        finally {botRoomLockService.release(roomId);}
+
+    private Long skipTurnAndGetNextBot(Long roomId, String roomCode, Long stuckPlayerId, int skipCount) {
+
+        if (skipCount >= 8) {
+            log.error(
+                    "[BOT_SAFETY_ABORT] Room:{} too many consecutive skip attempts — stopping bot loop",
+                    roomCode
+            );
+            return null;
+        }
+
+        GameStateDTO rotatedState = engineService.continueTurnAfterDelay(roomId, roomCode, stuckPlayerId);
+
+        if (rotatedState == null) {
+            log.info(
+                    "[BOT_SKIP_NOOP] Room:{} Player:{} turn already changed elsewhere",
+                    roomCode,
+                    stuckPlayerId
+            );
+            return null;
+        }
+
+        log.info(
+                "[BOT_SKIP_ROTATED] Room:{} FromBot:{} ToPlayer:{}",
+                roomCode,
+                stuckPlayerId,
+                rotatedState.getCurrentTurnPlayerId()
+        );
+
+        return nextBotIdOrNull(rotatedState);
     }
 
     private PlayerDTO findPlayer(GameStateDTO gameState, Long playerId) {
