@@ -84,20 +84,29 @@ const Login = () => {
 
       const response = await socialLogin(payload);
       handleLoginSuccess(response);
-      showSnackbar(response.message || "Login Successful", "success")
+      showSnackbar(response.message || "Login Successful", "success");
     } catch (error) {
       console.error(`${provider} Login Error:`, error);
       showSnackbar(error.message || `${provider} login failed.`, "error");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogleError = (error) => {
     console.error("Google Login Error:", error);
+    setLoading(false);
+
+    if (error?.error === "google_login_cancelled") {
+      return;
+    }
+
     showSnackbar("Google login failed.", "error");
   };
 
   const handleFacebookError = (error) => {
     console.error("Facebook Login Error:", error);
+    setLoading(false);
 
     if (error?.error === "facebook_login_cancelled") {
       return;
@@ -106,7 +115,7 @@ const Login = () => {
     showSnackbar("Facebook login failed.", "error");
   };
 
-  const { loginWithGoogle } = useGoogleAuth({
+  const { loginWithGoogle, isReady: isGoogleReady } = useGoogleAuth({
     onSuccess: handleSocialSuccess,
     onError: handleGoogleError,
   });
@@ -117,6 +126,8 @@ const Login = () => {
   });
 
   const handleSocialSelect = (provider) => {
+    if (loading) return;
+    setLoading(true);
     if (provider === "google") {
       loginWithGoogle(provider);
       return;
@@ -124,6 +135,7 @@ const Login = () => {
       loginWithFacebook(provider);
       return;
     }
+    setLoading(false);
     showSnackbar(`${provider} login coming soon`, "info");
   };
 
@@ -208,7 +220,14 @@ const Login = () => {
           </Button>
         </form>
 
-        <SocialAuthButtons onSelect={handleSocialSelect} />
+        <SocialAuthButtons
+          providerReady={{
+            google: isGoogleReady,
+            facebook: isFacebookReady,
+          }}
+          disabled={loading}
+          onSelect={handleSocialSelect}
+        />
       </AuthCard>
     </AuthLayout>
   );

@@ -3,94 +3,79 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 export const useGoogleAuth = ({ onSuccess, onError }) => {
-  const clientRef = useRef(null);
-  const providerRef = useRef(null);
-  const buttonHostRef = useRef(null);
+  const codeClientRef = useRef(null);
   const [isReady, setIsReady] = useState(false);
+  const onSuccessRef = useRef(onSuccess);
+  const onErrorRef = useRef(onError);
+
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+    onErrorRef.current = onError;
+  }, [onSuccess, onError]);
 
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) {
       console.error("Google Client ID is not configured.");
-      return;
+      return undefined;
     }
 
     const initializeGoogle = () => {
-      if (!window.google?.accounts?.id) {
-        return;
+      if (!window.google?.accounts?.oauth2?.initCodeClient) {
+        return false;
       }
 
-      window.google.accounts.id.initialize({
+      codeClientRef.current = window.google.accounts.oauth2.initCodeClient({
         client_id: GOOGLE_CLIENT_ID,
         scope: "openid email profile",
         ux_mode: "popup",
         callback: (response) => {
           if (response.error) {
-            onError?.(response);
+            onErrorRef.current?.(response);
             return;
           }
 
-          onSuccess?.(providerRef.current, response.credential);
+          if (!response.code) {
+            onErrorRef.current?.({ error: "google_auth_code_missing" });
+            return;
+          }
+
+          onSuccessRef.current?.("google", response.code);
+        },
+        error_callback: (error) => {
+          if (error?.type === "popup_closed" || error?.type === "popup_failed_to_open") {
+            onErrorRef.current?.({ error: "google_login_cancelled", errorDetail: error });
+            return;
+          }
+
+          onErrorRef.current?.(error);
         },
       });
 
-      if (!buttonHostRef.current) {
-        const host = document.createElement("div");
-        host.style.position = "fixed";
-        host.style.left = "-9999px";
-        host.style.top = "0";
-        host.setAttribute("aria-hidden", "true");
-        document.body.appendChild(host);
-        buttonHostRef.current = host;
-      }
-
-      buttonHostRef.current.innerHTML = "";
-      window.google.accounts.id.renderButton(buttonHostRef.current, {
-        type: "standard",
-        size: "large",
-      });
-
-      clientRef.current = window.google.accounts.id;
       setIsReady(true);
+      return true;
     };
 
-    if (window.google?.accounts?.id) {
-      initializeGoogle();
-      return;
+    if (initializeGoogle()) {
+      return undefined;
     }
 
     const interval = setInterval(() => {
-      if (window.google?.accounts?.id) {
+      if (initializeGoogle()) {
         clearInterval(interval);
-        initializeGoogle();
       }
     }, 100);
 
     return () => clearInterval(interval);
   }, []);
 
-  const loginWithGoogle = useCallback(
-    (provider) => {
-      if (!clientRef.current) {
-        onError?.({
-          error: "google_not_ready",
-        });
-        return;
-      }
+  const loginWithGoogle = useCallback(() => {
+    if (!codeClientRef.current) {
+      onErrorRef.current?.({ error: "google_not_ready" });
+      return;
+    }
 
-      providerRef.current = provider;
-
-      const googleButton =
-        buttonHostRef.current?.querySelector("div[role='button']");
-
-      if (googleButton) {
-        googleButton.click();
-        return;
-      }
-
-      clientRef.current.prompt();
-    },
-    [onError],
-  );
+    codeClientRef.current.requestCode();
+  }, []);
 
   return {
     loginWithGoogle,
