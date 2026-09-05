@@ -70,7 +70,6 @@ const PlayerCard = ({name, userId, color, avatarUrl, isCurrentTurnPlayer = false
 
           <div className="flex flex-nowrap gap-1 bg-grey rounded-lg shadow-lg p-1 max-w-[180px] mt-1">
             {visibleDice.map((dice, index) => {
-              // Is this dice currently selectable?
               const isSelectable = isMyTurn && 
               diceOptions.some((move) => move.dice === dice);
 
