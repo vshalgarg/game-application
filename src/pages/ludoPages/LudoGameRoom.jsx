@@ -32,6 +32,8 @@ const LudoGameRoom = () => {
   const [moveInProgress, setMoveInProgress] = useState(false);
   const [boardScale, setBoardScale] = useState(1);
   const [showExitPopup, setShowExitPopup] = useState(false);
+  const [visiblePendingDiceCount, setVisiblePendingDiceCount] = useState(0);
+  const [showMovableTokens, setShowMovableTokens] = useState(false);
   const closeExitPopup = useCallback(() => setShowExitPopup(false), []);
   const openExitPopup = useCallback(() => setShowExitPopup(true), []);
 
@@ -46,6 +48,10 @@ const LudoGameRoom = () => {
   const [celebratingPlayers, setCelebratingPlayers] = useState([]);
   const previousFinishedRef = useRef({});
 
+  // for delivering realtime updates in queue
+  const pendingUpdateRef = useRef(null);
+
+  // for movements
   const previousBoardRef = useRef(null);
   const animatingRef = useRef(false);
   const autoMovingRef = useRef(false);
@@ -92,59 +98,87 @@ const LudoGameRoom = () => {
     roomCode,
 
     onGameUpdate: async (game) => {
-      const board = game.game_state_data.board;
-      console.info("Realtime received:", game);
-
-      board.players.forEach((player) => {
-        const wasFinished = previousFinishedRef.current[player.playerId] ?? false;
-
-        if (!wasFinished && player.hasFinished) {
-          triggerCelebration(player.playerId);
-        }
-        previousFinishedRef.current[player.playerId] = player.hasFinished;
-      });
-
-      const newTurnUserId = game.current_turn_user_id;
-      const newDiceValue = board.lastDice;
-      const newPlayerTurnStage = board.playerTurnStage;
-
-      const rollerId = previousTurnUserIdRef.current;
-      const previousStage = previousPlayerTurnStageRef.current;
-      const turnChanged = rollerId !== null && newTurnUserId !== rollerId;
-
-      // hold the switch when the current player rolls dice during all 4 base slot condition
-      const isAutoSkipAfterRoll = turnChanged && previousStage === "ROLL_DICE";
-
-      previousTurnUserIdRef.current = newTurnUserId;
-      previousPlayerTurnStageRef.current = newPlayerTurnStage;
-
-      clearTimeout(turnTransitionTimeoutRef.current);
-
-      if (isAutoSkipAfterRoll) {
-
-        // the current player see their rolled number 
-        setDiceValue(newDiceValue);
-
-        turnTransitionTimeoutRef.current = setTimeout(() => {
-          setCurrentTurnUserId(newTurnUserId);
-        }, 2000); 
-      } else {
-        setCurrentTurnUserId(newTurnUserId);
-        setDiceValue(newDiceValue);
+      // if an animation is currently running don't process the update 
+      if (animatingRef.current) {
+        pendingUpdateRef.current = game;
+        return;
       }
 
-      setWinnerUserId(game.winner_user_id);
-      setStatus(game.game_status);
-
-      if (!previousBoardRef.current) {
-        previousBoardRef.current = structuredClone(board);
-        setGameState(game.game_state_data);
-      } else if (!animatingRef.current) {
-        await animateBoard(previousBoardRef.current, board);
-        previousBoardRef.current = structuredClone(board);
-      }
+      await processGameUpdate(game);
     },
   });
+
+  // for queue inside realtime update 
+  const processGameUpdate = async (game) => {
+    const board = game.game_state_data.board;
+    console.info("Realtime received:", game);
+
+    // for player confetti celebration
+    board.players.forEach((player) => {
+      const wasFinished = previousFinishedRef.current[player.playerId] ?? false;
+
+      if (!wasFinished && player.hasFinished) {
+        triggerCelebration(player.playerId);
+      }
+      previousFinishedRef.current[player.playerId] = player.hasFinished;
+    });
+
+    const newTurnUserId = game.current_turn_user_id;
+    const newDiceValue = board.lastDice;
+    const newPlayerTurnStage = board.playerTurnStage;
+
+    const rollerId = previousTurnUserIdRef.current;
+    const previousStage = previousPlayerTurnStageRef.current;
+    const turnChanged = rollerId !== null && newTurnUserId !== rollerId;
+
+    const isAutoSkipAfterRoll = turnChanged && previousStage === "ROLL_DICE";
+
+    previousTurnUserIdRef.current = newTurnUserId;
+    previousPlayerTurnStageRef.current = newPlayerTurnStage;
+
+    clearTimeout(turnTransitionTimeoutRef.current);
+
+    setWinnerUserId(game.winner_user_id);
+    setStatus(game.game_status);
+
+    const applyTurnUpdate = () => {
+      setCurrentTurnUserId(newTurnUserId);
+      setDiceValue(newDiceValue);
+    };
+
+    if (isAutoSkipAfterRoll) {
+      setDiceValue(newDiceValue);
+
+      turnTransitionTimeoutRef.current = setTimeout(() => {
+        setCurrentTurnUserId(newTurnUserId);
+      }, 2000);
+    }
+
+    if (!previousBoardRef.current) {
+      previousBoardRef.current = structuredClone(board);
+      setGameState(game.game_state_data);
+
+      if (!isAutoSkipAfterRoll) {
+        applyTurnUpdate();
+      }
+
+      setShowMovableTokens(newPlayerTurnStage === "TOKEN_MOVE");
+    } else {
+      await animateBoard(previousBoardRef.current, board);
+      previousBoardRef.current = structuredClone(board);
+
+      if (!isAutoSkipAfterRoll) {
+        applyTurnUpdate();
+      }
+    }
+
+    // after finishing an update, check for another update(queue)
+    if (pendingUpdateRef.current) {
+      const nextGame = pendingUpdateRef.current;
+      pendingUpdateRef.current = null;
+      await processGameUpdate(nextGame);
+    }
+  };
 
   // Cleanup any pending turn-transition timeout on unmount
   useEffect(() => {
@@ -162,7 +196,7 @@ const LudoGameRoom = () => {
 
   // for automatic move when single token is on track
   useEffect(() => {
-    // Don't auto move while animation is running
+    // Don't auto move while rolling animation is running
     if (!animationComplete) return;
 
     // Don't auto move while API call is running
@@ -188,7 +222,7 @@ const LudoGameRoom = () => {
 
     autoMoveKeyRef.current = moveKey;
 
-    // Dice animation duration when single token on track
+    // Dice animation duration when single token on track(delay)
     const timer = setTimeout(async () => {
       await handleTokenClick(move.tokenId, move.dice);
     }, 1500);
@@ -213,12 +247,12 @@ const LudoGameRoom = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Player card position according to player color/corner
+  // Player card position according to player corner
   const playerCardPositions = {
-    1: { right: "-34%", bottom: "1%", transformOrigin: "bottom right" },
-    2: { left: "-34%", bottom: "1%", transformOrigin: "bottom left" },
-    3: { left: "-34%", top: "1%", transformOrigin: "top left" },
-    4: { right: "-34%", top: "1%", transformOrigin: "top right" },
+    1: { right: "-34%", bottom: "1%", transformOrigin: "bottom left" },
+    2: { left: "-34%", bottom: "1%", transformOrigin: "bottom right" },
+    3: { left: "-34%", top: "1%", transformOrigin: "top right" },
+    4: { right: "-34%", top: "1%", transformOrigin: "top left" },
   };
 
   // Roll Dice handler
@@ -226,6 +260,7 @@ const LudoGameRoom = () => {
     if (!canRoll) return;
 
     try {
+      setShowMovableTokens(false);
       setRolling(true);
 
       await rollDice({
@@ -234,6 +269,8 @@ const LudoGameRoom = () => {
       });
 
       setTimeout(() => {
+        setVisiblePendingDiceCount(pendingDice.length);
+        setShowMovableTokens(true);
         setRolling(false);
       }, 800);
     } catch (error) {
@@ -434,6 +471,13 @@ const LudoGameRoom = () => {
     }, 3500);
   };
 
+  // for displaying previous pending dice number while next rolling in playercard
+  useEffect(() => {
+    if (!rolling) {
+      setVisiblePendingDiceCount(pendingDice.length);
+    }
+  }, [rolling, pendingDice]);
+
   // while loading board through api
   if (boardLoading) {
     return (
@@ -469,19 +513,11 @@ const LudoGameRoom = () => {
       <ExitGamePopup open={showExitPopup} onClose={closeExitPopup} />
 
       <div className="flex flex-col items-center gap-4 w-full">
-        {/* Turn Info */}
-        {/* <div className="text-center text-white">
-          <h2 className="font-bold text-sm sm:text-base md:text-lg">
-            {isMyTurn ? "Your Turn" : "Other Player's Turn"}
-          </h2> */}
-
-          {/* <p className="text-xs sm:text-sm break-all">Your User ID: {currentUserId}</p>
-          <p className="text-xs sm:text-sm break-all">Current Turn Player: {currentTurnUserId}</p> */}
-        {/* </div> */}
 
         {/* Game Area */}
         <div className="relative">
           <div ref={gameAreaRef} className="relative w-fit">
+            
             {/* Board */}
             <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl md:rounded-3xl p-2 sm:p-4 w-fit">
               <LudoBoard
@@ -492,6 +528,7 @@ const LudoGameRoom = () => {
                 handleTokenClick={handleTokenClick}
                 legalMoves={legalMoves}
                 movableTokenIds={movableTokenIds}
+                showMovableTokens={showMovableTokens}
                 currentTurnColorIndex={currentTurnColorIndex}
                 isMyTurn={isMyTurn}
               />
@@ -525,6 +562,7 @@ const LudoGameRoom = () => {
                   pendingDice={pendingDice}
                   diceOptions={diceOptions}
                   onDiceSelect={handleDiceSelection}
+                  visiblePendingDiceCount={visiblePendingDiceCount}
                   celebrating={celebratingPlayers.includes(player.playerId)}
                   avatarUrl="https://plus.unsplash.com/premium_photo-1739786996022-5ed5b56834e2?q=80&w=2080&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                 />

@@ -1,7 +1,8 @@
 const PlayerCard = ({name, userId, color, avatarUrl, isCurrentTurnPlayer = false, isMyTurn = false,
-  playerTurnStage, pendingDice = [], diceOptions = [], onDiceSelect, currentUserId, celebrating = false}) => {
+  playerTurnStage, pendingDice = [], diceOptions = [], onDiceSelect, currentUserId, celebrating = false, visiblePendingDiceCount = 0 }) => {
 
-  const showDiceSection = isCurrentTurnPlayer && playerTurnStage === "TOKEN_MOVE" && pendingDice.length > 0;
+  const visibleDice = pendingDice.slice(0, visiblePendingDiceCount);
+  const showDiceSection = isCurrentTurnPlayer && visibleDice.length > 0;
   const isCurrentUser = userId === currentUserId;
 
   return (
@@ -68,8 +69,7 @@ const PlayerCard = ({name, userId, color, avatarUrl, isCurrentTurnPlayer = false
           )} */}
 
           <div className="flex flex-nowrap gap-1 bg-grey rounded-lg shadow-lg p-1 max-w-[180px] mt-1">
-            {pendingDice.map((dice, index) => {
-              // Is this dice currently selectable?
+            {visibleDice.map((dice, index) => {
               const isSelectable = isMyTurn && 
               diceOptions.some((move) => move.dice === dice);
 
