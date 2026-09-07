@@ -21,7 +21,7 @@ public class GameProfileGatewayService {
     public Mono<Void> createOrUpdateProfile(ProfileRequest request) {
         return webClient
                 .post()
-                .uri(gameServiceUrl + "/game-service/profile")
+                .uri(gameServiceUrl + "/game-service/api/v1/profile")
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(String.class)
