@@ -5,7 +5,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/game_db
     username: root
-    password: 123451
+    password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
