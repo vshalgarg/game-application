@@ -101,6 +101,16 @@
       focus:border-gz-primary-cyan focus:ring-1 focus:ring-gz-primary-cyan/40;
   }
 
+  .gz-input:-webkit-autofill,
+  .gz-input:-webkit-autofill:hover,
+  .gz-input:-webkit-autofill:focus,
+  .gz-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--gz-input-bg) inset !important;
+    -webkit-text-fill-color: var(--gz-text);
+    caret-color: var(--gz-text);
+    transition: background-color 9999s ease-out 0s;
+  }
+
   .gz-btn-primary {
     @apply w-full cursor-pointer rounded-gz-control bg-linear-to-r from-gz-login-from to-gz-login-to
       py-2.5 text-center text-sm font-semibold text-white shadow-lg shadow-gz-login-to/30
