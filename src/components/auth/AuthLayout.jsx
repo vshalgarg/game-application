@@ -1,4 +1,4 @@
-import gameBg from "../../assets/images/game_bg.jpg";
+import gameBg from "../../assets/images/game_bg.webp";
 
 const AuthLayout = ({ children }) => {
   return (
