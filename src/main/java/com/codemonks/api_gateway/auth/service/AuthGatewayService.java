@@ -12,6 +12,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -20,7 +21,7 @@ public class AuthGatewayService {
 
     private final WebClient webClient;
     private final ResponseParser responseParser;
-
+    private final GameProfileGatewayService gameProfileGatewayService;
     @Value("${auth.service.url}")
     private String authServiceUrl;
     @Value("${auth.service.client.name}")
@@ -81,22 +82,9 @@ public class AuthGatewayService {
                 .doOnError(error -> log.error("[LOGIN] {}", error.getMessage(), error));
     }
 
-    public Mono<LoginResponse> socialLogin(
-            SocialLoginRequest request
-    ) {
-
-        log.info(
-                "[SOCIAL LOGIN] Request received for provider={}",
-                request.getProvider()
-        );
-
+    public Mono<LoginResponse> socialLogin(SocialLoginRequest request) {
+        log.info("[SOCIAL LOGIN] Request received for provider={}", request.getProvider());
         String endpoint = "/auth/api/v1/login/social";
-
-        log.info(
-                "[SOCIAL LOGIN] Calling Auth Service endpoint={}",
-                authServiceUrl + endpoint
-        );
-
         return webClient
                 .post()
                 .uri(authServiceUrl + endpoint)
@@ -105,28 +93,37 @@ public class AuthGatewayService {
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(String.class)
-                .doOnNext(body ->
-                        log.info(
-                                "[SOCIAL LOGIN] AUTH API RESPONSE = {}",
-                                body
-                        )
-                )
                 .flatMap(body ->
                         responseParser.parseResponse(
                                 body,
                                 LoginResponse.class
                         )
                 )
+                .flatMap(loginResponse -> {
+                    Map<String, Object> profile = loginResponse.userProfile();
+                    String name = profile != null && profile.get("name") != null
+                            ? profile.get("name").toString()
+                            : null;
+                    String email = loginResponse.username();
+                    if (profile != null && profile.get("email") != null)
+                    {
+                        email = profile.get("email").toString();
+                    }
+                    ProfileRequest profileRequest =
+                            ProfileRequest.builder()
+                                    .userId(loginResponse.userId())
+                                    .name(name)
+                                    .email(email)
+                                    .build();
+                    return gameProfileGatewayService
+                            .createOrUpdateProfile(profileRequest)
+                            .thenReturn(loginResponse);
+                })
                 .doOnSuccess(response ->
-                        log.info("[SOCIAL LOGIN] Login successful")
+                        log.info("[SOCIAL LOGIN] Login successful. userId={}", response.userId())
                 )
                 .doOnError(error ->
-                        log.error(
-                                "[SOCIAL LOGIN] Failed for provider={}: {}",
-                                request.getProvider(),
-                                error.getMessage(),
-                                error
-                        )
+                        log.error("[SOCIAL LOGIN] Failed for provider={}: {}", request.getProvider(), error.getMessage(), error)
                 );
     }
 }
