@@ -1,10 +1,10 @@
 import { lazy, Suspense } from "react";
 import { Navigate, Routes, Route } from "react-router-dom";
+import Login from "../pages/Login";
+import Signup from "../pages/Signup";
 
 const MainLayout = lazy(() => import("../layouts/MainLayout"));
 const ProtectedRoute = lazy(() => import("./ProtectedRoute"));
-const Login = lazy(() => import("../pages/Login"));
-const Signup = lazy(() => import("../pages/Signup"));
 const Landing = lazy(() => import("../pages/Landing"));
 const Home = lazy(() => import("../pages/Home"));
 const WaitingRoom = lazy(() => import("../pages/WaitingRoom"));
