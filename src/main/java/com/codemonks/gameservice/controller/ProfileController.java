@@ -1,5 +1,6 @@
 package com.codemonks.gameservice.controller;
 
+import com.codemonks.gameservice.constants.ApiUrlConstants;
 import com.codemonks.gameservice.dto.ApiResponse;
 import com.codemonks.gameservice.dto.request.ProfileRequestDTO;
 import com.codemonks.gameservice.dto.response.ProfileResponseDTO;
@@ -9,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/game-service/profile")
+@RequestMapping(ApiUrlConstants.Profile.BASE)
 @RequiredArgsConstructor
 public class ProfileController {
 

@@ -21,4 +21,8 @@ public class ApiUrlConstants {
         public static final String BASE = BASE_API+ "/game";
         public static final String MAKE_MOVE = "/{roomCode}/move";
     }
+    public static class Profile {
+        public static final String BASE = BASE_API + "/profile";
+        public static final String CREATE_OR_UPDATE = "";
+    }
 }
