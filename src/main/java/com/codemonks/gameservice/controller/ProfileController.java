@@ -17,15 +17,8 @@ public class ProfileController {
     private final ProfileService profileService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<ProfileResponseDTO>> createOrUpdateProfile(
-            @RequestBody ProfileRequestDTO request
-    ) {
-
-        ProfileResponseDTO response =
-                profileService.createOrUpdateProfile(request);
-
-        return ResponseEntity.ok(
-                ApiResponse.success(response)
-        );
+    public ResponseEntity<ApiResponse<ProfileResponseDTO>> createOrUpdateProfile(@RequestBody ProfileRequestDTO request) {
+        ProfileResponseDTO response = profileService.createOrUpdateProfile(request);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

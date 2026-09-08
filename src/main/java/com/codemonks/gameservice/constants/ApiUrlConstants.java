@@ -23,6 +23,5 @@ public class ApiUrlConstants {
     }
     public static class Profile {
         public static final String BASE = BASE_API + "/profile";
-        public static final String CREATE_OR_UPDATE = "";
     }
 }

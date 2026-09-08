@@ -11,26 +11,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class ProfileServiceImpl implements ProfileService {
-
-    private final ProfileEntityRepository profileRepository;
-
+public class ProfileServiceImpl implements ProfileService { private final ProfileEntityRepository profileRepository;
     @Override
     @Transactional
-    public ProfileResponseDTO createOrUpdateProfile(
-            ProfileRequestDTO request
-    ) {
-
-        ProfileEntity profile =
-                profileRepository.findByUserId(request.getUserId())
-                        .orElseGet(ProfileEntity::new);
-
+    public ProfileResponseDTO createOrUpdateProfile(ProfileRequestDTO request)
+    {
+        ProfileEntity profile = profileRepository.findByUserId(request.getUserId()).orElseGet(ProfileEntity::new);
         profile.setUserId(request.getUserId());
         profile.setName(request.getName());
         profile.setEmail(request.getEmail());
-
         profile = profileRepository.save(profile);
-
         return ProfileResponseDTO.builder()
                 .userId(profile.getUserId())
                 .name(profile.getName())
