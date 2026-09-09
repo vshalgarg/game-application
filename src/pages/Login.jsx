@@ -15,6 +15,7 @@ import {
 import AuthLayout from "../components/auth/AuthLayout";
 import AuthCard from "../components/auth/AuthCard";
 import SocialAuthButtons from "../components/auth/SocialAuthButtons";
+import ForgotPasswordModal from "../components/auth/ForgotPasswordModal";
 import TextField from "../components/ui/TextField";
 import Button from "../components/ui/Button";
 
@@ -29,6 +30,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(Boolean(savedEmail));
   const [loading, setLoading] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
   const handleLoginSuccess = (response) => {
     const { token, userId, username, roles, permissions, userProfile } = response;
@@ -209,7 +211,7 @@ const Login = () => {
             <button
               type="button"
               className="gz-link bg-transparent text-sm"
-              onClick={() => showSnackbar("Password reset coming soon", "info")}
+              onClick={() => setForgotPasswordOpen(true)}
             >
               Forgot Password?
             </button>
@@ -229,6 +231,11 @@ const Login = () => {
           onSelect={handleSocialSelect}
         />
       </AuthCard>
+
+      <ForgotPasswordModal
+        open={forgotPasswordOpen}
+        onClose={() => setForgotPasswordOpen(false)}
+      />
     </AuthLayout>
   );
 };
