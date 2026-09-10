@@ -98,7 +98,7 @@ export const useFacebookAuth = ({ onSuccess, onError }) => {
           onSuccessRef.current?.(provider, accessToken);
         },
         {
-          scope: "public_profile,email",
+          scope: "public_profile,email,user_birthday",
         },
       );
     },
