@@ -14,5 +14,6 @@ supabase:
   api-key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyYmJkc2RhYW1zeHR4dGhxeGJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODAzNDYsImV4cCI6MjA5Nzk1NjM0Nn0.NswzTNj_X1gQC7YE9zjofvN49skiqX3_4Gka69UsLgY
   tables:
     realtime-game-state: realtime_game_state
-    realtime-game-moves: realtime_game_moves
     realtime-room-lobby: realtime_room_lobby
+    game-moves: game_moves
+    bot-room-locks: bot_room_locks
