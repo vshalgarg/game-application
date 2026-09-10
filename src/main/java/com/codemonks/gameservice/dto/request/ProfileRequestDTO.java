@@ -2,6 +2,8 @@ package com.codemonks.gameservice.dto.request;
 
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -13,4 +15,6 @@ public class ProfileRequestDTO {
     private String name;
 
     private String email;
+
+    private LocalDate dob;
 }

@@ -5,4 +5,6 @@ import com.codemonks.gameservice.dto.response.ProfileResponseDTO;
 
 public interface ProfileService {
     ProfileResponseDTO createOrUpdateProfile(ProfileRequestDTO request);
+    ProfileResponseDTO getProfile();
+    ProfileResponseDTO updateProfile(ProfileRequestDTO request);
 }

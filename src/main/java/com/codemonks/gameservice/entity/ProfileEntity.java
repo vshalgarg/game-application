@@ -3,6 +3,8 @@ package com.codemonks.gameservice.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "game_profile")
 @Getter
@@ -19,7 +21,7 @@ public class ProfileEntity extends BaseEntity {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id", nullable = false, unique = true)
     private Long userId;
 
     @Column(name = "name")
@@ -27,4 +29,7 @@ public class ProfileEntity extends BaseEntity {
 
     @Column(name = "email")
     private String email;
+
+    @Column(name = "dob")
+    private LocalDate dob;
 }
