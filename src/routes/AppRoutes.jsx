@@ -1,7 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Navigate, Routes, Route } from "react-router-dom";
 import Login from "../pages/Login";
-import Signup from "../pages/Signup";
 
 const MainLayout = lazy(() => import("../layouts/MainLayout"));
 const ProtectedRoute = lazy(() => import("./ProtectedRoute"));
@@ -22,7 +21,6 @@ const AppRoutes = () => {
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
 
         {/* Protected Routes with Navbar */}
         <Route
