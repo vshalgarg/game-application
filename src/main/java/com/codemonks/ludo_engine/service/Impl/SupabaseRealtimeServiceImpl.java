@@ -84,7 +84,7 @@ public class SupabaseRealtimeServiceImpl implements SupabaseRealtimeService {
 
     @Override
     public void saveMove(RealtimeMoveDTO moveDTO) {
-        String table = properties.getTables().getRealtimeGameMoves();
+        String table = properties.getTables().getGameMoves();
         try {
             supabaseRestClient.post()
                     .uri("/rest/v1/" + table)
