@@ -18,6 +18,7 @@ import SocialAuthButtons from "../components/auth/SocialAuthButtons";
 import ForgotPasswordModal from "../components/auth/ForgotPasswordModal";
 import TextField from "../components/ui/TextField";
 import Button from "../components/ui/Button";
+import { getProfile } from "../services/profileService";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
-  const handleLoginSuccess = (response) => {
+  const handleLoginSuccess = async (response) => {
     const { token, userId, username, roles, permissions, userProfile } = response;
 
     login({
@@ -50,8 +51,19 @@ const Login = () => {
       clearRememberedEmail();
     }
 
-    showSnackbar(response.message || "Login Successful", "success");
-    navigate("/", { replace: true });
+    try {
+      const profileResponse = await getProfile();
+      if (profileResponse.profileStatus) {
+        navigate("/", { replace: true });
+      } else {
+        navigate("/profile", { replace: true });
+      }
+
+      showSnackbar(response.message || "Login Successful", "success");
+    } catch (error) {
+      console.error("Profile Fetch Error:", error);
+      showSnackbar(error.message || "Unable to load your profile. Please try again later.", "error");
+    }
   };
 
   const handleLogin = async () => {
@@ -63,7 +75,7 @@ const Login = () => {
     try {
       setLoading(true);
       const response = await loginUser({ email, password });
-      handleLoginSuccess(response);
+      await handleLoginSuccess(response);
     } catch (error) {
       console.error("Login Error:", error);
       showSnackbar(error.message || "Login Failed.", "error");
@@ -85,8 +97,7 @@ const Login = () => {
       };
 
       const response = await socialLogin(payload);
-      handleLoginSuccess(response);
-      showSnackbar(response.message || "Login Successful", "success");
+      await handleLoginSuccess(response);
     } catch (error) {
       console.error(`${provider} Login Error:`, error);
       showSnackbar(error.message || `${provider} login failed.`, "error");
@@ -145,26 +156,26 @@ const Login = () => {
     <AuthLayout>
       <AuthCard
         eyebrow="Welcome Back!"
-        title="Login"
-        subtitle="Enter your login credentials"
-        footer={
-          <>
-            Don&apos;t have an account?{" "}
-            <span
-              className="gz-link"
-              onClick={() => navigate("/signup", { replace: true })}
-              role="link"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  navigate("/signup", { replace: true });
-                }
-              }}
-            >
-              Create Account
-            </span>
-          </>
-        }
+        title="Continue to GameZone"
+        subtitle="Enter your email and password to continue"
+        // footer={
+        //   <>
+        //     Don&apos;t have an account?{" "}
+        //     <span
+        //       className="gz-link"
+        //       onClick={() => navigate("/signup", { replace: true })}
+        //       role="link"
+        //       tabIndex={0}
+        //       onKeyDown={(e) => {
+        //         if (e.key === "Enter" || e.key === " ") {
+        //           navigate("/signup", { replace: true });
+        //         }
+        //       }}
+        //     >
+        //       Create Account
+        //     </span>
+        //   </>
+        // }
       >
         <form onSubmit={handleSubmit} className="space-y-3">
           <TextField
@@ -218,7 +229,7 @@ const Login = () => {
           </div>
 
           <Button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Authenticating in..." : "Continue"}
           </Button>
         </form>
 
@@ -232,10 +243,7 @@ const Login = () => {
         />
       </AuthCard>
 
-      <ForgotPasswordModal
-        open={forgotPasswordOpen}
-        onClose={() => setForgotPasswordOpen(false)}
-      />
+      <ForgotPasswordModal open={forgotPasswordOpen} onClose={() => setForgotPasswordOpen(false)} />
     </AuthLayout>
   );
 };
