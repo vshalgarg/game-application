@@ -11,8 +11,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 @Component
-public class UserIdPropagationFilter
-        implements GlobalFilter, Ordered {
+public class UserIdPropagationFilter implements GlobalFilter, Ordered {
 
     private static final String USER_ID_HEADER = "X-User-Id";
 
