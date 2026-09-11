@@ -14,6 +14,7 @@ const LudoGameRoom = lazy(() => import("../pages/ludoPages/LudoGameRoom"));
 const About = lazy(() => import("../pages/About"));
 const Contact = lazy(() => import("../pages/Contact"));
 const Profile = lazy(() => import("../pages/Profile"));
+const CompleteProfile = lazy(() => import("../pages/CompleteProfile"));
 
 const AppRoutes = () => {
   return (
@@ -21,12 +22,20 @@ const AppRoutes = () => {
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
+        <Route
+          path="/complete-profile"
+          element={
+            <ProtectedRoute>
+              <CompleteProfile />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Protected Routes with Navbar */}
         <Route
           path="/*"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requireCompleteProfile>
               <MainLayout>
                 <Routes>
                   <Route path="/" element={<Landing />} /> {/*select game page */}

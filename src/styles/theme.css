@@ -101,6 +101,14 @@
       focus:border-gz-primary-cyan focus:ring-1 focus:ring-gz-primary-cyan/40;
   }
 
+  .gz-input:disabled {
+    @apply cursor-not-allowed opacity-70;
+  }
+
+  .gz-input[type="date"] {
+    color-scheme: dark;
+  }
+
   .gz-input:-webkit-autofill,
   .gz-input:-webkit-autofill:hover,
   .gz-input:-webkit-autofill:focus,
@@ -208,6 +216,10 @@
   .gz-select option {
     color: #172a46;
     background: #f5fafc;
+  }
+
+  .gz-select:disabled {
+    @apply cursor-not-allowed opacity-70;
   }
 
   .gz-mode-option {

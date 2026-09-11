@@ -3,6 +3,7 @@ const SelectField = ({
   value,
   onChange,
   options = [],
+  placeholder,
   leftIcon,
   className = "",
   ...props
@@ -22,6 +23,11 @@ const SelectField = ({
         className={`gz-select ${leftIcon ? "pl-11" : "pl-4"}`}
         {...props}
       >
+        {placeholder ? (
+          <option value="" disabled>
+            {placeholder}
+          </option>
+        ) : null}
         {options.map(({ label, value: optionValue }) => (
           <option key={optionValue || "default"} value={optionValue}>
             {label}
