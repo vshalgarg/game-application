@@ -16,7 +16,6 @@ const LudoGameRoom = () => {
   const { roomCode } = useParams();
   const navigate = useNavigate();
 
-  // for get board api
   const [boardData, setBoardData] = useState(null);
   const [boardLoading, setBoardLoading] = useState(true);
   const [boardError, setBoardError] = useState(null);
@@ -36,6 +35,7 @@ const LudoGameRoom = () => {
   const [showMovableTokens, setShowMovableTokens] = useState(false);
   const closeExitPopup = useCallback(() => setShowExitPopup(false), []);
   const openExitPopup = useCallback(() => setShowExitPopup(true), []);
+  const [diceUpdatedAt, setDiceUpdatedAt] = useState(null);
 
   useBackExitGuard(openExitPopup);
 
@@ -107,11 +107,12 @@ const LudoGameRoom = () => {
       await processGameUpdate(game);
     },
   });
-
-  // for queue inside realtime update 
+ 
+  // for queue inside realtime update
   const processGameUpdate = async (game) => {
     const board = game.game_state_data.board;
     console.info("Realtime received:", game);
+    const newDiceUpdatedAt = game.updated_at;
 
     // for player confetti celebration
     board.players.forEach((player) => {
@@ -126,12 +127,30 @@ const LudoGameRoom = () => {
     const newTurnUserId = game.current_turn_user_id;
     const newDiceValue = board.lastDice;
     const newPlayerTurnStage = board.playerTurnStage;
+    const relevantPlayerId = board.lastDicePlayerId ?? board.currentTurnPlayerId;
 
-    const rollerId = previousTurnUserIdRef.current;
-    const previousStage = previousPlayerTurnStageRef.current;
-    const turnChanged = rollerId !== null && newTurnUserId !== rollerId;
+    const isInitialLoad = !previousBoardRef.current;
 
-    const isAutoSkipAfterRoll = turnChanged && previousStage === "ROLL_DICE";
+    // pendingDice grew for the relevant player for avoiding dice animation on make move updated at
+    let pendingDiceIncreased = false;
+    if (previousBoardRef.current) {
+      const oldPlayer = previousBoardRef.current.players.find((p) => p.playerId === relevantPlayerId);
+      const newPlayer = board.players.find((p) => p.playerId === relevantPlayerId);
+      const oldLen = oldPlayer?.pendingDice?.length ?? 0;
+      const newLen = newPlayer?.pendingDice?.length ?? 0;
+      pendingDiceIncreased = newLen > oldLen;
+    }
+
+    // animation logic when all token at base, pending dice null
+    const relevantPlayer = board.players.find((p) => p.playerId === board.lastDicePlayerId);
+    const allTokensAtBase = relevantPlayer?.tokens?.every((t) => t.state === "BASE") ?? false;
+    const rollerDiffersFromCurrentTurn = board.lastDicePlayerId != null && board.lastDicePlayerId !== board.currentTurnPlayerId;
+
+    const isAutoSkipAfterRoll = !isInitialLoad && rollerDiffersFromCurrentTurn &&
+      newPlayerTurnStage === "ROLL_DICE" && (board.legalMoves?.length ?? 0) === 0 && allTokensAtBase;
+
+    // A genuine roll happened pending dice increased or through updated at.
+    const isRollEvent = pendingDiceIncreased || isAutoSkipAfterRoll;
 
     previousTurnUserIdRef.current = newTurnUserId;
     previousPlayerTurnStageRef.current = newPlayerTurnStage;
@@ -144,14 +163,23 @@ const LudoGameRoom = () => {
     const applyTurnUpdate = () => {
       setCurrentTurnUserId(newTurnUserId);
       setDiceValue(newDiceValue);
+
+      if (isRollEvent) {
+        setDiceUpdatedAt(newDiceUpdatedAt);
+      }
     };
 
     if (isAutoSkipAfterRoll) {
       setDiceValue(newDiceValue);
 
+      if (isRollEvent) {
+        setDiceUpdatedAt(newDiceUpdatedAt);
+      }
+
+      // dice roll animation and number displaying timing when all token at base
       turnTransitionTimeoutRef.current = setTimeout(() => {
         setCurrentTurnUserId(newTurnUserId);
-      }, 2000);
+      }, 3000);
     }
 
     if (!previousBoardRef.current) {
@@ -179,7 +207,6 @@ const LudoGameRoom = () => {
       await processGameUpdate(nextGame);
     }
   };
-
   // Cleanup any pending turn-transition timeout on unmount
   useEffect(() => {
     return () => clearTimeout(turnTransitionTimeoutRef.current);
@@ -196,10 +223,10 @@ const LudoGameRoom = () => {
 
   // for automatic move when single token is on track
   useEffect(() => {
-    // Don't auto move while rolling animation is running
+    // no auto move while rolling animation is running
     if (!animationComplete) return;
 
-    // Don't auto move while API call is running
+    // no auto move while API call is running
     if (moveInProgress) return;
 
     if (!isMyTurn) {
@@ -217,7 +244,6 @@ const LudoGameRoom = () => {
     const move = legalMoves[0];
     const moveKey = `${roomCode}-${currentTurnUserId}-${move.tokenId}-${move.dice}`;
 
-    // Already processed exact move
     if (autoMoveKeyRef.current === moveKey) return;
 
     autoMoveKeyRef.current = moveKey;
@@ -225,12 +251,12 @@ const LudoGameRoom = () => {
     // Dice animation duration when single token on track(delay)
     const timer = setTimeout(async () => {
       await handleTokenClick(move.tokenId, move.dice);
-    }, 1500);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [legalMoves, playerTurnStage, isMyTurn, currentTurnUserId, roomCode, animationComplete, moveInProgress]);
 
-  // Gamearena responsiveness
+  // board responsiveness
   useLayoutEffect(() => {
     const el = gameAreaRef.current;
     if (!el) return;
@@ -308,7 +334,7 @@ const LudoGameRoom = () => {
     if (currentTurnUserId !== currentUserId) return;
     if (playerTurnStage !== "TOKEN_MOVE") return;
 
-    // All legal moves for this token
+    // All legal moves for a token
     const tokenMoves = legalMoves.filter((move) => move.tokenId === tokenId);
 
     if (tokenMoves.length === 0) return;
@@ -331,7 +357,7 @@ const LudoGameRoom = () => {
       return;
     }
 
-    // Find which dice to consume
+    // dice number to consume
     const consumedDice = selectedDice ?? tokenMoves[0].dice;
     await moveToken(tokenId, consumedDice);
   };
@@ -351,7 +377,7 @@ const LudoGameRoom = () => {
 
     const board = structuredClone(oldBoard);
 
-    // Store killed tokens here
+    // killed tokens stored
     const killedAnimations = [];
 
     for (const latestPlayer of newBoard.players) {
@@ -478,7 +504,7 @@ const LudoGameRoom = () => {
     }
   }, [rolling, pendingDice]);
 
-  // while loading board through api
+  // board loading through api
   if (boardLoading) {
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
@@ -547,6 +573,7 @@ const LudoGameRoom = () => {
                   onRoll={handleRollDice}
                   colors={boardData.metadata.colors}
                   isCurrentTurn={isMyTurn}
+                  diceUpdatedAt={diceUpdatedAt}
                 />
               );
 
