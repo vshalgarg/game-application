@@ -3,6 +3,8 @@ package com.codemonks.api_gateway.auth.dto.request;
 
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -14,4 +16,6 @@ public class ProfileRequest {
     private String name;
 
     private String email;
+
+    private String dob;
 }

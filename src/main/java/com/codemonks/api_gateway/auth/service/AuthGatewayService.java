@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.Map;
 
@@ -102,10 +103,14 @@ public class AuthGatewayService {
                     String email = profile != null && profile.get("email") != null
                             ? profile.get("email").toString()
                             : loginResponse.username();
+                    String dob = profile != null && profile.get("dob") != null
+                            ? profile.get("dob").toString()
+                            : null;
                     ProfileRequest profileRequest = ProfileRequest.builder()
                                     .userId(loginResponse.userId())
                                     .name(name)
                                     .email(email)
+                            .dob(dob)
                                     .build();
                     return gameProfileGatewayService
                             .createOrUpdateProfile(profileRequest)
