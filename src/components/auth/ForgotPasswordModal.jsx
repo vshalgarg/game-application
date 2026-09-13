@@ -12,7 +12,7 @@ import TextField from "../ui/TextField";
 import Button from "../ui/Button";
 
 const STEP = {
-  PHONE: 1,
+  EMAIL: 1,
   OTP: 2,
   PASSWORD: 3,
   SUCCESS: 4,
@@ -20,11 +20,8 @@ const STEP = {
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 45;
-const PHONE_PATTERN = /^[6-9]\d{9}$/;
 
 const emptyOtp = () => Array(OTP_LENGTH).fill("");
-
-const maskPhone = (phone) => `******${phone.slice(-4)}`;
 
 const OtpInputs = ({ values, disabled, onChange, onComplete }) => {
   const inputRefs = useRef([]);
@@ -102,16 +99,77 @@ const OtpInputs = ({ values, disabled, onChange, onComplete }) => {
 const ForgotPasswordModal = ({ open, onClose }) => {
   const { showSnackbar } = useSnackbar();
 
-  const [step, setStep] = useState(STEP.PHONE);
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [step, setStep] = useState(STEP.EMAIL);
+  const [email, setEmail] = useState("");
   const [otp, setOtp] = useState(emptyOtp);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [resetToken, setResetToken] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   const [resendIn, setResendIn] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const clearError = (field) => {
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+
+      const next = { ...prev };
+      delete next[field];
+
+      return next;
+    });
+  };
+
+  const validateEmail = () => {
+    const value = email.trim();
+
+    if (!value) {
+      setErrors({ email: "Email is required" });
+      return false;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      setErrors({ email: "Please enter a valid email address" });
+      return false;
+    }
+
+    setErrors({});
+    return true;
+  };
+
+  const validateOtp = () => {
+    const otpValue = otp.join("");
+
+    if (otpValue.length !== OTP_LENGTH) {
+      setErrors({ otp: "Please enter the 6-digit OTP" });
+      return false;
+    }
+
+    setErrors({});
+    return true;
+  };
+
+  const validatePassword = () => {
+    const nextErrors = {};
+
+    if (!newPassword) {
+      nextErrors.newPassword = "New password is required";
+    }
+
+    if (!confirmPassword) {
+      nextErrors.confirmPassword = "Please confirm your new password";
+    }
+
+    if (newPassword && confirmPassword && newPassword !== confirmPassword) {
+      nextErrors.confirmPassword = "Passwords do not match";
+    }
+
+    setErrors(nextErrors);
+
+    return Object.keys(nextErrors).length === 0;
+  };
 
   const handleClose = () => {
     onClose();
@@ -120,8 +178,8 @@ const ForgotPasswordModal = ({ open, onClose }) => {
   useEffect(() => {
     if (open) return;
 
-    setStep(STEP.PHONE);
-    setPhoneNumber("");
+    setStep(STEP.EMAIL);
+    setEmail("");
     setOtp(emptyOtp());
     setNewPassword("");
     setConfirmPassword("");
@@ -130,6 +188,7 @@ const ForgotPasswordModal = ({ open, onClose }) => {
     setResendIn(0);
     setShowPassword(false);
     setShowConfirmPassword(false);
+    setErrors({});
   }, [open]);
 
   useEffect(() => {
@@ -159,19 +218,14 @@ const ForgotPasswordModal = ({ open, onClose }) => {
 
   const handleSendOtp = async (event) => {
     event.preventDefault();
-
-    if (!PHONE_PATTERN.test(phoneNumber)) {
-      showSnackbar("Enter a valid 10-digit mobile number", "error");
-      return;
-    }
-
+    if (!validateEmail()) return;
     try {
       setLoading(true);
-      // const response = await forgotPassword({ phoneNumber });
+      const response = await forgotPassword({ email });
       setOtp(emptyOtp());
       setStep(STEP.OTP);
       startResendTimer();
-      showSnackbar( "OTP sent", "success");
+      showSnackbar(response.message || "OTP sent", "success");
     } catch (error) {
       console.error("Forgot Password Error:", error);
       showSnackbar(error.message || "Failed to send OTP.", "error");
@@ -182,18 +236,15 @@ const ForgotPasswordModal = ({ open, onClose }) => {
 
   const handleVerifyOtp = async (event) => {
     event.preventDefault();
+    if (!validateOtp()) return;
     const otpValue = otp.join("");
-
-    if (otpValue.length !== OTP_LENGTH) {
-      showSnackbar("Enter the 6-digit OTP", "error");
-      return;
-    }
 
     try {
       setLoading(true);
-      // const response = await verifyResetOtp({ phoneNumber, otp: otpValue });
-      setResetToken(resetToken);
+      const response = await verifyResetOtp({ email, otp: otpValue });
+      setResetToken(response.resetToken);
       setStep(STEP.PASSWORD);
+      showSnackbar(response.message || "OTP verification successful.", "success");
     } catch (error) {
       console.error("Verify OTP Error:", error);
       showSnackbar(error.message || "Invalid OTP.", "error");
@@ -207,7 +258,7 @@ const ForgotPasswordModal = ({ open, onClose }) => {
 
     try {
       setLoading(true);
-      const response = await resendResetOtp({ phoneNumber });
+      const response = await resendResetOtp({ email });
       setOtp(emptyOtp());
       startResendTimer();
       showSnackbar(response.message || "OTP resent", "success");
@@ -222,21 +273,13 @@ const ForgotPasswordModal = ({ open, onClose }) => {
   const handleResetPassword = async (event) => {
     event.preventDefault();
 
-    if (!newPassword || !confirmPassword) {
-      showSnackbar("Both fields are required", "error");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      showSnackbar("Passwords do not match", "error");
-      return;
-    }
+    if (!validatePassword()) return;
 
     try {
       setLoading(true);
-      // const response = await resetPassword({ resetToken, newPassword });
+      const response = await resetPassword({ resetToken, newPassword });
       setStep(STEP.SUCCESS);
-      showSnackbar( "Password reset successful", "success");
+      showSnackbar(response.message || "Password reset successful", "success");
     } catch (error) {
       console.error("Reset Password Error:", error);
       showSnackbar(error.message || "Failed to reset password.", "error");
@@ -246,9 +289,12 @@ const ForgotPasswordModal = ({ open, onClose }) => {
   };
 
   const titles = {
-    [STEP.PHONE]: { title: "Forgot Password", subtitle: "Enter your registered mobile number" },
-    [STEP.OTP]: { title: "Verify OTP", subtitle: `OTP sent to ${maskPhone(phoneNumber)}` },
-    [STEP.PASSWORD]: { title: "Reset Password", subtitle: "Choose a new password for your account" },
+    [STEP.EMAIL]: { title: "Forgot Password", subtitle: "Enter your registered email address" },
+    [STEP.OTP]: { title: "Verify OTP", subtitle: `OTP sent to ${email}` },
+    [STEP.PASSWORD]: {
+      title: "Reset Password",
+      subtitle: "Choose a new password for your account",
+    },
     [STEP.SUCCESS]: { title: "Success", subtitle: "Your password has been reset." },
   };
 
@@ -282,18 +328,20 @@ const ForgotPasswordModal = ({ open, onClose }) => {
           <p className="mt-1 text-sm text-gz-text-secondary">{titles[step].subtitle}</p>
         </div>
 
-        {step === STEP.PHONE && (
+        {step === STEP.EMAIL && (
           <form onSubmit={handleSendOtp} className="space-y-3">
             <TextField
-              id="forgot-phone"
-              type="tel"
-              inputMode="numeric"
-              autoComplete="tel"
-              maxLength={10}
-              placeholder="Mobile number"
-              value={phoneNumber}
-              onChange={(event) => setPhoneNumber(event.target.value.replace(/\D/g, "").slice(0, 10))}
+              id="email"
+              type="email"
+              autoComplete="username"
+              placeholder="Enter registered email address"
+              value={email}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                clearError("email");
+              }}
             />
+            {errors.email && <p className="text-sm text-red-400">{errors.email}</p>}
             <Button type="submit" disabled={loading}>
               {loading ? "Sending..." : "Send OTP"}
             </Button>
@@ -302,7 +350,15 @@ const ForgotPasswordModal = ({ open, onClose }) => {
 
         {step === STEP.OTP && (
           <form onSubmit={handleVerifyOtp} className="space-y-4">
-            <OtpInputs values={otp} disabled={loading} onChange={setOtp} />
+            <OtpInputs
+              values={otp}
+              disabled={loading}
+              onChange={(value) => {
+                setOtp(value);
+                clearError("otp");
+              }}
+            />
+            {errors.otp && <p className="text-center text-sm text-red-400">{errors.otp}</p>}
 
             <div className="text-center text-sm">
               {resendIn > 0 ? (
@@ -332,7 +388,10 @@ const ForgotPasswordModal = ({ open, onClose }) => {
               type={showPassword ? "text" : "password"}
               placeholder="New Password"
               value={newPassword}
-              onChange={(event) => setNewPassword(event.target.value)}
+              onChange={(event) => {
+                setNewPassword(event.target.value);
+                clearError("newPassword");
+              }}
               autoComplete="new-password"
               leftIcon={<FaLock size={16} />}
               rightSlot={
@@ -346,12 +405,17 @@ const ForgotPasswordModal = ({ open, onClose }) => {
                 </button>
               }
             />
+            {errors.newPassword && <p className="text-sm text-red-400">{errors.newPassword}</p>}
+
             <TextField
               id="reset-confirm-password"
               type={showConfirmPassword ? "text" : "password"}
               placeholder="Confirm Password"
               value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
+              onChange={(event) => {
+                setConfirmPassword(event.target.value);
+                clearError("confirmPassword");
+              }}
               autoComplete="new-password"
               leftIcon={<FaLock size={16} />}
               rightSlot={
@@ -365,6 +429,11 @@ const ForgotPasswordModal = ({ open, onClose }) => {
                 </button>
               }
             />
+
+            {errors.confirmPassword && (
+              <p className="text-sm text-red-400">{errors.confirmPassword}</p>
+            )}
+
             <Button type="submit" disabled={loading}>
               {loading ? "Resetting..." : "Reset Password"}
             </Button>
