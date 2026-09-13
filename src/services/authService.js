@@ -39,10 +39,10 @@ export const socialLogin = async (payload) => {
   }
 };
 
-export const forgotPassword = async ({ phoneNumber }) => {
+export const forgotPassword = async ({ email }) => {
   try {
-    const res = await authApi.post("/forget-password", {
-      phoneNumber,
+    const res = await authApi.post("/forgot-password", {
+      email,
     });
     return checkLogicalError(res.data);
   } catch (error) {
@@ -50,11 +50,11 @@ export const forgotPassword = async ({ phoneNumber }) => {
   }
 };
 
-export const verifyResetOtp = async ({ phoneNumber, otp }) => {
+export const verifyResetOtp = async ({ email, otp }) => {
   try {
-    const res = await authApi.post("/verify-reset-otp", {
-      phoneNumber,
-      otp,
+    const res = await authApi.post("/forgot-password/verify-otp", {
+      email,
+      verificationCode: otp,
     });
     const result = checkLogicalError(res.data);
     const resetToken = result?.resetToken;
@@ -82,7 +82,7 @@ export const resendResetOtp = async ({ phoneNumber }) => {
 
 export const resetPassword = async ({ resetToken, newPassword }) => {
   try {
-    const res = await authApi.post("/reset-password", {
+    const res = await authApi.post("/forgot-password/reset", {
       resetToken,
       newPassword,
     });
