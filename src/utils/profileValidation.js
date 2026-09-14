@@ -1,4 +1,3 @@
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_IN_PATTERN = /^[6-9]\d{9}$/;
 const DISPLAY_NAME_PATTERN = /^[a-zA-Z0-9 _.-]{2,24}$/;
 const NAME_PATTERN = /^[a-zA-Z][a-zA-Z .'-]{0,39}$/;
@@ -35,10 +34,6 @@ const getAge = (dob) => {
 
 export const validateProfile = (form) => {
   const errors = {};
-
-  // if (!form.avatarId && !form.avatarUrl) {
-  //   errors.avatar = "Please select an avatar.";
-  // }
 
   const displayName = form.displayName.trim();
 
@@ -79,14 +74,6 @@ export const validateProfile = (form) => {
 
   if (!form.country) {
     errors.country = "Country is required.";
-  }
-
-  const email = form.email.trim();
-
-  if (!email) {
-    errors.email = "Email is required.";
-  } else if (!EMAIL_PATTERN.test(email)) {
-    errors.email = "Enter a valid email address.";
   }
 
   const phone = form.phone.replace(/\D/g, "");
