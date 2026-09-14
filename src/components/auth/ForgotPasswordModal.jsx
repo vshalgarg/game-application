@@ -340,8 +340,10 @@ const ForgotPasswordModal = ({ open, onClose }) => {
                 setEmail(event.target.value);
                 clearError("email");
               }}
+              error={errors.email}
+              helperText={errors.email}
             />
-            {errors.email && <p className="text-sm text-red-400">{errors.email}</p>}
+
             <Button type="submit" disabled={loading}>
               {loading ? "Sending..." : "Send OTP"}
             </Button>
@@ -392,6 +394,8 @@ const ForgotPasswordModal = ({ open, onClose }) => {
                 setNewPassword(event.target.value);
                 clearError("newPassword");
               }}
+              error={errors.newPassword}
+              helperText={errors.newPassword}
               autoComplete="new-password"
               leftIcon={<FaLock size={16} />}
               rightSlot={
@@ -405,7 +409,6 @@ const ForgotPasswordModal = ({ open, onClose }) => {
                 </button>
               }
             />
-            {errors.newPassword && <p className="text-sm text-red-400">{errors.newPassword}</p>}
 
             <TextField
               id="reset-confirm-password"
@@ -416,6 +419,8 @@ const ForgotPasswordModal = ({ open, onClose }) => {
                 setConfirmPassword(event.target.value);
                 clearError("confirmPassword");
               }}
+              error={errors.confirmPassword}
+              helperText={errors.confirmPassword}
               autoComplete="new-password"
               leftIcon={<FaLock size={16} />}
               rightSlot={
@@ -429,10 +434,6 @@ const ForgotPasswordModal = ({ open, onClose }) => {
                 </button>
               }
             />
-
-            {errors.confirmPassword && (
-              <p className="text-sm text-red-400">{errors.confirmPassword}</p>
-            )}
 
             <Button type="submit" disabled={loading}>
               {loading ? "Resetting..." : "Reset Password"}
