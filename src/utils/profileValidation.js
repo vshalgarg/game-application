@@ -36,9 +36,9 @@ const getAge = (dob) => {
 export const validateProfile = (form) => {
   const errors = {};
 
-  if (!form.avatarId && !form.avatarUrl) {
-    errors.avatar = "Please select an avatar.";
-  }
+  // if (!form.avatarId && !form.avatarUrl) {
+  //   errors.avatar = "Please select an avatar.";
+  // }
 
   const displayName = form.displayName.trim();
 

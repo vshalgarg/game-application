@@ -8,7 +8,7 @@ const ProtectedRoute = ({ children, requireCompleteProfile = false }) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (requireCompleteProfile) {
+  if (requireCompleteProfile && !auth?.profileStatus) {
     return <Navigate to="/complete-profile" replace />;
   }
 

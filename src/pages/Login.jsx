@@ -19,12 +19,11 @@ import ForgotPasswordModal from "../components/auth/ForgotPasswordModal";
 import TextField from "../components/ui/TextField";
 import Button from "../components/ui/Button";
 import { getProfile } from "../services/profileService";
-import { mapProfileFromApi } from "../utils/profileMapper";
 
 const Login = () => {
   const navigate = useNavigate();
   const { showSnackbar } = useSnackbar();
-  const { login } = useAuth();
+  const { login, updateCurrentUser } = useAuth();
 
   const savedEmail = loadRememberedEmail();
   const [email, setEmail] = useState(savedEmail || "");
@@ -35,7 +34,7 @@ const Login = () => {
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
   const handleLoginSuccess = async (response) => {
-    const { token, userId, username, roles, permissions, userProfile } = response;
+    const { token, userId, username, roles, permissions } = response;
 
     login({
       token,
@@ -43,7 +42,6 @@ const Login = () => {
       username,
       roles,
       permissions,
-      userProfile,
     });
 
     if (rememberMe) {
@@ -54,17 +52,20 @@ const Login = () => {
 
     try {
       const profileResponse = await getProfile();
+      updateCurrentUser({ profileStatus: profileResponse.profileStatus });
       if (profileResponse.profileStatus) {
         navigate("/", { replace: true });
       } else {
-        const mapped = mapProfileFromApi(profileResponse);
         navigate("/complete-profile", { replace: true });
       }
 
       showSnackbar(response.message || "Login Successful", "success");
     } catch (error) {
       console.error("Profile Fetch Error:", error);
-      showSnackbar(error.message || "Unable to load your profile. Please try again later.", "error");
+      showSnackbar(
+        error.message || "Unable to load your profile. Please try again later.",
+        "error",
+      );
     }
   };
 
