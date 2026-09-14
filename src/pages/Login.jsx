@@ -19,6 +19,7 @@ import ForgotPasswordModal from "../components/auth/ForgotPasswordModal";
 import TextField from "../components/ui/TextField";
 import Button from "../components/ui/Button";
 import { getProfile } from "../services/profileService";
+import { mapProfileFromApi } from "../utils/profileMapper";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -56,7 +57,8 @@ const Login = () => {
       if (profileResponse.profileStatus) {
         navigate("/", { replace: true });
       } else {
-        navigate("/profile", { replace: true });
+        const mapped = mapProfileFromApi(profileResponse);
+        navigate("/complete-profile", { replace: true });
       }
 
       showSnackbar(response.message || "Login Successful", "success");
