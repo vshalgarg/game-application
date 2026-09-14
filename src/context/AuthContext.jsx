@@ -30,14 +30,13 @@ export const AuthProvider = ({ children }) => {
     };
   }, [navigate]);
 
-  const login = async ({ token, userId, username, roles, permissions = [], userProfile }) => {
+  const login = async ({ token, userId, username, roles, permissions = [] }) => {
     const updatedAuth = updateAuth({
       token,
       userId,
       username,
       roles,
       permissions,
-      userProfile,
     });
 
     setAuth(updatedAuth);

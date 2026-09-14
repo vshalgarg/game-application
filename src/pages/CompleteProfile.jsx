@@ -16,7 +16,7 @@ import { emptyProfile, mapProfileFromApi, mapProfileToApi } from "../utils/profi
 
 const CompleteProfile = () => {
   const navigate = useNavigate();
-  const { auth } = useAuth();
+  const { auth, updateCurrentUser } = useAuth();
   const { showSnackbar } = useSnackbar();
 
   const [form, setForm] = useState(emptyProfile);
@@ -69,8 +69,9 @@ const CompleteProfile = () => {
 
     try {
       setSaving(true);
-      const response = await updateProfile(mapProfileToApi(form));
-      showSnackbar(response?.message || "Profile saved", "success");
+      // const response = await updateProfile(mapProfileToApi(form));
+      updateCurrentUser({ profileStatus: true });
+      // showSnackbar(response?.message || "Profile saved", "success");
       navigate("/", { replace: true });
     } catch (error) {
       console.error("Profile Save Error:", error);
@@ -129,9 +130,7 @@ const CompleteProfile = () => {
                   {form.playerId || "—"}
                 </span>
                 <p className="mt-2 text-xs text-gz-text-secondary">
-                  {form.avatarId
-                    ? `Avatar: ${selectedAvatar?.name || "Custom"}`
-                    : "Avatar is required"}
+                  {form?.avatarId && `Avatar: ${selectedAvatar?.name || "Custom"}`}
                 </p>
               </div>
             </div>

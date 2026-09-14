@@ -40,6 +40,7 @@ const Profile = () => {
 
   const fetchProfile = async () => {
     setLoading(true);
+    setLoadError("")
     try {
       const response = await getProfile();
       const mapped = mapProfileFromApi(response);
@@ -49,6 +50,7 @@ const Profile = () => {
     } catch (error) {
       console.error("Profile Fetch Error:", error);
       setLoadError(error.message || "Unable to load your profile.");
+    } finally {
       setLoading(false);
     }
   };
