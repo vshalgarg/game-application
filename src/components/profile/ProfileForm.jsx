@@ -80,6 +80,15 @@ const ProfileForm = ({
       </div>
 
       <div className="grid gap-3.5 sm:grid-cols-2">
+        <LabeledField id="email" label="Email" required>
+          <TextField
+            id="email"
+            value={form.email}
+            readOnly
+            disabled
+            leftIcon={<FaEnvelope size={14} />}
+          />
+        </LabeledField>
         <LabeledField id="display-name" label="Display Name" required>
           <TextField
             id="display-name"
@@ -92,6 +101,9 @@ const ProfileForm = ({
             helperText={errors.displayName}
           />
         </LabeledField>
+      </div>
+
+      <div className="grid gap-3.5 sm:grid-cols-2">
         <LabeledField id="dob" label="Date of Birth" required>
           <TextField
             id="dob"
@@ -105,9 +117,6 @@ const ProfileForm = ({
             helperText={errors.dob}
           />
         </LabeledField>
-      </div>
-
-      <div className="grid gap-3.5 sm:grid-cols-2">
         <LabeledField id="gender" label="Gender" required>
           <SelectField
             id="gender"
@@ -120,6 +129,9 @@ const ProfileForm = ({
             helperText={errors.gender}
           />
         </LabeledField>
+      </div>
+
+      <div className="grid gap-3.5 sm:grid-cols-2">
         <LabeledField id="country" label="Country" required>
           <SelectField
             id="country"
@@ -130,22 +142,6 @@ const ProfileForm = ({
             leftIcon={<FaGlobe size={14} />}
             error={errors.country}
             helperText={errors.country}
-          />
-        </LabeledField>
-      </div>
-
-      <div className="grid gap-3.5 sm:grid-cols-2">
-        <LabeledField id="email" label="Email" required>
-          <TextField
-            id="email"
-            type="email"
-            value={form.email}
-            onChange={updateField("email")}
-            placeholder="you@email.com"
-            autoComplete="email"
-            leftIcon={<FaEnvelope size={14} />}
-            error={errors.email}
-            helperText={errors.email}
           />
         </LabeledField>
         <LabeledField id="phone" label="Phone" required>
