@@ -19,7 +19,7 @@ const TextField = ({
     <div className={className}>
       <div className="relative">
         {leftIcon && (
-          <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-gz-icon">
+          <span className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-gz-icon">
             {leftIcon}
           </span>
         )}
@@ -40,7 +40,9 @@ const TextField = ({
         />
 
         {rightSlot && (
-          <div className="absolute top-1/2 right-3.5 -translate-y-1/2">{rightSlot}</div>
+          <div className="absolute inset-y-0 right-3.5 flex items-center [&_button]:inline-flex [&_button]:items-center [&_button]:leading-none [&_svg]:block">
+            {rightSlot}
+          </div>
         )}
       </div>
 
