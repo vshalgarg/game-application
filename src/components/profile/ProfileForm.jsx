@@ -14,14 +14,24 @@ import { COUNTRIES } from "../../data/countries";
 import { GENDERS } from "../../data/genders";
 import { minDobIso, todayIso } from "../../utils/profileValidation";
 
-const ProfileForm = ({ id = "profile-form", form, onPatch, onSubmit, children }) => {
+const ProfileForm = ({
+  id = "profile-form",
+  form,
+  errors,
+  onClearError,
+  onPatch,
+  onSubmit,
+  children,
+}) => {
   const updateField = (field) => (event) => {
     onPatch({ [field]: event.target.value });
+    onClearError(field);
   };
 
   const handlePhoneChange = (event) => {
     const maxLength = form.country === "IN" ? 10 : 15;
     onPatch({ phone: event.target.value.replace(/\D/g, "").slice(0, maxLength) });
+    onClearError("phone");
   };
 
   const handleCountryChange = (event) => {
@@ -30,6 +40,8 @@ const ProfileForm = ({ id = "profile-form", form, onPatch, onSubmit, children })
       country,
       phone: country === "IN" ? form.phone.slice(0, 10) : form.phone,
     });
+    onClearError("country");
+    onClearError("phone");
   };
 
   return (
@@ -76,6 +88,8 @@ const ProfileForm = ({ id = "profile-form", form, onPatch, onSubmit, children })
             placeholder="Shown on leaderboards"
             autoComplete="nickname"
             leftIcon={<FaUser size={14} />}
+            error={errors.displayName}
+            helperText={errors.displayName}
           />
         </LabeledField>
         <LabeledField id="dob" label="Date of Birth" required>
@@ -87,6 +101,8 @@ const ProfileForm = ({ id = "profile-form", form, onPatch, onSubmit, children })
             min={minDobIso}
             max={todayIso}
             leftIcon={<FaCalendarAlt size={14} />}
+            error={errors.dob}
+            helperText={errors.dob}
           />
         </LabeledField>
       </div>
@@ -100,6 +116,8 @@ const ProfileForm = ({ id = "profile-form", form, onPatch, onSubmit, children })
             placeholder="Select gender"
             options={GENDERS}
             leftIcon={<FaVenusMars size={15} />}
+            error={errors.gender}
+            helperText={errors.gender}
           />
         </LabeledField>
         <LabeledField id="country" label="Country" required>
@@ -110,6 +128,8 @@ const ProfileForm = ({ id = "profile-form", form, onPatch, onSubmit, children })
             placeholder="Select country"
             options={COUNTRIES}
             leftIcon={<FaGlobe size={14} />}
+            error={errors.country}
+            helperText={errors.country}
           />
         </LabeledField>
       </div>
@@ -124,6 +144,8 @@ const ProfileForm = ({ id = "profile-form", form, onPatch, onSubmit, children })
             placeholder="you@email.com"
             autoComplete="email"
             leftIcon={<FaEnvelope size={14} />}
+            error={errors.email}
+            helperText={errors.email}
           />
         </LabeledField>
         <LabeledField id="phone" label="Phone" required>
@@ -136,6 +158,8 @@ const ProfileForm = ({ id = "profile-form", form, onPatch, onSubmit, children })
             autoComplete="tel"
             inputMode="numeric"
             leftIcon={<FaPhoneAlt size={14} />}
+            error={errors.phone}
+            helperText={errors.phone}
           />
         </LabeledField>
       </div>

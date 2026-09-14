@@ -20,6 +20,7 @@ const CompleteProfile = () => {
   const { showSnackbar } = useSnackbar();
 
   const [form, setForm] = useState(emptyProfile);
+  const [errors, setErrors] = useState({});
   const [pickerOpen, setPickerOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -27,8 +28,9 @@ const CompleteProfile = () => {
 
   const selectedAvatar = getAvatarById(form.avatarId);
 
-  const fetchProfile = async() => {
+  const fetchProfile = async () => {
     setLoading(true);
+    setLoadError("");
     try {
       const response = await getProfile();
       const mapped = mapProfileFromApi(response);
@@ -36,31 +38,38 @@ const CompleteProfile = () => {
     } catch (error) {
       console.error("Profile Fetch Error:", error);
       setLoadError(error.message || "Unable to load your profile.");
-    } finally{
-       setLoading(false);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-
-     fetchProfile();
-
+    fetchProfile();
   }, []);
+
+  const clearError = (field) => {
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+
+      const next = { ...prev };
+      delete next[field];
+
+      return next;
+    });
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const errorMessage = validateProfile(form);
-    if (errorMessage) {
-      showSnackbar(errorMessage, "error");
+    const validationErrors = validateProfile(form);
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length > 0) {
       return;
     }
 
     try {
       setSaving(true);
       const response = await updateProfile(mapProfileToApi(form));
-      const mapped = mapProfileFromApi(response, { ...form, profileStatus: true });
-      const nextProfile = { ...mapped, profileStatus: true };
-
       showSnackbar(response?.message || "Profile saved", "success");
       navigate("/", { replace: true });
     } catch (error) {
@@ -91,11 +100,13 @@ const CompleteProfile = () => {
         </div>
 
         {loading ? (
-          <p className="py-6 text-center text-sm text-gz-text-secondary">Fetching your details...</p>
+          <p className="py-6 text-center text-sm text-gz-text-secondary">
+            Fetching your details...
+          </p>
         ) : loadError ? (
           <div className="py-4 text-center">
             <p className="text-sm text-gz-text-secondary">{loadError}</p>
-            <Button type="button" className="mt-5" onClick={getProfile}>
+            <Button type="button" className="mt-5" onClick={fetchProfile}>
               Try again
             </Button>
           </div>
@@ -118,12 +129,20 @@ const CompleteProfile = () => {
                   {form.playerId || "—"}
                 </span>
                 <p className="mt-2 text-xs text-gz-text-secondary">
-                  {form.avatarId ? `Avatar: ${selectedAvatar?.name || "Custom"}` : "Avatar is required"}
+                  {form.avatarId
+                    ? `Avatar: ${selectedAvatar?.name || "Custom"}`
+                    : "Avatar is required"}
                 </p>
               </div>
             </div>
 
-            <ProfileForm form={form} onPatch={(patch) => setForm((prev) => ({ ...prev, ...patch }))} onSubmit={handleSubmit}>
+            <ProfileForm
+              form={form}
+              errors={errors}
+              onClearError={clearError}
+              onPatch={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
+              onSubmit={handleSubmit}
+            >
               <Button type="submit" disabled={saving}>
                 {saving ? "Saving..." : "Save & Continue"}
               </Button>

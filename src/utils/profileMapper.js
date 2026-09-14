@@ -12,11 +12,11 @@ export const emptyProfile = {
   avatarId: "",
   avatarUrl: "",
   email: "",
-  phone: ""
+  phone: "",
 };
 
-const firstValue = (...values) => values.find((value) => value !== undefined && value !== null && value !== "") ?? "";
-
+const firstValue = (...values) =>
+  values.find((value) => value !== undefined && value !== null && value !== "") ?? "";
 
 const normalizeCountry = (value) => {
   if (!value) return "";
@@ -61,7 +61,7 @@ export const mapProfileFromApi = (response) => {
     avatarId: isAvatarUrl ? "" : avatarValue,
     avatarUrl: isAvatarUrl ? avatarValue : firstValue(response.avatarUrl),
     email: firstValue(response.email),
-    phone: String(firstValue(response.phoneNumber))
+    phone: String(firstValue(response.phoneNumber)),
   };
 };
 

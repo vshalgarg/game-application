@@ -10,7 +10,6 @@ import { getCountryLabel } from "../data/countries";
 import { getGenderLabel } from "../data/genders";
 import { getAvatarById } from "../data/avatars";
 import { getProfile, updateProfile } from "../services/profileService";
-import { useAuth } from "../context/AuthContext";
 import { useSnackbar } from "../context/SnackbarContext";
 import { emptyProfile, mapProfileFromApi, mapProfileToApi } from "../utils/profileMapper";
 
@@ -26,10 +25,10 @@ const formatDob = (value) => {
 };
 
 const Profile = () => {
-  const { auth, updateCurrentUser } = useAuth();
   const { showSnackbar } = useSnackbar();
 
   const [form, setForm] = useState(emptyProfile);
+  const [errors, setErrors] = useState({});
   const [savedProfile, setSavedProfile] = useState(emptyProfile);
   const [editing, setEditing] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -39,7 +38,7 @@ const Profile = () => {
 
   const selectedAvatar = getAvatarById(form.avatarId);
 
-  const fetchProfile = async() => {
+  const fetchProfile = async () => {
     setLoading(true);
     try {
       const response = await getProfile();
@@ -52,18 +51,26 @@ const Profile = () => {
       setLoadError(error.message || "Unable to load your profile.");
       setLoading(false);
     }
-  }
-
+  };
 
   useEffect(() => {
-
     fetchProfile();
-
   }, []);
 
+  const clearError = (field) => {
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+
+      const next = { ...prev };
+      delete next[field];
+
+      return next;
+    });
+  };
 
   const handleCancel = () => {
     setForm(savedProfile);
+    setErrors({});
     setEditing(false);
     setPickerOpen(false);
   };
@@ -81,9 +88,11 @@ const Profile = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const errorMessage = validateProfile(form);
-    if (errorMessage) {
-      showSnackbar(errorMessage, "error");
+    const validationErrors = validateProfile(form);
+
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length > 0) {
       return;
     }
 
@@ -95,8 +104,8 @@ const Profile = () => {
 
       setSavedProfile(nextProfile);
       setForm(nextProfile);
+      setErrors({});
       setEditing(false);
-      updateCurrentUser({ profileStatus: true, userProfile: nextProfile });
       showSnackbar(response?.message || "Profile saved", "success");
     } catch (error) {
       console.error("Profile Save Error:", error);
@@ -212,13 +221,18 @@ const Profile = () => {
             {editing ? (
               <ProfileForm
                 form={form}
+                errors={errors}
+                onClearError={clearError}
                 onPatch={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
                 onSubmit={handleSubmit}
               />
             ) : (
               <div className="grid gap-2.5 sm:grid-cols-2">
                 {infoItems.map((item) => (
-                  <article key={item.id} className="rounded-xl border border-white/10 bg-gz-popup/40 px-3.5 py-3">
+                  <article
+                    key={item.id}
+                    className="rounded-xl border border-white/10 bg-gz-popup/40 px-3.5 py-3"
+                  >
                     <p className="text-[11px] font-semibold tracking-[0.14em] text-gz-text-secondary uppercase">
                       {item.label}
                     </p>
