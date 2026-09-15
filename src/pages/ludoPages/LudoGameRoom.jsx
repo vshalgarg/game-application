@@ -44,6 +44,10 @@ const LudoGameRoom = () => {
   const previousPlayerTurnStageRef = useRef(null);
   const turnTransitionTimeoutRef = useRef(null);
 
+  // 800ms spin and 800ms CSS transform
+  const DICE_SETTLE_DELAY = 1600; 
+  const revealTimeoutRef = useRef(null);
+
   // for winning players confetti
   const [celebratingPlayers, setCelebratingPlayers] = useState([]);
   const previousFinishedRef = useRef({});
@@ -60,7 +64,7 @@ const LudoGameRoom = () => {
 
   const currentUserId = auth?.userId;
 
-  // Fetch board layout from API
+  // fetch board layout from API
   useEffect(() => {
     let cancelled = false;
 
@@ -98,7 +102,7 @@ const LudoGameRoom = () => {
     roomCode,
 
     onGameUpdate: async (game) => {
-      // if an animation is currently running don't process the update 
+      // if animation currently running don't process the update 
       if (animatingRef.current) {
         pendingUpdateRef.current = game;
         return;
@@ -107,14 +111,14 @@ const LudoGameRoom = () => {
       await processGameUpdate(game);
     },
   });
- 
+
   // for queue inside realtime update
   const processGameUpdate = async (game) => {
     const board = game.game_state_data.board;
     console.info("Realtime received:", game);
     const newDiceUpdatedAt = game.updated_at;
 
-    // for player confetti celebration
+    // player confetti celebration
     board.players.forEach((player) => {
       const wasFinished = previousFinishedRef.current[player.playerId] ?? false;
 
@@ -141,7 +145,7 @@ const LudoGameRoom = () => {
       pendingDiceIncreased = newLen > oldLen;
     }
 
-    // animation logic when all token at base, pending dice null
+    // animation when all token at base and pending dice null 
     const relevantPlayer = board.players.find((p) => p.playerId === board.lastDicePlayerId);
     const allTokensAtBase = relevantPlayer?.tokens?.every((t) => t.state === "BASE") ?? false;
     const rollerDiffersFromCurrentTurn = board.lastDicePlayerId != null && board.lastDicePlayerId !== board.currentTurnPlayerId;
@@ -149,7 +153,7 @@ const LudoGameRoom = () => {
     const isAutoSkipAfterRoll = !isInitialLoad && rollerDiffersFromCurrentTurn &&
       newPlayerTurnStage === "ROLL_DICE" && (board.legalMoves?.length ?? 0) === 0 && allTokensAtBase;
 
-    // A genuine roll happened pending dice increased or through updated at.
+    // A genuine roll happened pending dice increased or through updated at
     const isRollEvent = pendingDiceIncreased || isAutoSkipAfterRoll;
 
     previousTurnUserIdRef.current = newTurnUserId;
@@ -168,6 +172,22 @@ const LudoGameRoom = () => {
         setDiceUpdatedAt(newDiceUpdatedAt);
       }
     };
+
+    const turnPlayerForCount = board.players.find((p) => p.playerId === newTurnUserId);
+    const actualPendingLen = turnPlayerForCount?.pendingDice?.length ?? 0;
+
+    clearTimeout(revealTimeoutRef.current);
+
+    if (isRollEvent) {
+      // pending dice and movable tokens display when dice rolled completed
+      revealTimeoutRef.current = setTimeout(() => {
+        setVisiblePendingDiceCount(actualPendingLen);
+        setShowMovableTokens(newPlayerTurnStage === "TOKEN_MOVE");
+      }, DICE_SETTLE_DELAY);
+    } else {
+      setVisiblePendingDiceCount(actualPendingLen);
+      setShowMovableTokens(newPlayerTurnStage === "TOKEN_MOVE");
+    }
 
     if (isAutoSkipAfterRoll) {
       setDiceValue(newDiceValue);
@@ -207,9 +227,13 @@ const LudoGameRoom = () => {
       await processGameUpdate(nextGame);
     }
   };
+
   // Cleanup any pending turn-transition timeout on unmount
   useEffect(() => {
-    return () => clearTimeout(turnTransitionTimeoutRef.current);
+    return () => {
+      clearTimeout(turnTransitionTimeoutRef.current);
+      clearTimeout(revealTimeoutRef.current);
+    };
   }, []);
 
   const board = gameState?.board;
@@ -223,6 +247,7 @@ const LudoGameRoom = () => {
 
   // for automatic move when single token is on track
   useEffect(() => {
+
     // no auto move while rolling animation is running
     if (!animationComplete) return;
 
@@ -273,7 +298,7 @@ const LudoGameRoom = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Player card position according to player corner
+   // Player card position according to player corner
   const playerCardPositions = {
     1: { right: "-34%", bottom: "1%", transformOrigin: "bottom left" },
     2: { left: "-34%", bottom: "1%", transformOrigin: "bottom right" },
@@ -294,9 +319,8 @@ const LudoGameRoom = () => {
         userId: currentUserId,
       });
 
+      // Only stops the local spin animation state, reveal timing owned by processGameUpdate when realtime update arrives
       setTimeout(() => {
-        setVisiblePendingDiceCount(pendingDice.length);
-        setShowMovableTokens(true);
         setRolling(false);
       }, 800);
     } catch (error) {
@@ -307,7 +331,6 @@ const LudoGameRoom = () => {
 
   // Make move api
   const moveToken = async (tokenId, consumedDice) => {
-    // Prevent duplicate API calls
     if (moveInProgress) return;
     setMoveInProgress(true);
 
@@ -368,7 +391,7 @@ const LudoGameRoom = () => {
     await moveToken(selectedToken, dice);
   };
 
-  // Find current player's color
+  // current player's color
   const currentTurnColorIndex = currentPlayer?.colorIndex;
 
   const animateBoard = async (oldBoard, newBoard) => {
@@ -497,13 +520,6 @@ const LudoGameRoom = () => {
     }, 3500);
   };
 
-  // for displaying previous pending dice number while next rolling in playercard
-  useEffect(() => {
-    if (!rolling) {
-      setVisiblePendingDiceCount(pendingDice.length);
-    }
-  }, [rolling, pendingDice]);
-
   // board loading through api
   if (boardLoading) {
     return (
@@ -539,12 +555,8 @@ const LudoGameRoom = () => {
       <ExitGamePopup open={showExitPopup} onClose={closeExitPopup} />
 
       <div className="flex flex-col items-center gap-4 w-full">
-
-        {/* Game Area */}
         <div className="relative">
           <div ref={gameAreaRef} className="relative w-fit">
-            
-            {/* Board */}
             <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl md:rounded-3xl p-2 sm:p-4 w-fit">
               <LudoBoard
                 boardData={boardData}
@@ -560,7 +572,6 @@ const LudoGameRoom = () => {
               />
             </div>
 
-            {/* Player Cards and Dice */}
             {(board?.players ?? []).map((player) => {
               const isTurnPlayer = player.playerId === currentTurnUserId;
               const isTopPlayer = player.colorIndex === 3 || player.colorIndex === 4;
