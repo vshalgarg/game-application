@@ -26,7 +26,17 @@ public enum ResponseErrorCodes {
     REALTIME_STATE_FETCH_FAILED(1013, "REALTIME_STATE_FETCH_FAILED"),
     PLAYER_NOT_IN_ROOM(1014, "You are not a player in this room"),
     MINIMUM_PLAYERS_REQUIRED(1015, "At least two participants are required to play"),
-    HOST_CANNOT_REMOVE_SELF(1016, "Host cannot remove himself");
+    HOST_CANNOT_REMOVE_SELF(1016, "Host cannot remove himself"),
+
+    // Sound specific
+    SOUND_NOT_FOUND(1017, "Sound not found"),
+    SOUND_ALREADY_EXISTS(1018, "Sound already exists for this game, theme and event"),
+    INVALID_GAME_TYPE(1019, "Invalid game type"),
+    SOUND_FILE_READ_FAILED(1020, "Failed to read uploaded sound file"),
+    RULES_NOT_CONFIGURED(1021, "Rules have not been configured for this room");
+
+
+
     private final int code;
     private final String message;
 

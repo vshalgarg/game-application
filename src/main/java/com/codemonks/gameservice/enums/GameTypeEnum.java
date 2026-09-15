@@ -3,7 +3,7 @@ package com.codemonks.gameservice.enums;
 public enum GameTypeEnum {
     TIC_TAC_TOE(1),
     LUDO(2),
-    CHESS(3);
+    TAMBOLA(3);
 
     private final int code;
 

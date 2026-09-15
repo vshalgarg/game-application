@@ -49,8 +49,8 @@
             List<PlayerEntity> players = playerRepository.findByRoom_Id(room.getId());
             EngineStartGameRequestDTO request = GameMapper.toStartGameRequest(room, players);
             GameEngine engine = gameEngineFactory.getStrategy(room.getGameType());
-            EngineGameStateResponseDTO engineResponse = engine.startGame(request);
 
+            EngineGameStateResponseDTO engineResponse = engine.startGame(request);
 
             RealtimeLobbyDTO lobbyDTO = LobbyMapper.toLobbyDTO(room,
                             players, RoomRealtimeStatusEnum.ACTIVE
@@ -79,7 +79,6 @@
 
                 throw new GameException(GAME_ALREADY_FINISHED);
             }
-
 
 
             List<PlayerEntity> roomPlayers = playerRepository.findByRoom_Id(room.getId());
@@ -144,11 +143,9 @@
                     .playerId(playerId)
                             .build();
 
-            // 5. Call engine via factory — generic, works for any game
             GameEngine engine = gameEngineFactory.getStrategy(room.getGameType());
             DiceRollResponseDTO result = engine.rollDice(engineRequest);
 
-            // 7. Supabase Realtime broadcasts to all clients automatically
             log.info("Dice rolled. roomId={}, playerId={}, dice={}",
                     room.getId(), playerId, result.getDice());
 
