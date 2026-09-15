@@ -28,5 +28,8 @@ public class SupabaseProperties {
     public static class Tables {
         private String realtimeGameState;
         private String realtimeRoomLobby;
+        private String realtimeTambolaRules;   // realtime_tambola_rules
+        private String tambolaTickets;         // tambola_tickets (persisted only)
+        private String tambolaClaims;
     }
 }

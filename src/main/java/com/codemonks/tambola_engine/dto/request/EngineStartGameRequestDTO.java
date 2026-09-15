@@ -18,6 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 public class EngineStartGameRequestDTO {
     private Long roomId;
+    private String roomCode;
     private Integer timerIntervalSeconds;
     private List<PlayerDTO> players;
     private List<RuleConfigRequestDTO> rules;

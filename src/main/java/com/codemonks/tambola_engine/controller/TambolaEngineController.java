@@ -27,20 +27,8 @@ import static com.codemonks.tambola_engine.constant.ApiConstants.*;
 @Slf4j
 public class TambolaEngineController {
 
-    // Poora setup-orchestration isi service ke andar hai - controller
-    // sirf HTTP-layer (request/response wrap) sambhalta hai, koi business
-    // logic yahan nahi likhi jaati.
     private final GameSetupService gameSetupService;
-
-    // Host ne "Start Game" dabaya -> game-service ye endpoint call karta
-    // hai -> poora room-setup (TambolaGameState + tickets + timer-start)
-    // is ek call me ho jaata hai (jaisa GameSetupServiceImpl me discuss
-    // kiya - setup aur start ek hi action hai yahan, koi beech ka
-    // "initialized but not running" wait-state nahi hai).
-
-    // NAYA: ClaimService inject kiya - claim-submit endpoint ke liye chahiye.
     private final ClaimService claimService;
-
 
     @PostMapping(START_GAME)
     public ResponseEntity<GameSetupResult> startGame(
@@ -53,13 +41,6 @@ public class TambolaEngineController {
 
         return ResponseEntity.ok(result);
     }
-
-    // NAYA: Player jab "Claim" button dabata hai (Early Five/Full House/etc.)
-    // -> ye endpoint call hota hai -> ClaimServiceImpl poora validation +
-    // state-update + Supabase-persist + timer-signal (WIN/FINISHED) sambhalta hai.
-    // InvalidClaimException GlobalExceptionHandler ke through automatically
-    // proper error-response me convert ho jaayegi (Ludo ke pattern jaisa,
-    // agar Tambola me bhi GlobalExceptionHandler bana hua hai).
     @PostMapping(SUBMIT_CLAIM)
     public ResponseEntity<ClaimResponseDTO> submitClaim(
             @Valid @RequestBody ClaimRequestDTO request) {

@@ -1,115 +1,149 @@
 package com.codemonks.tambola_engine.service.impl;
 
-import com.codemonks.tambola_engine.domain.game.GameStateRegistry;
 import com.codemonks.tambola_engine.domain.game.TambolaGameState;
 import com.codemonks.tambola_engine.enums.GameStatusEnum;
 import com.codemonks.tambola_engine.exception.BoardExhaustedException;
+import com.codemonks.tambola_engine.repository.TambolaGameStateRepository;
 import com.codemonks.tambola_engine.service.NumberGeneratorService;
-import com.codemonks.tambola_engine.service.SupabaseRealtimeService;
-import com.codemonks.tambola_engine.service.TimerService;
+import com.codemonks.tambola_engine.util.OptimisticRetry;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.Instant;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
+// AUTONOMOUS POLLER — Spring ke @EnableScheduling/@Scheduled infra ka
+// use NAHI karta, jaanbujh kar. Wajah: @Scheduled poore application-
+// context me ek SHARED TaskScheduler-bean pe depend karta hai - agar
+// kal Ludo/TicTacToe bhi apna @Scheduled ya SchedulingConfigurer add
+// karein, to unka aur Tambola ka scheduler-config ek-doosre ko
+// silently override kar sakta hai (ScheduledTaskRegistrar context-wide
+// singleton hota hai). Isse bachne ke liye ye class apna KHUD KA,
+// fully-isolated ScheduledExecutorService manage karti hai - koi bhi
+// Spring-bean-naming/uniqueness-conflict possible hi nahi hai, chahe
+// combo-app me raho ya kal alag microservice bano, code bilkul same
+// rahega.
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TimerServiceImpl implements TimerService {
+public class TimerServiceImpl {
 
-    private final TaskScheduler taskScheduler;
+    private static final long POLL_INTERVAL_MS = 1000;
+
+    private final TambolaGameStateRepository roomRepository;
     private final NumberGeneratorService numberGeneratorService;
-    private final GameStateRegistry gameStateRegistry;
 
-    // NAYA: har tick ke baad naya number bhi Supabase me turant bhejna
-    // hai - warna frontend ka realtime-subscription kabhi trigger hi
-    // nahi hoga jab tak koi claim na ho (jo bahut der tak nahi bhi ho
-    // sakta - players number-calling dekhte rehte hain claim se pehle).
-    private final SupabaseRealtimeService supabaseRealtimeService;
+    private ScheduledExecutorService executor;
 
-    private final Map<Long, ScheduledFuture<?>> roomTimers = new ConcurrentHashMap<>();
+    // Bean fully construct hone ke baad hi thread start karo (constructor
+    // ke andar nahi - taaki dependencies pehle se hi wire ho chuki hon).
+    @PostConstruct
+    public void start() {
+        executor = Executors.newSingleThreadScheduledExecutor(
+                r -> {
+                    Thread t = new Thread(r, "tambola-poller");
+                    t.setDaemon(true);   // JVM shutdown ko block na kare
+                    return t;
+                });
 
-    @Override
-    public void startTimer(Long roomId) {
-        TambolaGameState state = gameStateRegistry.get(roomId);
+        executor.scheduleWithFixedDelay(
+                this::safeProcessDueRooms, 0, POLL_INTERVAL_MS, TimeUnit.MILLISECONDS);
 
-        if (roomTimers.containsKey(roomId)) {
-            log.warn("Timer already running for room {}, ignoring duplicate start", roomId);
-            return;
-        }
-        Duration interval = Duration.ofSeconds(state.getTimerIntervalSeconds());
-        ScheduledFuture<?> future = taskScheduler.scheduleAtFixedRate(
-                () -> tick(roomId),
-                Instant.now().plus(interval),
-                interval
-        );
-
-        roomTimers.put(roomId, future);
+        log.info("[TAMBOLA_POLLER_STARTED] interval={}ms", POLL_INTERVAL_MS);
     }
 
-    @Override
-    public void stopTimer(Long roomId) {
-        ScheduledFuture<?> future = roomTimers.remove(roomId);
-        if (future != null) {
-            future.cancel(false);
+    // App shutdown hote waqt thread ko cleanly band karo.
+    @PreDestroy
+    public void stop() {
+        if (executor != null) {
+            executor.shutdown();
         }
     }
 
-    @Override
-    public void scheduleResume(Long roomId, int delaySeconds) {
-        stopTimer(roomId);
-        taskScheduler.schedule(
-                () -> resumeAfterWin(roomId),
-                Instant.now().plusSeconds(delaySeconds)
-        );
-    }
-
-    private void tick(Long roomId) {
-        TambolaGameState state = gameStateRegistry.get(roomId);
-
-        if (state.getStatus() != GameStatusEnum.RUNNING) {
-            return;
-        }
+    // ScheduledExecutorService ka rule: agar scheduled-task ke andar
+    // exception uncaught gaya, to poora recurring-schedule silently
+    // hamesha ke liye ruk jaata hai. Isliye try-catch yahan mandatory hai.
+    private void safeProcessDueRooms() {
         try {
-            numberGeneratorService.generateNextNumber(state);
-
-            // NAYA: number successfully call hote hi turant Supabase
-            // update - taaki frontend har number turant realtime dekh
-            // sake, sirf claim-events pe hi update na mile.
-            supabaseRealtimeService.upsertGameState(state);
-
-        } catch (BoardExhaustedException e) {
-            log.info("Board exhausted for room {}, stopping timer", roomId);
-            stopTimer(roomId);
-
-            // Board khatam ho gaya bina FULL_HOUSE claim hue - ye ek
-            // edge-case hai (game khinch gaya, koi jeeta hi nahi last
-            // rule pe). State ko FINISHED mark karke persist kar dena
-            // sahi hai, taaki room permanently "RUNNING" na dikhta rahe
-            // Supabase me.
-            state.setStatus(GameStatusEnum.FINISHED);
-            supabaseRealtimeService.upsertGameState(state);
-            gameStateRegistry.remove(roomId);
+            processDueRooms();
+        } catch (Exception e) {
+            log.error("Tambola poller tick failed - will retry next cycle", e);
         }
     }
 
-    private void resumeAfterWin(Long roomId) {
-        TambolaGameState state = gameStateRegistry.get(roomId);
+    private void processDueRooms() {
+        List<TambolaGameState> dueRooms = roomRepository.findRoomsDueForTick(Instant.now());
 
-        if (state.getStatus() == GameStatusEnum.FINISHED) {
-            return;
+        for (TambolaGameState room : dueRooms) {
+            try {
+                if (room.getStatus() == GameStatusEnum.WIN) {
+                    resumeFromWin(room.getRoomId());
+                } else if (room.getStatus() == GameStatusEnum.RUNNING) {
+                    callNextNumber(room.getRoomId());
+                }
+            } catch (Exception e) {
+                log.error("Failed to process tick for room {}", room.getRoomId(), e);
+            }
         }
-        state.setStatus(GameStatusEnum.RUNNING);
-        startTimer(roomId);
-        // NAYA: WIN se wapas RUNNING me aane ka transition bhi persist
-        // karo - taaki frontend ka "winner announcement" turant clear
-        // ho jaaye aur agla number aana shuru ho jaaye UI me.
-        supabaseRealtimeService.upsertGameState(state);
+    }
+
+    private void callNextNumber(Long roomId) {
+        OptimisticRetry.attempt(() -> {
+            TambolaGameState fresh = roomRepository.findById(roomId);
+
+            if (fresh.getStatus() != GameStatusEnum.RUNNING) {
+                return true;
+            }
+
+            try {
+                Set<Integer> calledNumbersSet = new HashSet<>(fresh.getCalledNumbers());
+                Integer nextNumber = numberGeneratorService.generateNextNumber(calledNumbersSet);
+
+                List<Integer> updatedNumbers = new ArrayList<>(fresh.getCalledNumbers());
+                updatedNumbers.add(nextNumber);
+
+                Map<String, Object> blob = new HashMap<>();
+                blob.put("called_numbers", updatedNumbers);
+                blob.put("timer_interval_seconds", fresh.getTimerIntervalSeconds());
+                blob.put("next_tick_at",
+                        Instant.now().plusSeconds(fresh.getTimerIntervalSeconds()).toString());
+
+                return roomRepository.updateIfVersionMatches(
+                        roomId, Map.of("game_state_data", blob), fresh.getVersion());
+
+            } catch (BoardExhaustedException e) {
+                log.info("Board exhausted for room {}, marking FINISHED", roomId);
+                return roomRepository.updateIfVersionMatches(
+                        roomId, Map.of("game_status", GameStatusEnum.FINISHED.name()), fresh.getVersion());
+            }
+        });
+    }
+
+    private void resumeFromWin(Long roomId) {
+        OptimisticRetry.attempt(() -> {
+            TambolaGameState fresh = roomRepository.findById(roomId);
+
+            if (fresh.getStatus() != GameStatusEnum.WIN) {
+                return true;
+            }
+
+            Map<String, Object> blob = new HashMap<>();
+            blob.put("timer_interval_seconds", fresh.getTimerIntervalSeconds());
+            blob.put("next_tick_at",
+                    Instant.now().plusSeconds(fresh.getTimerIntervalSeconds()).toString());
+            blob.put("called_numbers", fresh.getCalledNumbers());
+
+            Map<String, Object> changes = new HashMap<>();
+            changes.put("game_status", GameStatusEnum.RUNNING.name());
+            changes.put("game_state_data", blob);
+
+            return roomRepository.updateIfVersionMatches(roomId, changes, fresh.getVersion());
+        });
     }
 }

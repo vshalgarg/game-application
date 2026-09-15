@@ -47,13 +47,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException exception) {
-        // GameStateRegistry.get() isi exception ko throw karta hai jab
-        // roomId ki koi active state nahi milti.
+    @ExceptionHandler(RoomNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleRoomNotFound(RoomNotFoundException exception) {
         log.warn("[ROOM_NOT_FOUND] {}", exception.getMessage());
         ErrorResponse response = ErrorResponse.builder()
-                .errorCode(TambolaErrorCodesEnum.ROOM_NOT_FOUND.getCode())
+                .errorCode(exception.getErrorCode().getCode())
                 .errorMessage(exception.getMessage())
                 .build();
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);

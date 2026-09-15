@@ -13,22 +13,6 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
 
-// Standard Tambola ticket generate karne ki responsibility isi class ki hai.
-// Ek ticket = 3 rows x 9 columns, jismein sirf 15 cells filled hote hain
-// (har row me exactly 5 numbers), baaki 12 cells blank (null) rehte hain.
-//
-// @Component - ye ek Spring-managed singleton hai, kyunki isme koi per-room
-// state nahi hai (sirf ek shared ticketId counter hai jo poore engine ke
-// liye globally unique IDs deta hai).
-//
-// FUTURE NOTE: Abhi ye sirf GameSetupService se call hota hai (game-start
-// ke waqt, har player ke fixed tickets banane ke liye). Lekin isko
-// jaanbujh kar "per-call = ek ticket banao aur unique ID do" ke tarah
-// design kiya hai (na ki "poore room ke saare tickets ek saath banao"),
-// taaki AAGE jaake jab "coin se ticket khareedo" feature aaye (mid-game,
-// dynamic ticket count per player), tab bhi yehi method reuse ho sake -
-// ek naya BuyTicketService bas isi generateTicket() ko call karega,
-// koi restructuring nahi karni padegi.
 @Component
 public class TicketGenerator {
 
@@ -39,22 +23,8 @@ public class TicketGenerator {
     private static final int TOTAL_FILLED_CELLS = TOTAL_ROWS * NUMBERS_PER_ROW; // 15
     private static final int MAX_NUMBERS_PER_COLUMN = 3; // 3 rows hain, ek column me max 3 hi aa sakte
 
-    // Har naye ticket ko globally-unique ID dene ke liye shared counter.
-    // AtomicLong isliye kyunki multiple threads (different rooms ke setup
-    // requests ek saath aa sakte hain) se safely increment hona chahiye.
-    // NOTE: Ye in-memory hai - JVM restart hone par 1 se reset ho jaayega.
-    // Runtime-only identifiers ke liye abhi ye theek hai (jaisa NumberGenerator
-    // aur baaki engine bhi purely in-memory hai); agar future me IDs ko
-    // restart ke paar bhi persist/unique rehna zaroori ho, isko Supabase
-    // se DB-generated ID lene wale approach me badalna hoga.
-    private final AtomicLong ticketIdSequence = new AtomicLong(1);
+   // private final AtomicLong ticketIdSequence = new AtomicLong(1);
 
-    /**
-     * Ek naya, valid Tambola ticket generate karta hai ek player ke liye.
-     * Har call ek naya unique ticketId deta hai - isliye ye method
-     * setup ke waqt (N baar loop me) aur future ticket-purchase ke waqt
-     * (ek-ek baar), dono jagah reusable hai.
-     */
     public TambolaTicket generateTicket(Long playerId) {
 
         ThreadLocalRandom random = ThreadLocalRandom.current();
@@ -102,8 +72,8 @@ public class TicketGenerator {
         }
 
         // Naye ticket ko unique ID do (counter se), aur poora object return karo.
-        Long ticketId = ticketIdSequence.getAndIncrement();
-        return new TambolaTicket(ticketId, playerId, ticketRows);
+
+        return new TambolaTicket(null, null, playerId, ticketRows);
     }
 
     // Har column me kitne numbers honge, ye decide karta hai.

@@ -5,7 +5,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication(scanBasePackages = {
 		"com.codemonks.tic_tac_toe_game_engine",
-		"com.codemonks.ludo_engine"
+		"com.codemonks.ludo_engine",
+		"com.codemonks.tambola_engine"
 })
 public class TicTacToeGameEngineApplication {
 
