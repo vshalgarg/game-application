@@ -1,6 +1,8 @@
 package com.codemonks.tambola_engine.domain.rule;
 
 import com.codemonks.tambola_engine.enums.RuleTypeEnum;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,57 +12,83 @@ import java.util.List;
 /**
  * Represents one claim-type that has been configured as valid for
  * a specific game room, chosen by the host during room setup.
- * <p>
- * A game typically has multiple GameRules active at once (e.g. Early
- * Five, Top Line, Full House). As each one gets successfully claimed,
- * TambolaGameState moves through its WIN status; once every GameRule
- * for the room has been claimed, the game moves to FINISHED.
+ *
+ * A game typically has multiple GameRules active at once
+ * (e.g. Early Five, Top Line, Full House).
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class GameRule {
 
+    @JsonProperty("room_id")
+    private Long roomId;
+
     /** Which claim pattern this rule represents. */
+    @JsonProperty("rule_type")
     private RuleTypeEnum ruleType;
 
     /**
      * Order in which this rule should logically be completed
-     * (lower = earlier). Used to determine whether FULL_HOUSE
-     * (typically the highest order) being claimed means the
-     * game is now FINISHED.
+     * (lower = earlier).
      */
+    @JsonProperty("rule_order")
     private Integer order;
 
-    //Whether this rule has already been successfully claimed.
+    /**
+     * Whether this rule has already been successfully claimed.
+     *
+     * This is a domain/runtime field.
+     * It is NOT stored in realtime_tambola_rules.
+     */
+    @JsonIgnore
     private Boolean claimed;
 
-    // Kitne players is rule ko simultaneously jeet sakte hain.
-// Host agar na bheje to service-layer default 1 laga deta hai
-// (backward-compatible single-winner behavior).
+    /**
+     * Maximum number of players that can simultaneously
+     * win this rule.
+     *
+     * Host agar na bheje to service-layer default 1 laga deta hai.
+     */
+    @JsonProperty("max_winners")
     private Integer maxWinners;
 
-    // Ab tak jitne players jeet chuke, unki IDs - ORDER MAYNE RAKHTA HAI
-    // (pehla winner list ke index-0 pe, doosra index-1 pe, waisa hi).
-    // TambolaGameState.tryClaimSlot() hi isme add karta hai (synchronized),
-    // koi aur jagah se seedha modify nahi karna.
+    /**
+     * Players who have already successfully claimed this rule.
+     *
+     * Order matters:
+     * first winner -> index 0
+     * second winner -> index 1
+     * etc.
+     */
+    @JsonProperty("winner_player_ids")
     private List<Long> winnerPlayerIds;
 
-    // FUTURE-FLEXIBILITY FIELD: abhi ke liye null/unused rahega for most
-    // rules. Lekin agar kal koi rule (jaise EARLY_FIVE) ko configurable
-    // banana ho ("host chaahe to 5 ki jagah 7 numbers maange"), to
-    // ClaimValidationServiceImpl is field ko read karega (hardcoded
-    // constant ki jagah) - koi structural change nahi karni padegi,
-    // sirf validation-method ke andar ek line badlegi.
+    /**
+     * Optional configurable threshold for a rule.
+     *
+     * Example:
+     * EARLY_FIVE -> 5
+     * Future configurable rule -> another value
+     */
     private Integer threshold;
 
-    // Convenience-check: kya is rule me abhi bhi koi slot khaali hai?
-    // NOTE: Ye method khud thread-safe nahi hai - isko sirf TambolaGameState
-    // ke synchronized method (tryClaimSlot) ke andar se hi authoritative
-    // tareeke se use karna hai. Bahar se sirf "quick look" ke liye theek hai
-    // (jaise fail-fast UI-hint), final decision hamesha tryClaimSlot() ka hai.
+    /**
+     * realtime_tambola_rules.version ke against optimistic
+     * concurrency check ke liye use hota hai.
+     */
+    private Long version;
+
+    /**
+     * Convenience-check:
+     * kya is rule me abhi bhi koi winner slot khaali hai?
+     *
+     * NOTE:
+     * Ye method khud thread-safe nahi hai.
+     * Authoritative decision TambolaGameState.tryClaimSlot()
+     * ke synchronized flow ke andar hi hona chahiye.
+     */
     public boolean hasOpenSlots() {
         return winnerPlayerIds.size() < maxWinners;
     }
-
 }

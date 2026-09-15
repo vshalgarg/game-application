@@ -17,3 +17,6 @@ supabase:
     realtime-room-lobby: realtime_room_lobby
     game-moves: game_moves
     bot-room-locks: bot_room_locks
+    realtime-tambola-rules: realtime_tambola_rules
+    tambola-tickets: tambola_tickets
+    tambola-claims: tambola_claims
