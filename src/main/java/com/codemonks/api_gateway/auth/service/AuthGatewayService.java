@@ -94,6 +94,7 @@ public class AuthGatewayService {
                 .bodyValue(authRequest)
                 .retrieve()
                 .bodyToMono(String.class)
+                .doOnNext(body -> log.info("[FORGOT PASSWORD] Auth API raw response={}", body))
                 .flatMap(body -> responseParser.parseResponse(body, SendOtpResponse.class))
                 .doOnSuccess(response -> log.info("[FORGOT PASSWORD] OTP request successful"))
                 .doOnError(error -> log.error("[FORGOT PASSWORD] {}", error.getMessage(), error));
