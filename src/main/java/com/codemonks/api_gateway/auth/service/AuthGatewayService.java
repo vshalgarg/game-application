@@ -6,6 +6,7 @@ import com.codemonks.api_gateway.util.ResponseParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -89,6 +90,7 @@ public class AuthGatewayService {
                 .uri(authServiceUrl + "/auth/api/v1/forgot-password")
                 .header("clientName", authServiceClientName)
                 .header("clientSecret", authServiceClientSecret)
+                .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(authRequest)
                 .retrieve()
                 .bodyToMono(String.class)
