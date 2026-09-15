@@ -7,10 +7,8 @@ import lombok.Data;
 
 @Data
 public class RemovePlayerRequestDTO {
-
     @NotNull
     private Long hostUserId;
-
     @NotNull
     private Long userId;
 }

@@ -17,6 +17,7 @@ public interface RoomService {
     RoomDetailsResponseDTO getRoomDetails(String roomCode);
     BoardLayout getBoardLayout(String roomCode);
     RoomActionResponseDTO addBot(String roomCode, AddBotRequestDTO request);
-
     RoomActionResponseDTO removePlayer(String roomCode, RemovePlayerRequestDTO request);
+    void setRoomRules(String roomCode, SetRoomRulesRequestDTO request);
+
 }

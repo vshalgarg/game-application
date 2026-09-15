@@ -15,10 +15,18 @@ spring:
     properties:
       hibernate:
         format_sql: true
+e2e:
+  s3:
+    region: ap-south-1
+    bucket: game-application-sound-bucket-dev
+    access-key: IIQM8KRNXAO0FBSZF7OT
+    secret-key: 02UHT9IXN7MNXZ9FRV7SXNTJT62ZQKRPO2NRP65P
+    endpoint: https://objectstore.e2enetworks.net
+    presigned-url-expiry-hours: 24
 
 services:
   tic-tac-toe-engine:
-    base-url:  http://localhost:8081/game-engine/tic-tac-toe-engine/api/v1
+    base-url: http://localhost:8081/game-engine/tic-tac-toe-engine/api/v1
     endpoints:
       start-game: /start-game
       move: /make-move
@@ -33,3 +41,9 @@ services:
       lobby: /lobby
       board-layout: /board-layout
 
+  tambola-engine:
+    base-url: http://localhost:8081/game-engine/tambola-engine/api/v1
+    endpoints:
+      start-game: /start-game
+      submit-claim: /submit-claim
+      lobby: /lobby

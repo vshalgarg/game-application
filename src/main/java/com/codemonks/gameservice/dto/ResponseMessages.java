@@ -14,5 +14,6 @@ public class ResponseMessages {
     public static final String BOT_ADDED = "Bot added successfully";
     public static final String BOT_REMOVED = "Bot removed successfully";
     public static final String PLAYER_REMOVED = "Player removed successfully";
+    public static final String RULES_SAVED = "Rules saved successfully";
 
 }

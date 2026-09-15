@@ -135,3 +135,31 @@ CREATE INDEX idx_result_winner
 
 ALTER TABLE game_db.rooms
     MODIFY COLUMN match_type VARCHAR(50) NULL;
+
+
+CREATE TABLE IF NOT EXISTS sound_events (
+
+                                            id               BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                            game_type        TINYINT NOT NULL,
+                                            theme_key        VARCHAR(50) NOT NULL DEFAULT 'DEFAULT',
+    event_key        VARCHAR(50) NOT NULL,
+    s3_object_key    VARCHAR(255) NOT NULL,
+    format           VARCHAR(10) NOT NULL DEFAULT 'mp3',
+    version          BIGINT NOT NULL DEFAULT 1,
+    is_active        TINYINT(1) NOT NULL DEFAULT 1,
+
+    created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT uk_sound_event_game_theme_key
+    UNIQUE (game_type, theme_key, event_key)
+
+    );
+
+ALTER TABLE rooms
+    ADD COLUMN rule_config_json TEXT NULL;
+
+CREATE INDEX idx_sound_event_game_type
+    ON sound_events (game_type);
+CREATE INDEX idx_sound_event_key
+    ON sound_events (event_key);

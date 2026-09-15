@@ -15,6 +15,15 @@ public class ApiUrlConstants {
         public static final String ROLL_DICE = "/{roomCode}/roll-dice";
         public static final String ADD_BOT = "/{roomCode}/bots";
         public static final String REMOVE_PLAYER = "/{roomCode}/players";
+        public static final String SET_RULES = "/{roomCode}/rules";
+
+    }
+
+    public static final class Sound {
+        public static final String BASE = BASE_API + "/sounds";
+        public static final String GET_LIST = "/list";
+        public static final String BY_ID = "/{id}";
+        private Sound() {}
     }
 
     public static class Game{

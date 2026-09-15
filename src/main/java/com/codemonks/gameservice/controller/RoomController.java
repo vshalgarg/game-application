@@ -89,6 +89,16 @@ public class RoomController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @PutMapping(SET_RULES)   // ApiUrlConstants.Room me naya constant add karo, jaise "/{roomCode}/rules"
+    public ResponseEntity<ApiResponse<Void>> setRoomRules(
+            @PathVariable String roomCode,
+            @RequestBody SetRoomRulesRequestDTO request) {
+
+        log.info("Set rules request. roomCode={}, hostUserId={}", roomCode, request.getHostUserId());
+        roomService.setRoomRules(roomCode, request);
+        return ResponseEntity.ok(ApiResponse.success(null, ResponseMessages.RULES_SAVED));
+    }
+
     @PostMapping(ADD_BOT)
     public ResponseEntity<ApiResponse<RoomDetailsResponseDTO>> addBot(
             @PathVariable String roomCode,
