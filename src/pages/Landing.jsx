@@ -5,15 +5,51 @@ import PageShell from "../components/layout/PageShell";
 import CircuitMark from "../components/brand/CircuitMark";
 import GameCarousel from "../components/games/GameCarousel";
 import FeatureStrip from "../components/games/FeatureStrip";
+import { getGameSounds } from "../services/soundService";
+import { loadGameSounds } from "../services/soundManager";
+// import { playSound } from "../services/soundManager"; 
 
 const Landing = () => {
   const navigate = useNavigate();
 
-  const handleSelect = (game) => {
+  const handleSelect = async (game) => {
+  console.log("Selected game:", game);
+
+  try {
+    let gameType;
+
+    if (game.id === "ludo") {
+      gameType = "LUDO";
+    } else if (game.id === "tic-tac-toe") {
+      gameType = "TIC_TAC_TOE";
+    }
+
+    if (gameType) {
+
+      const soundResponse = await getGameSounds(gameType);
+      console.log("Sound API response:", soundResponse);
+
+      // sounds
+      console.log("Before loading sounds");
+      await loadGameSounds(gameType, soundResponse);
+      // playSound("LUDO", "BUTTON_CLICK");
+
+      console.log("After loading sounds");
+      console.info(`${gameType} sounds loaded`);
+    }
+
+    if (game.path) {
+      console.log("Navigating now");
+      navigate(game.path);
+    }
+  } catch (error) {
+    console.error("Failed to load game sounds:", error);
+
     if (game.path) {
       navigate(game.path);
     }
-  };
+  }
+};
 
   return (
     <PageShell className="gz-page-shell--dashboard">

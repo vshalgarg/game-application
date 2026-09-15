@@ -13,6 +13,7 @@ import PageShell from "../../components/layout/PageShell";
 import GameZoneLogo from "../../components/brand/GameZoneLogo";
 import Button from "../../components/ui/Button";
 import ExitGamePopup from "../../components/ui/ExitGamePopup";
+import { playSound } from "../../services/soundManager";
 
 const LudoWaitingRoom = () => {
   const navigate = useNavigate();
@@ -52,7 +53,11 @@ const LudoWaitingRoom = () => {
         showSnackbar("Waiting for another player...", "error");
         return;
       }
-      const result = await startRoom({ roomCode, userId: currentUserId });
+      const result = await startRoom({ 
+        roomCode, 
+        userId: currentUserId 
+      });
+      playSound("LUDO", "BUTTON_CLICK");
       showSnackbar(result.message, "success");
     } catch (error) {
       console.error("Failed to start game:", error);
@@ -67,6 +72,7 @@ const LudoWaitingRoom = () => {
         hostUserId: currentUserId,
         botDifficulty: "HARD",
       });
+      playSound("LUDO", "BUTTON_CLICK");
       showSnackbar(result.message, "success");
     } catch (error) {
       console.error(error);
@@ -81,6 +87,7 @@ const LudoWaitingRoom = () => {
         hostUserId: currentUserId,
         userId: player.user_id,
       });
+      playSound("LUDO", "BUTTON_CLICK");
       showSnackbar(result.message, "success");
     } catch (error) {
       console.error(error);

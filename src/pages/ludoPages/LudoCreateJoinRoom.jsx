@@ -8,6 +8,7 @@ import PageShell from "../../components/layout/PageShell";
 import GameZoneLogo from "../../components/brand/GameZoneLogo";
 import ModeOption from "../../components/ui/ModeOption";
 import TextField from "../../components/ui/TextField";
+import { playSound } from "../../services/soundManager";
 
 const LudoCreateJoinRoom = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const LudoCreateJoinRoom = () => {
 
   const handleCreateRoom = async () => {
     if (loading) return;
+    playSound("LUDO", "BUTTON_CLICK");
     setLoading(true);
     try {
       const res = await createRoom({
@@ -42,6 +44,7 @@ const LudoCreateJoinRoom = () => {
       showSnackbar("Please enter Room ID", "error");
       return;
     }
+    playSound("LUDO", "BUTTON_CLICK");
     try {
       setJoining(true);
       const res = await joinRoom({
