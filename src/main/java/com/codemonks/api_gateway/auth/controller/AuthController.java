@@ -3,6 +3,7 @@
     import com.codemonks.api_gateway.auth.dto.request.LoginRequest;
     import com.codemonks.api_gateway.auth.dto.request.RegisterRequest;
     import com.codemonks.api_gateway.auth.dto.request.SocialLoginRequest;
+    import com.codemonks.api_gateway.auth.dto.response.CountryResponse;
     import com.codemonks.api_gateway.auth.dto.response.LoginResponse;
     import com.codemonks.api_gateway.auth.dto.response.RegisterResponse;
     import com.codemonks.api_gateway.auth.service.AuthGatewayService;
@@ -38,5 +39,15 @@
         @PostMapping("/login/social")
         public Mono<LoginResponse> socialLogin(@Valid @RequestBody SocialLoginRequest request) {
             return authGatewayService.socialLogin(request);
+        }
+
+        @GetMapping("/countries")
+        public Mono<String> getAllCountries() {
+            return authGatewayService.getAllCountries();
+        }
+
+        @GetMapping("/countries/{name}")
+        public Mono<CountryResponse> getCountryByName(@PathVariable String name) {
+            return authGatewayService.getCountryByName(name);
         }
     }
