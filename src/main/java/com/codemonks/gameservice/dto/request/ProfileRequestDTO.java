@@ -1,5 +1,7 @@
 package com.codemonks.gameservice.dto.request;
 
+import com.codemonks.gameservice.enums.AvatarId;
+import com.codemonks.gameservice.enums.Gender;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -9,12 +11,12 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class ProfileRequestDTO {
-
-    private Long userId;
-
-    private String name;
-
-    private String email;
-
+    private String firstName;
+    private String lastName;
     private LocalDate dob;
+    private Gender gender;
+    private String countryCode;
+    private AvatarId avatarId;
+    private String email;
+    private String phoneNumber;
 }

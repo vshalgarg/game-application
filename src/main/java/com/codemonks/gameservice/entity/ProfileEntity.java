@@ -1,5 +1,7 @@
 package com.codemonks.gameservice.entity;
 
+import com.codemonks.gameservice.enums.AvatarId;
+import com.codemonks.gameservice.enums.Gender;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,12 +26,29 @@ public class ProfileEntity extends BaseEntity {
     @Column(name = "user_id", nullable = false, unique = true)
     private Long userId;
 
-    @Column(name = "name")
-    private String name;
+    @Column(name = "first_name")
+    private String firstName;
+
+    @Column(name = "last_name")
+    private String lastName;
 
     @Column(name = "email")
     private String email;
 
     @Column(name = "dob")
     private LocalDate dob;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "gender")
+    private Gender gender;
+
+    @Column(name = "country_code")
+    private String countryCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "avatar_id")
+    private AvatarId avatarId;
+
+    @Column(name = "phone_number")
+    private String phoneNumber;
 }
