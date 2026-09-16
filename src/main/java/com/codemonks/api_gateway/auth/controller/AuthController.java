@@ -2,6 +2,7 @@
 
     import com.codemonks.api_gateway.auth.dto.request.LoginRequest;
     import com.codemonks.api_gateway.auth.dto.request.RegisterRequest;
+    import com.codemonks.api_gateway.auth.dto.response.CountryResponse;
     import com.codemonks.api_gateway.auth.dto.response.LoginResponse;
     import com.codemonks.api_gateway.auth.dto.response.RegisterResponse;
     import com.codemonks.api_gateway.auth.service.AuthGatewayService;
@@ -12,6 +13,8 @@
     import org.springframework.web.bind.annotation.*;
 
     import reactor.core.publisher.Mono;
+
+    import java.util.List;
 
     @RestController
     @RequestMapping("/game-gateway/auth/api/v1/")
@@ -32,5 +35,15 @@
                 @Valid @RequestBody LoginRequest request) {
 
             return authGatewayService.login(request);
+        }
+
+        @GetMapping("/countries")
+        public Mono<String> getAllCountries() {
+            return authGatewayService.getAllCountries();
+        }
+
+        @GetMapping("/countries/{name}")
+        public Mono<CountryResponse> getCountryByName(@PathVariable String name) {
+            return authGatewayService.getCountryByName(name);
         }
     }
