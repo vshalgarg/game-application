@@ -26,6 +26,9 @@ public class ProfileEntity extends BaseEntity {
     @Column(name = "user_id", nullable = false, unique = true)
     private Long userId;
 
+    @Column(name = "display_name")
+    private String displayName;
+
     @Column(name = "first_name")
     private String firstName;
 

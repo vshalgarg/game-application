@@ -65,6 +65,7 @@ public class ProfileServiceImpl implements ProfileService {
         ProfileEntity profile = profileRepository
                         .findByUserId(userId)
                         .orElseGet(() -> ProfileEntity.builder().userId(userId).build());
+        profile.setDisplayName(request.getDisplayName());
         profile.setFirstName(request.getFirstName());
         profile.setLastName(request.getLastName());
         profile.setDob(request.getDob());
@@ -96,7 +97,7 @@ public class ProfileServiceImpl implements ProfileService {
 
         return ProfileResponseDTO.builder()
                 .userId(profile.getUserId())
-                .displayName(displayName.isBlank() ? null : displayName)
+                .displayName(profile.getDisplayName())
                 .firstName(profile.getFirstName())
                 .lastName(profile.getLastName())
                 .email(profile.getEmail())
