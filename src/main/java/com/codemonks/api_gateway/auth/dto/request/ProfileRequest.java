@@ -10,12 +10,8 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class ProfileRequest {
-
     private Long userId;
-
     private String name;
-
     private String email;
-
     private String dob;
 }

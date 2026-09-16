@@ -36,9 +36,7 @@
         }
 
         @PostMapping("/login/social")
-        public Mono<LoginResponse> socialLogin(
-                @Valid @RequestBody SocialLoginRequest request
-        ) {
+        public Mono<LoginResponse> socialLogin(@Valid @RequestBody SocialLoginRequest request) {
             return authGatewayService.socialLogin(request);
         }
     }

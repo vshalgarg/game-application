@@ -110,7 +110,7 @@ public class AuthGatewayService {
                                     .userId(loginResponse.userId())
                                     .name(name)
                                     .email(email)
-                            .dob(dob)
+                                    .dob(dob)
                                     .build();
                     return gameProfileGatewayService
                             .createOrUpdateProfile(profileRequest)
