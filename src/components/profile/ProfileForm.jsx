@@ -10,7 +10,6 @@ import {
 import TextField from "../ui/TextField";
 import SelectField from "../ui/SelectField";
 import LabeledField from "./LabeledField";
-import { COUNTRIES } from "../../data/countries";
 import { GENDERS } from "../../data/genders";
 import { minDobIso, todayIso } from "../../utils/profileValidation";
 
@@ -21,6 +20,8 @@ const ProfileForm = ({
   onClearError,
   onPatch,
   onSubmit,
+  countries = [],
+  countriesLoading = false,
   children,
 }) => {
   const updateField = (field) => (event) => {
@@ -137,11 +138,12 @@ const ProfileForm = ({
             id="country"
             value={form.country}
             onChange={handleCountryChange}
-            placeholder="Select country"
-            options={COUNTRIES}
+            placeholder={countriesLoading ? "Loading countries..." : "Select country"}
+            options={countries}
             leftIcon={<FaGlobe size={14} />}
             error={errors.country}
             helperText={errors.country}
+            disabled={countriesLoading || countries.length === 0}
           />
         </LabeledField>
         <LabeledField id="phone" label="Phone" required>
