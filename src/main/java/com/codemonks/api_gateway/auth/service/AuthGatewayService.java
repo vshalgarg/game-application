@@ -4,6 +4,7 @@ import com.codemonks.api_gateway.auth.dto.request.AuthLoginRequest;
 import com.codemonks.api_gateway.auth.dto.request.AuthRegisterRequest;
 import com.codemonks.api_gateway.auth.dto.request.LoginRequest;
 import com.codemonks.api_gateway.auth.dto.request.RegisterRequest;
+import com.codemonks.api_gateway.auth.dto.response.CountryResponse;
 import com.codemonks.api_gateway.auth.dto.response.LoginResponse;
 import com.codemonks.api_gateway.auth.dto.response.RegisterResponse;
 import com.codemonks.api_gateway.util.ResponseParser;
@@ -15,6 +16,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -61,26 +63,50 @@ public class AuthGatewayService {
     }
 
     public Mono<LoginResponse> login(LoginRequest request) {
-
         log.info("[LOGIN] Request received for email={}", request.email());
-
         AuthLoginRequest authRequest = new AuthLoginRequest(request.email(), request.password());
-
         log.info("[LOGIN] Calling Auth Service endpoint={}", authServiceUrl + "/auth/api/v1/login");
-
         return webClient
                 .post()
-                  .uri(authServiceUrl + "/auth/api/v1/login")
+                .uri(authServiceUrl + "/auth/api/v1/login")
                 .header("clientName", authServiceClientName)
-                .header(
-                        "clientSecret",
-                        authServiceClientSecret)
-
+                .header("clientSecret", authServiceClientSecret)
                 .bodyValue(authRequest)
                 .retrieve()
                 .bodyToMono(String.class)
                 .flatMap(body -> responseParser.parseResponse(body, LoginResponse.class))
                 .doOnSuccess(response -> log.info("[LOGIN] Login successful"))
                 .doOnError(error -> log.error("[LOGIN] {}", error.getMessage(), error));
+    }
+
+    public Mono<String> getAllCountries() {
+        log.info("[COUNTRIES] Fetching all countries");
+        String url = authServiceUrl + "/auth/api/v1/countries";
+        log.info("[COUNTRIES] Calling Auth Service endpoint={}", url);
+        return webClient
+                .get()
+                .uri(url)
+                .header("clientName", authServiceClientName)
+                .header("clientSecret", authServiceClientSecret)
+                .retrieve()
+                .bodyToMono(String.class)
+                .doOnNext(body -> log.info("[COUNTRIES] Auth API response: {}", body))
+                .doOnError(error -> log.error("[COUNTRIES] Auth API error", error));
+    }
+
+    public Mono<CountryResponse> getCountryByName(String name) {
+        log.info("[COUNTRY] Fetching country details for name={}", name);
+        String url = authServiceUrl + "/auth/api/v1/countries/" + name;
+        log.info("[COUNTRY] Calling Auth Service endpoint={}", url);
+        return webClient
+                .get()
+                .uri(url)
+                .header("clientName", authServiceClientName)
+                .header("clientSecret", authServiceClientSecret)
+                .retrieve()
+                .bodyToMono(String.class)
+                .flatMap(body -> responseParser.parseResponse(body, CountryResponse.class))
+                .doOnSuccess(response -> log.info("[COUNTRY] Country fetched successfully: {}", name))
+                .doOnError(error -> log.error("[COUNTRY] {}", error.getMessage(), error));
     }
 }
