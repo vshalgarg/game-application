@@ -13,11 +13,18 @@ import { getProfile, updateProfile } from "../services/profileService";
 import { useAuth } from "../context/AuthContext";
 import { useSnackbar } from "../context/SnackbarContext";
 import { emptyProfile, mapProfileFromApi, mapProfileToApi } from "../utils/profileMapper";
+import useCountries from "../hooks/useCountries";
 
 const CompleteProfile = () => {
   const navigate = useNavigate();
   const { auth, updateCurrentUser } = useAuth();
   const { showSnackbar } = useSnackbar();
+  const {
+    countries,
+    loading: countriesLoading,
+    error: countriesError,
+    refetch: refetchCountries,
+  } = useCountries();
 
   const [form, setForm] = useState(emptyProfile);
   const [errors, setErrors] = useState({});
@@ -33,7 +40,9 @@ const CompleteProfile = () => {
     setLoadError("");
     try {
       const response = await getProfile();
+       console.log("response",response);
       const mapped = mapProfileFromApi(response);
+      console.log("mapped",mapped);
       setForm(mapped);
     } catch (error) {
       console.error("Profile Fetch Error:", error);
@@ -69,9 +78,9 @@ const CompleteProfile = () => {
 
     try {
       setSaving(true);
-      // const response = await updateProfile(mapProfileToApi(form));
+      const response = await updateProfile(mapProfileToApi(form));
       updateCurrentUser({ profileStatus: true });
-      // showSnackbar(response?.message || "Profile saved", "success");
+      showSnackbar(response?.message || "Profile saved", "success");
       navigate("/", { replace: true });
     } catch (error) {
       console.error("Profile Save Error:", error);
@@ -100,14 +109,21 @@ const CompleteProfile = () => {
           </p>
         </div>
 
-        {loading ? (
+        {loading || countriesLoading ? (
           <p className="py-6 text-center text-sm text-gz-text-secondary">
             Fetching your details...
           </p>
-        ) : loadError ? (
+        ) : loadError || countriesError ? (
           <div className="py-4 text-center">
-            <p className="text-sm text-gz-text-secondary">{loadError}</p>
-            <Button type="button" className="mt-5" onClick={fetchProfile}>
+            <p className="text-sm text-gz-text-secondary">{loadError || countriesError}</p>
+            <Button
+              type="button"
+              className="mt-5"
+              onClick={() => {
+                refetchCountries();
+                fetchProfile();
+              }}
+            >
               Try again
             </Button>
           </div>
@@ -116,7 +132,6 @@ const CompleteProfile = () => {
             <div className="mb-4 flex items-center gap-4 rounded-2xl border border-white/10 bg-gz-popup/45 p-3.5">
               <AvatarPreview
                 avatarId={form.avatarId}
-                avatarUrl={form.avatarUrl}
                 name={selectedAvatar?.name || form.displayName}
                 editable
                 onClick={() => setPickerOpen(true)}
@@ -141,6 +156,8 @@ const CompleteProfile = () => {
               onClearError={clearError}
               onPatch={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
               onSubmit={handleSubmit}
+              countries={countries}
+              countriesLoading={countriesLoading}
             >
               <Button type="submit" disabled={saving}>
                 {saving ? "Saving..." : "Save & Continue"}
@@ -153,7 +170,7 @@ const CompleteProfile = () => {
       <AvatarPicker
         open={pickerOpen}
         selectedId={form.avatarId}
-        onSelect={(avatarId) => setForm((prev) => ({ ...prev, avatarId, avatarUrl: "" }))}
+        onSelect={(avatarId) => setForm((prev) => ({ ...prev, avatarId }))}
         onClose={() => setPickerOpen(false)}
       />
     </AuthLayout>

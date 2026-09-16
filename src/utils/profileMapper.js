@@ -1,6 +1,3 @@
-import { COUNTRIES } from "../data/countries";
-import { normalizeGender } from "../data/genders";
-
 export const emptyProfile = {
   playerId: "",
   firstName: "",
@@ -10,27 +7,12 @@ export const emptyProfile = {
   gender: "",
   country: "",
   avatarId: "",
-  avatarUrl: "",
   email: "",
   phone: "",
 };
 
 const firstValue = (...values) =>
   values.find((value) => value !== undefined && value !== null && value !== "") ?? "";
-
-const normalizeCountry = (value) => {
-  if (!value) return "";
-  const text = String(value).trim();
-  const byCode = COUNTRIES.find((country) => country.value.toLowerCase() === text.toLowerCase());
-  if (byCode) return byCode.value;
-  const byLabel = COUNTRIES.find((country) => country.label.toLowerCase() === text.toLowerCase());
-  return byLabel?.value || text;
-};
-
-const firstNonEmail = (...values) => {
-  const value = firstValue(...values);
-  return String(value).includes("@") ? "" : value;
-};
 
 const toDateInputValue = (value) => {
   if (!value) return "";
@@ -47,19 +29,15 @@ const toDateInputValue = (value) => {
 };
 
 export const mapProfileFromApi = (response) => {
-  const avatarValue = firstValue(response.avatarId);
-  const isAvatarUrl = typeof avatarValue === "string" && /^(https?:)?\/\//.test(avatarValue);
-
   return {
-    playerId: String(firstValue(response.playerId)),
+    playerId: String(firstValue(response.userId)),
     firstName: firstValue(response.firstName),
     lastName: firstValue(response.lastName),
     displayName: firstValue(response.displayName),
     dob: toDateInputValue(firstValue(response.dob)),
-    gender: normalizeGender(firstValue(response.gender)),
-    country: normalizeCountry(firstValue(response.country)),
-    avatarId: isAvatarUrl ? "" : avatarValue,
-    avatarUrl: isAvatarUrl ? avatarValue : firstValue(response.avatarUrl),
+    gender: firstValue(response.gender),
+    country: firstValue(response.countryCode),
+    avatarId: firstValue(response.avatarId),
     email: firstValue(response.email),
     phone: String(firstValue(response.phoneNumber)),
   };
@@ -71,8 +49,8 @@ export const mapProfileToApi = (form) => ({
   displayName: form.displayName.trim(),
   dob: form.dob,
   gender: form.gender,
-  country: form.country,
+  countryCode: form.country,
   avatarId: form.avatarId,
   email: form.email.trim(),
-  phone: form.phone.trim(),
+  phoneNumber: form.phone.trim(),
 });

@@ -91,3 +91,17 @@ export const resetPassword = async ({ resetToken, newPassword }) => {
     throw new Error(handleApiError(error));
   }
 };
+
+export const getCountries = async () => {
+  try {
+    const res = await authApi.get("/countries");
+    const data = checkLogicalError(res.data);
+
+    return (Array.isArray(data) ? data : []).map((country) => ({
+      value: country.code,
+      label: country.name,
+    }));
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};

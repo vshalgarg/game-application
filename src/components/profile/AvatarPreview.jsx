@@ -1,15 +1,13 @@
 import { FaUser } from "react-icons/fa";
 import { getAvatarById } from "../../data/avatars";
 
-const AvatarPreview = ({ avatarId, avatarUrl, name, editable = false, onClick }) => {
+const AvatarPreview = ({ avatarId, name, editable = false, onClick }) => {
   const preset = getAvatarById(avatarId);
   const Art = preset?.Art;
   const label = name || preset?.name || "Player avatar";
 
   const content = Art ? (
     <Art />
-  ) : avatarUrl ? (
-    <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
   ) : (
     <FaUser className="text-gz-text-secondary" size={36} />
   );

@@ -6,12 +6,12 @@ import AvatarPreview from "../components/profile/AvatarPreview";
 import AvatarPicker from "../components/profile/AvatarPicker";
 import ProfileForm from "../components/profile/ProfileForm";
 import { validateProfile } from "../utils/profileValidation";
-import { getCountryLabel } from "../data/countries";
-import { getGenderLabel } from "../data/genders";
+import { GENDERS } from "../data/genders";
 import { getAvatarById } from "../data/avatars";
 import { getProfile, updateProfile } from "../services/profileService";
 import { useSnackbar } from "../context/SnackbarContext";
 import { emptyProfile, mapProfileFromApi, mapProfileToApi } from "../utils/profileMapper";
+import useCountries from "../hooks/useCountries";
 
 const formatDob = (value) => {
   if (!value) return "—";
@@ -26,6 +26,12 @@ const formatDob = (value) => {
 
 const Profile = () => {
   const { showSnackbar } = useSnackbar();
+  const {
+    countries,
+    loading: countriesLoading,
+    error: countriesError,
+    refetch: refetchCountries,
+  } = useCountries();
 
   const [form, setForm] = useState(emptyProfile);
   const [errors, setErrors] = useState({});
@@ -40,7 +46,7 @@ const Profile = () => {
 
   const fetchProfile = async () => {
     setLoading(true);
-    setLoadError("")
+    setLoadError("");
     try {
       const response = await getProfile();
       const mapped = mapProfileFromApi(response);
@@ -101,7 +107,7 @@ const Profile = () => {
     try {
       setSaving(true);
       const response = await updateProfile(mapProfileToApi(form));
-      const mapped = mapProfileFromApi(response, { ...form, profileStatus: true });
+      const mapped = mapProfileFromApi(response);
       const nextProfile = { ...mapped, profileStatus: true };
 
       setSavedProfile(nextProfile);
@@ -121,8 +127,17 @@ const Profile = () => {
   const infoItems = [
     { id: "name", label: "Name", value: fullName },
     { id: "dob", label: "Date of Birth", value: formatDob(form.dob) },
-    { id: "gender", label: "Gender", value: getGenderLabel(form.gender) || "—" },
-    { id: "country", label: "Country", value: getCountryLabel(form.country) || "—" },
+    {
+      id: "gender",
+      label: "Gender",
+      value: GENDERS.find((gender) => gender.value === form.gender)?.label || form.gender || "—",
+    },
+    {
+      id: "country",
+      label: "Country",
+      value:
+        countries.find((country) => country.value === form.country)?.label || form.country || "—",
+    },
     { id: "email", label: "Email", value: form.email || "—" },
     { id: "phone", label: "Phone", value: form.phone || "—" },
   ];
@@ -130,17 +145,24 @@ const Profile = () => {
   return (
     <PageShell scrollable className="pt-5 pb-7">
       <section className="relative z-10 mx-auto w-full max-w-3xl rounded-gz-card border border-gz-primary-cyan/40 bg-gz-popup-dark/90 px-4 py-5 backdrop-blur-xl sm:px-6 sm:py-6 shadow-[0_20px_60px_rgba(0,0,0,0.45),0_0_32px_rgb(0_217_232/0.16),0_0_24px_rgb(139_92_246/0.12)]">
-        {loading ? (
+        {loading || countriesLoading ? (
           <div className="py-10 text-center">
             <p className="text-sm font-semibold tracking-[0.2em] text-gz-primary-cyan">LOADING</p>
             <h1 className="mt-2 text-2xl font-bold text-gz-text">Player Profile</h1>
             <p className="mt-2 text-sm text-gz-text-secondary">Fetching your details...</p>
           </div>
-        ) : loadError ? (
+        ) : loadError || countriesError ? (
           <div className="py-8 text-center">
             <h1 className="text-2xl font-bold text-gz-text">Player Profile</h1>
-            <p className="mt-2 text-sm text-gz-text-secondary">{loadError}</p>
-            <Button type="button" className="mt-5" onClick={fetchProfile}>
+            <p className="mt-2 text-sm text-gz-text-secondary">{loadError || countriesError}</p>
+            <Button
+              type="button"
+              className="mt-5"
+              onClick={() => {
+                refetchCountries();
+                fetchProfile();
+              }}
+            >
               Try again
             </Button>
           </div>
@@ -190,7 +212,6 @@ const Profile = () => {
             <div className="mb-5 flex items-center gap-4 rounded-2xl border border-white/10 bg-gz-popup/45 p-3.5 sm:gap-5 sm:p-4">
               <AvatarPreview
                 avatarId={form.avatarId}
-                avatarUrl={form.avatarUrl}
                 name={selectedAvatar?.name || form.displayName}
                 editable={editing}
                 onClick={() => setPickerOpen(true)}
@@ -227,6 +248,8 @@ const Profile = () => {
                 onClearError={clearError}
                 onPatch={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
                 onSubmit={handleSubmit}
+                countries={countries}
+                countriesLoading={countriesLoading}
               />
             ) : (
               <div className="grid gap-2.5 sm:grid-cols-2">
@@ -250,7 +273,7 @@ const Profile = () => {
       <AvatarPicker
         open={pickerOpen}
         selectedId={form.avatarId}
-        onSelect={(avatarId) => setForm((prev) => ({ ...prev, avatarId, avatarUrl: "" }))}
+        onSelect={(avatarId) => setForm((prev) => ({ ...prev, avatarId }))}
         onClose={() => setPickerOpen(false)}
       />
     </PageShell>
