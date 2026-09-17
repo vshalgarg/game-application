@@ -17,7 +17,7 @@ public class ProfileRequestDTO {
     private LocalDate dob;
     private Gender gender;
     private String countryCode;
-    private AvatarId avatarId;
+    private String avatarId;
     private String email;
     private String phoneNumber;
 }

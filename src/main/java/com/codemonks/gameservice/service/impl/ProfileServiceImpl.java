@@ -5,6 +5,7 @@ import com.codemonks.gameservice.dto.request.ProfileRequestDTO;
 import com.codemonks.gameservice.dto.request.SocialProfileRequestDTO;
 import com.codemonks.gameservice.dto.response.ProfileResponseDTO;
 import com.codemonks.gameservice.entity.ProfileEntity;
+import com.codemonks.gameservice.enums.AvatarId;
 import com.codemonks.gameservice.repository.ProfileEntityRepository;
 import com.codemonks.gameservice.service.ProfileService;
 import lombok.RequiredArgsConstructor;
@@ -71,7 +72,11 @@ public class ProfileServiceImpl implements ProfileService {
         profile.setDob(request.getDob());
         profile.setGender(request.getGender());
         profile.setCountryCode(request.getCountryCode());
-        profile.setAvatarId(request.getAvatarId());
+        String avatarId = request.getAvatarId();
+        AvatarId avatar = (avatarId == null || avatarId.isBlank())
+                ? null
+                : AvatarId.valueOf(avatarId);
+        profile.setAvatarId(avatar);
         profile.setEmail(request.getEmail());
         profile.setPhoneNumber(request.getPhoneNumber());
         profile = profileRepository.save(profile);
