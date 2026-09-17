@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { FaCopy, FaGamepad, FaRobot, FaUserCircle, FaTrash } from "react-icons/fa";
 import { LuX } from "react-icons/lu";
 import { useSnackbar } from "../../context/SnackbarContext";
@@ -13,7 +13,7 @@ import PageShell from "../../components/layout/PageShell";
 import GameZoneLogo from "../../components/brand/GameZoneLogo";
 import Button from "../../components/ui/Button";
 import ExitGamePopup from "../../components/ui/ExitGamePopup";
-import { playSound } from "../../services/soundManager";
+import { playSound, initializeGameSounds, } from "../../services/soundManager";
 
 const LudoWaitingRoom = () => {
   const navigate = useNavigate();
@@ -30,6 +30,11 @@ const LudoWaitingRoom = () => {
 
   const { players } = useWaitingRoomRealtime(roomCode);
   console.info("Players in waiting room", players);
+
+  // for loading sounds on refresh
+  useEffect(() => {
+  initializeGameSounds("LUDO");
+  }, []);
 
   useRoomRealtime({
     roomCode,
@@ -58,7 +63,6 @@ const LudoWaitingRoom = () => {
         roomCode, 
         userId: currentUserId 
       });
-      // playSound("LUDO", "BUTTON_CLICK");
       showSnackbar(result.message, "success");
     } catch (error) {
       console.error("Failed to start game:", error);
@@ -67,13 +71,13 @@ const LudoWaitingRoom = () => {
   };
 
   const handleAddBot = async () => {
+    playSound("LUDO", "BUTTON_CLICK");
     try {
       const result = await addBot({
         roomCode,
         hostUserId: currentUserId,
         botDifficulty: "HARD",
       });
-      playSound("LUDO", "BUTTON_CLICK");
       showSnackbar(result.message, "success");
     } catch (error) {
       console.error(error);
@@ -82,13 +86,13 @@ const LudoWaitingRoom = () => {
   };
 
   const handleRemovePlayer = async (player) => {
+    playSound("LUDO", "BUTTON_CLICK");
     try {
       const result = await removePlayer({
         roomCode,
         hostUserId: currentUserId,
         userId: player.user_id,
       });
-      playSound("LUDO", "BUTTON_CLICK");
       showSnackbar(result.message, "success");
     } catch (error) {
       console.error(error);

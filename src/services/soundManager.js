@@ -1,4 +1,7 @@
+import { getGameSounds } from "./soundService";
+
 const audioCache = {};
+let loadingPromises = {};
 
 export const loadGameSounds = async (gameType, soundResponse) => {
   const events = soundResponse?.data?.events;
@@ -8,7 +11,6 @@ export const loadGameSounds = async (gameType, soundResponse) => {
     return;
   }
 
-  // Create cache for this game if it doesn't exist
   if (!audioCache[gameType]) {
     audioCache[gameType] = {};
   }
@@ -25,7 +27,6 @@ export const loadGameSounds = async (gameType, soundResponse) => {
           "canplaythrough",
           () => {
             audioCache[gameType][eventName] = audio;
-
             resolve();
           },
           { once: true }
@@ -34,15 +35,11 @@ export const loadGameSounds = async (gameType, soundResponse) => {
         audio.addEventListener(
           "error",
           () => {
-            console.error(
-              `Failed to load sound: ${gameType} -> ${eventName}`
-            );
-
+            console.error(`Failed to load sound: ${gameType} -> ${eventName}`);
             resolve();
           },
           { once: true }
         );
-
         audio.load();
       });
     }
@@ -50,39 +47,61 @@ export const loadGameSounds = async (gameType, soundResponse) => {
 
   await Promise.all(loadPromises);
 
-  console.log(
-    `${gameType} sounds loaded:`,
-    Object.keys(audioCache[gameType])
-  );
+  console.info(`${gameType} sounds loaded:`,Object.keys(audioCache[gameType]));
+};
+
+// when page refresh sound loading
+export const initializeGameSounds = async (gameType) => {
+  // Already loaded
+  if (
+    audioCache[gameType] &&
+    Object.keys(audioCache[gameType]).length > 0
+  ) {
+    return;
+  }
+
+  // Already loading
+  if (loadingPromises[gameType]) {
+    return loadingPromises[gameType];
+  }
+
+  loadingPromises[gameType] = (async () => {
+    try {
+      const soundResponse = await getGameSounds(gameType);
+
+      await loadGameSounds(
+        gameType,
+        soundResponse
+      );
+    } catch (error) {
+      console.error(`Failed to initialize ${gameType} sounds:`,error);
+    } finally {
+      delete loadingPromises[gameType];
+    }
+  })();
+
+  return loadingPromises[gameType];
 };
 
 // for sound playing
 export const playSound = (gameType, eventName) => {
-  console.log("Trying to play sound:", gameType, eventName);
-  console.log("Current audio cache:", audioCache);
 
   const audio = audioCache[gameType]?.[eventName];
 
   if (!audio) {
-    console.warn(
-      `Sound not found: ${gameType} -> ${eventName}`
-    );
+    console.warn(`Sound not found: ${gameType} -> ${eventName}`);
     return;
   }
-
-  console.log("Audio found:", audio);
+  console.info("Audio found:", audio);
 
   audio.currentTime = 0;
 
   audio.play()
     .then(() => {
-      console.log(`Playing sound: ${gameType} -> ${eventName}`);
+      console.info(`Playing sound: ${gameType} -> ${eventName}`);
     })
     .catch((error) => {
-      console.error(
-        `Failed to play sound: ${gameType} -> ${eventName}`,
-        error
-      );
+      console.error(`Failed to play sound: ${gameType} -> ${eventName}`,error);
     });
 };
 
@@ -92,9 +111,7 @@ export const playLoopingSound = (gameType, eventName) => {
   const audio = audioCache[gameType]?.[eventName];
 
   if (!audio) {
-    console.warn(
-      `Sound not found: ${gameType} -> ${eventName}`
-    );
+    console.warn(`Sound not found: ${gameType} -> ${eventName}`);
     return;
   }
 
@@ -102,10 +119,7 @@ export const playLoopingSound = (gameType, eventName) => {
   audio.currentTime = 0;
 
   audio.play().catch((error) => {
-    console.warn(
-      `Failed to play looping sound: ${gameType} -> ${eventName}`,
-      error
-    );
+    console.warn(`Failed to play looping sound: ${gameType} -> ${eventName}`,error);
   });
 };
 

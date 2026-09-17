@@ -10,7 +10,7 @@ import WinModal from "../../modals/FinalWinner.jsx";
 import ExitGamePopup from "../../components/ui/ExitGamePopup";
 import useBackExitGuard from "../../hooks/useBackExitGuard";
 import { LuX } from "react-icons/lu";
-import { playSound, playLoopingSound, stopSound } from "../../services/soundManager";
+import { playSound, playLoopingSound, stopSound, initializeGameSounds, } from "../../services/soundManager";
 
 const LudoGameRoom = () => {
   const { auth } = useAuth();
@@ -64,6 +64,11 @@ const LudoGameRoom = () => {
   const gameAreaRef = useRef(null);
 
   const currentUserId = auth?.userId;
+
+  // for loading sounds on refresh
+  useEffect(() => {
+  initializeGameSounds("LUDO");
+  }, []);
 
   // fetch board layout from API
   useEffect(() => {
@@ -457,10 +462,7 @@ const LudoGameRoom = () => {
             const finalCell = boardData?.grid?.[0]?.[finalCellId];
 
             // Play safe-cell when finl cell is SC or SS
-            if (
-              finalCell?.type === "SC" ||
-              finalCell?.type === "SS"
-            ) {
+            if (finalCell?.type === "SC" || finalCell?.type === "SS") {
               playSound("LUDO", "SAFE_CELL");
             }
 
@@ -490,12 +492,15 @@ const LudoGameRoom = () => {
           }));
         }
 
-        // Killed Token Animation
+        // Kill Detection
         if (
           currentToken.state === "TRACK" &&
           latestToken.state === "BASE" &&
           latestToken.tokenKilled
         ) {
+
+          // Play kill sound immediately when kill is detected 
+          playSound("LUDO", "TOKEN_KILL");
           killedAnimations.push({
             currentToken,
             latestToken,
@@ -511,7 +516,7 @@ const LudoGameRoom = () => {
         : (currentToken.backwardJourney ?? []);
 
       // Start kill sound when backward animation starts
-      playLoopingSound("LUDO", "TOKEN_KILL");
+      // playLoopingSound("LUDO", "TOKEN_KILL");
 
       for (let i = backwardJourney.length - 1; i >= 0; i--) {
         currentToken.pathId = backwardJourney[i];
@@ -526,7 +531,7 @@ const LudoGameRoom = () => {
       }
 
       // Stop kill sound when backward animation finishes
-      stopSound("LUDO", "TOKEN_KILL");
+      // stopSound("LUDO", "TOKEN_KILL");
 
 
       currentToken.state = "BASE";

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaBorderAll, FaGamepad, FaPlusCircle, FaSignInAlt } from "react-icons/fa";
 import { createRoom, joinRoom } from "../../services/roomService";
 import { useSnackbar } from "../../context/SnackbarContext";
@@ -8,7 +8,7 @@ import PageShell from "../../components/layout/PageShell";
 import GameZoneLogo from "../../components/brand/GameZoneLogo";
 import ModeOption from "../../components/ui/ModeOption";
 import TextField from "../../components/ui/TextField";
-import { playSound } from "../../services/soundManager";
+import { playSound, initializeGameSounds, } from "../../services/soundManager";
 
 const LudoCreateJoinRoom = () => {
   const navigate = useNavigate();
@@ -19,9 +19,14 @@ const LudoCreateJoinRoom = () => {
   const [roomCode, setRoomCode] = useState("");
   const [joining, setJoining] = useState(false);
 
+  // for loading sounds on refresh
+  useEffect(() => {
+  initializeGameSounds("LUDO");
+  }, []);
+
   const handleCreateRoom = async () => {
-    if (loading) return;
     playSound("LUDO", "BUTTON_CLICK");
+    if (loading) return;
     setLoading(true);
     try {
       const res = await createRoom({
@@ -40,11 +45,11 @@ const LudoCreateJoinRoom = () => {
   };
 
   const handleJoinRoom = async () => {
+    playSound("LUDO", "BUTTON_CLICK");
     if (!roomCode.trim()) {
       showSnackbar("Please enter Room ID", "error");
       return;
     }
-    playSound("LUDO", "BUTTON_CLICK");
     try {
       setJoining(true);
       const res = await joinRoom({
