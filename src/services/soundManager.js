@@ -85,3 +85,37 @@ export const playSound = (gameType, eventName) => {
       );
     });
 };
+
+
+// sound to be played when the animation ends (looping)
+export const playLoopingSound = (gameType, eventName) => {
+  const audio = audioCache[gameType]?.[eventName];
+
+  if (!audio) {
+    console.warn(
+      `Sound not found: ${gameType} -> ${eventName}`
+    );
+    return;
+  }
+
+  audio.loop = true;
+  audio.currentTime = 0;
+
+  audio.play().catch((error) => {
+    console.warn(
+      `Failed to play looping sound: ${gameType} -> ${eventName}`,
+      error
+    );
+  });
+};
+
+// stop the sound when the animation ends
+export const stopSound = (gameType, eventName) => {
+  const audio = audioCache[gameType]?.[eventName];
+
+  if (!audio) return;
+
+  audio.pause();
+  audio.currentTime = 0;
+  audio.loop = false;
+};

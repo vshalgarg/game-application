@@ -48,6 +48,7 @@ const LudoWaitingRoom = () => {
   };
 
   const handleStartGame = async () => {
+    playSound("LUDO", "BUTTON_CLICK");
     try {
       if (players.length < 2) {
         showSnackbar("Waiting for another player...", "error");
@@ -57,7 +58,7 @@ const LudoWaitingRoom = () => {
         roomCode, 
         userId: currentUserId 
       });
-      playSound("LUDO", "BUTTON_CLICK");
+      // playSound("LUDO", "BUTTON_CLICK");
       showSnackbar(result.message, "success");
     } catch (error) {
       console.error("Failed to start game:", error);

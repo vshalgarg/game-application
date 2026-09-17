@@ -10,6 +10,7 @@ import WinModal from "../../modals/FinalWinner.jsx";
 import ExitGamePopup from "../../components/ui/ExitGamePopup";
 import useBackExitGuard from "../../hooks/useBackExitGuard";
 import { LuX } from "react-icons/lu";
+import { playSound, playLoopingSound, stopSound } from "../../services/soundManager";
 
 const LudoGameRoom = () => {
   const { auth } = useAuth();
@@ -124,6 +125,8 @@ const LudoGameRoom = () => {
 
       if (!wasFinished && player.hasFinished) {
         triggerCelebration(player.playerId);
+        playSound("LUDO", "SINGLE_PLAYER_WIN");
+
       }
       previousFinishedRef.current[player.playerId] = player.hasFinished;
     });
@@ -160,6 +163,11 @@ const LudoGameRoom = () => {
     previousPlayerTurnStageRef.current = newPlayerTurnStage;
 
     clearTimeout(turnTransitionTimeoutRef.current);
+
+    // for final winning sound
+    if (game.winner_user_id) {
+      playSound("LUDO", "GAME_WIN");
+    }
 
     setWinnerUserId(game.winner_user_id);
     setStatus(game.game_status);
@@ -314,6 +322,9 @@ const LudoGameRoom = () => {
       setShowMovableTokens(false);
       setRolling(true);
 
+      // Start dice rolling sound
+      playSound("LUDO", "DICE_ROLL");
+
       await rollDice({
         roomCode,
         userId: currentUserId,
@@ -321,10 +332,13 @@ const LudoGameRoom = () => {
 
       // Only stops the local spin animation state, reveal timing owned by processGameUpdate when realtime update arrives
       setTimeout(() => {
+        // Stop dice rolling sound
+        stopSound("LUDO", "DICE_ROLL");
         setRolling(false);
       }, 800);
     } catch (error) {
       console.error(error);
+      stopSound("LUDO", "DICE_ROLL");
       setRolling(false);
     }
   };
@@ -426,12 +440,34 @@ const LudoGameRoom = () => {
           for (const cellId of newSteps) {
             currentToken.pathId = cellId;
 
+            // Play movement sound for every cell
+            playSound("LUDO", "TOKEN_MOVEMENT");
+
             setGameState((prev) => ({
               ...prev,
               board: structuredClone(board),
             }));
 
             await new Promise((resolve) => setTimeout(resolve, 150));
+          }
+
+          // safe cell sound 
+          if (newSteps.length > 0) {
+            const finalCellId = newSteps[newSteps.length - 1];
+            const finalCell = boardData?.grid?.[0]?.[finalCellId];
+
+            // Play safe-cell when finl cell is SC or SS
+            if (
+              finalCell?.type === "SC" ||
+              finalCell?.type === "SS"
+            ) {
+              playSound("LUDO", "SAFE_CELL");
+            }
+
+            // goal cell sound
+            if (finalCell?.type === "G") {
+              playSound("LUDO", "SINGLE_TOKEN_GOAL");
+            }
           }
 
           currentToken.forwardJourney = latestToken.forwardJourney;
@@ -474,6 +510,9 @@ const LudoGameRoom = () => {
         ? latestToken.backwardJourney
         : (currentToken.backwardJourney ?? []);
 
+      // Start kill sound when backward animation starts
+      playLoopingSound("LUDO", "TOKEN_KILL");
+
       for (let i = backwardJourney.length - 1; i >= 0; i--) {
         currentToken.pathId = backwardJourney[i];
         currentToken.pathIndex = i;
@@ -485,6 +524,10 @@ const LudoGameRoom = () => {
 
         await new Promise((resolve) => setTimeout(resolve, 70));
       }
+
+      // Stop kill sound when backward animation finishes
+      stopSound("LUDO", "TOKEN_KILL");
+
 
       currentToken.state = "BASE";
       currentToken.pathId = null;
