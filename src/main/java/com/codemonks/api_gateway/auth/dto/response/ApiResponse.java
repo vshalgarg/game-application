@@ -1,7 +1,8 @@
-package com.codemonks.api_gateway.dto;
+package com.codemonks.api_gateway.auth.dto.response;
 
 import lombok.Builder;
 import lombok.Data;
+import reactor.core.publisher.Mono;
 
 @Builder
 @Data

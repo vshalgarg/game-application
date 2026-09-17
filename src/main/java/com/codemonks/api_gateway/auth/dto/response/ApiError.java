@@ -1,4 +1,4 @@
-package com.codemonks.api_gateway.dto;
+package com.codemonks.api_gateway.auth.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

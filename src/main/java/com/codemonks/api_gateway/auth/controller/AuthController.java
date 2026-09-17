@@ -7,7 +7,7 @@
     import com.codemonks.api_gateway.auth.dto.response.LoginResponse;
     import com.codemonks.api_gateway.auth.dto.response.RegisterResponse;
     import com.codemonks.api_gateway.auth.service.AuthGatewayService;
-    import com.codemonks.api_gateway.dto.ApiResponse;
+    import com.codemonks.api_gateway.auth.dto.response.ApiResponse;
     import java.util.List;
     import jakarta.validation.Valid;
     import lombok.RequiredArgsConstructor;
