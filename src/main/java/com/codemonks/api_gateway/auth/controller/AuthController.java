@@ -46,4 +46,9 @@
         public Mono<ChangePasswordResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
             return authGatewayService.resetPassword(request);
         }
+
+        @PostMapping("/forgot-password/resend-otp")
+        public Mono<SendOtpResponse> resendForgotPasswordOtp(@Valid @RequestBody ForgotPasswordRequest request) {
+            return authGatewayService.resendForgotPasswordOtp(request);
+        }
     }

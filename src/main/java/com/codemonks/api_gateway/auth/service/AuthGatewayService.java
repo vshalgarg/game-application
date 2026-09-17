@@ -126,4 +126,25 @@ public class AuthGatewayService {
                 .retrieve()
                 .bodyToMono(ChangePasswordResponse.class);
     }
+
+    public Mono<SendOtpResponse> resendForgotPasswordOtp(ForgotPasswordRequest request) {
+        log.info("[RESEND OTP] Request received for email={}", request.email());
+        AuthForgotPasswordRequest authRequest = new AuthForgotPasswordRequest(request.email());
+        String url = authServiceUrl + "/auth/api/v1/forgot-password/resend-otp";
+        log.info("[RESEND OTP] Calling Auth Service endpoint={}", url);
+        return webClient
+                .post()
+                .uri(url)
+                .header("clientName", authServiceClientName)
+                .header("clientSecret", authServiceClientSecret)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(authRequest)
+                .retrieve()
+                .bodyToMono(String.class)
+                .doOnNext(body -> log.info("[RESEND OTP] Auth API raw response={}",body))
+                .flatMap(body -> responseParser.parseResponse(body, SendOtpResponse.class))
+                .doOnSuccess(response -> log.info("[RESEND OTP] OTP resent successfully"))
+                .doOnError(error -> log.error("[RESEND OTP] {}", error.getMessage(), error)
+                );
+    }
 }
