@@ -15,11 +15,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-
-import java.time.LocalDate;
+import com.codemonks.api_gateway.dto.ApiResponse;
+import java.util.List;
 import java.util.Collections;
 import java.util.Map;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -127,34 +126,36 @@ public class AuthGatewayService {
                 );
     }
 
-    public Mono<String> getAllCountries() {
+    public Mono<ApiResponse<List<CountryResponse>>> getAllCountries() {
         log.info("[COUNTRIES] Fetching all countries");
         String url = authServiceUrl + "/auth/api/v1/countries";
         log.info("[COUNTRIES] Calling Auth Service endpoint={}", url);
         return webClient
-                .get()
-                .uri(url)
-                .header("clientName", authServiceClientName)
-                .header("clientSecret", authServiceClientSecret)
-                .retrieve()
-                .bodyToMono(String.class)
-                .doOnNext(body -> log.info("[COUNTRIES] Auth API response: {}", body))
-                .doOnError(error -> log.error("[COUNTRIES] Auth API error", error));
-    }
+            .get()
+            .uri(url)
+            .header("clientName", authServiceClientName)
+            .header("clientSecret", authServiceClientSecret)
+            .retrieve()
+            .bodyToFlux(CountryResponse.class)
+            .collectList()
+            .map(ApiResponse::success)
+            .doOnSuccess(response -> log.info("[COUNTRIES] Countries fetched successfully"))
+            .doOnError(error -> log.error("[COUNTRIES] Auth API error", error));
+      }
 
-    public Mono<CountryResponse> getCountryByName(String name) {
+      public Mono<ApiResponse<CountryResponse>> getCountryByName(String name) {
         log.info("[COUNTRY] Fetching country details for name={}", name);
         String url = authServiceUrl + "/auth/api/v1/countries/" + name;
         log.info("[COUNTRY] Calling Auth Service endpoint={}", url);
         return webClient
-                .get()
-                .uri(url)
-                .header("clientName", authServiceClientName)
-                .header("clientSecret", authServiceClientSecret)
-                .retrieve()
-                .bodyToMono(String.class)
-                .flatMap(body -> responseParser.parseResponse(body, CountryResponse.class))
-                .doOnSuccess(response -> log.info("[COUNTRY] Country fetched successfully: {}", name))
-                .doOnError(error -> log.error("[COUNTRY] {}", error.getMessage(), error));
-    }
+            .get()
+            .uri(url)
+            .header("clientName", authServiceClientName)
+            .header("clientSecret", authServiceClientSecret)
+            .retrieve()
+            .bodyToMono(CountryResponse.class)
+            .map(ApiResponse::success)
+            .doOnSuccess(response ->log.info("[COUNTRY] Country fetched successfully: {}", name))
+            .doOnError(error -> log.error("[COUNTRY] {}", error.getMessage(), error));
+       }
 }
