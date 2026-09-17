@@ -50,7 +50,13 @@
             EngineStartGameRequestDTO request = GameMapper.toStartGameRequest(room, players);
             GameEngine engine = gameEngineFactory.getStrategy(room.getGameType());
 
+            log.info("[ENGINE_START_FLOW] gameType={} roomId={} roomCode={} players={}",
+                    room.getGameType(), room.getId(), room.getRoomCode(), players.size());
+
             EngineGameStateResponseDTO engineResponse = engine.startGame(request);
+
+            log.info("[ENGINE_START_RESPONSE] gameType={} roomId={} status={}",
+                    room.getGameType(), room.getId(), engineResponse.getStatus());
 
             RealtimeLobbyDTO lobbyDTO = LobbyMapper.toLobbyDTO(room,
                             players, RoomRealtimeStatusEnum.ACTIVE
@@ -120,8 +126,8 @@
                         room.getId(), updatedState.getWinnerUserId());
             }
 
-            log.info("Move processed. roomId={}, userId={}",
-                    room.getId(), makeMoveRequestDTO.getUserId());
+            log.info("Move processed. roomId={}, gameType={}, userId={}",
+                    room.getId(), room.getGameType(), makeMoveRequestDTO.getUserId());
             return updatedState;
         }
 
