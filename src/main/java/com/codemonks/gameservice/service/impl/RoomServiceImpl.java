@@ -12,6 +12,7 @@
     import com.codemonks.gameservice.entity.GameConfigEntity;
     import com.codemonks.gameservice.entity.PlayerEntity;
     import com.codemonks.gameservice.entity.RoomEntity;
+    import com.codemonks.gameservice.enums.GameTypeEnum;
     import com.codemonks.gameservice.enums.RoomPlayerRole;
     import com.codemonks.gameservice.enums.RoomStatusEnum;
     import com.codemonks.gameservice.exceptions.GameException;
@@ -364,7 +365,14 @@
             room.setStatus(ACTIVE);
             roomRepository.save(room);
 
-            log.info("Game starting. roomId={}, matchType={}", room.getId(), room.getMatchType());
+            log.info("Game starting. roomId={}, gameType={}, matchType={}",
+                room.getId(), room.getGameType(), room.getMatchType());
+
+            if (room.getGameType() == GameTypeEnum.TAMBOLA) {
+                log.info("[TAMBOLA_START_FLOW] Room:{} RoomCode:{} Players:{}",
+                        room.getId(), room.getRoomCode(), players.size());
+            }
+
             return gameService.startGame(room);
         }
 

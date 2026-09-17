@@ -1,7 +1,9 @@
+
 package com.codemonks.gameservice.engineModule.strategy.impl;
 
 import com.codemonks.gameservice.client.TambolaFeignClient;
 import com.codemonks.gameservice.constants.ResponseErrorCodes;
+import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeLobbyDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineMoveRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.TambolaClaimRequestDTO;
@@ -32,53 +34,119 @@ public class TambolaEngineImpl implements GameEngine {
     }
 
     @Override
-    public EngineGameStateResponseDTO startGame(EngineStartGameRequestDTO request) {
-        log.info("[TAMBOLA_ENGINE] Starting game for room: {}", request.getRoomId());
+    public EngineGameStateResponseDTO startGame(
+            EngineStartGameRequestDTO request) {
 
-         TambolaGameSetupResponseDTO engineResponse = feignClient.start(request);
+        log.info("[TAMBOLA_ENGINE_START] Room:{} RoomCode:{} Players:{} MatchType:{} TimerInterval:{}s",
+                request.getRoomId(), request.getRoomCode(),
+                request.getPlayers() != null ? request.getPlayers().size() : 0,
+                request.getMatchType(), request.getTimerIntervalSeconds());
+
+        TambolaGameSetupResponseDTO engineResponse =
+                feignClient.start(request);
+
+        log.info("[TAMBOLA_ENGINE_START_RESPONSE] Room:{} Status:{} TotalTickets:{}",
+                request.getRoomId(), engineResponse.getStatus(),
+                engineResponse.getTotalTicketsGenerated());
 
         Map<String, Object> gameState = new HashMap<>();
-        gameState.put("totalTicketsGenerated", engineResponse.getTotalTicketsGenerated());
+        gameState.put(
+                "totalTicketsGenerated",
+                engineResponse.getTotalTicketsGenerated()
+        );
 
         return EngineGameStateResponseDTO.builder()
                 .gameState(gameState)
-                .status(GameStatusEnum.valueOf(engineResponse.getStatus()))
+                .status(GameStatusEnum.valueOf(
+                        engineResponse.getStatus()))
                 .build();
     }
 
     @Override
-    public EngineGameStateResponseDTO processMove(EngineMoveRequestDTO request) {
-        log.info("[TAMBOLA_ENGINE] Processing claim for room: {}", request.getRoomId());
+    public EngineGameStateResponseDTO processMove(
+            EngineMoveRequestDTO request) {
+
+        log.info("[TAMBOLA_ENGINE] Processing claim for room: {}",
+                request.getRoomId());
 
         Map<String, Object> moveData = request.getMoveData();
-        if (moveData == null || !moveData.containsKey("ticketId") || !moveData.containsKey("ruleType")) {
-            throw new GameException(ResponseErrorCodes.INVALID_REQUEST);
+
+        if (moveData == null
+                || !moveData.containsKey("ticketId")
+                || !moveData.containsKey("ruleType")) {
+
+            throw new GameException(
+                    ResponseErrorCodes.INVALID_REQUEST
+            );
         }
 
-        // NAYA — Tambola-engine ke apne TambolaClaimRequestDTO shape me convert karo.
-        TambolaClaimRequestDTO claimRequest = new TambolaClaimRequestDTO(
-                request.getRoomId(),
-                request.getUserId(),
-                Long.valueOf(moveData.get("ticketId").toString()),
-                moveData.get("ruleType").toString()
+        log.info("[TAMBOLA_ENGINE_CLAIM_REQUEST] Room:{} Player:{} Ticket:{} Rule:{}",
+                request.getRoomId(), request.getUserId(),
+                moveData.get("ticketId"), moveData.get("ruleType"));
+
+        TambolaClaimRequestDTO claimRequest =
+                new TambolaClaimRequestDTO(
+                        request.getRoomId(),
+                        request.getUserId(),
+                        Long.valueOf(
+                                moveData.get("ticketId").toString()
+                        ),
+                        moveData.get("ruleType").toString()
+                );
+
+        TambolaClaimResponseDTO claimResponse =
+                feignClient.submitClaim(claimRequest);
+
+        log.info("[TAMBOLA_ENGINE_CLAIM_RESPONSE] Room:{} Player:{} ClaimId:{} Rule:{} ClaimStatus:{} Winners:{}/{} GameStatus:{}",
+                request.getRoomId(), request.getUserId(),
+                claimResponse.getClaimId(), claimResponse.getRuleType(),
+                claimResponse.getStatus(), claimResponse.getWinnersCount(),
+                claimResponse.getMaxWinners(), claimResponse.getGameStatus());
+
+        Map<String, Object> gameState = new HashMap<>();
+
+        gameState.put(
+                "claimId",
+                claimResponse.getClaimId()
         );
 
-        TambolaClaimResponseDTO claimResponse = feignClient.submitClaim(claimRequest);
+        gameState.put(
+                "ruleType",
+                claimResponse.getRuleType()
+        );
 
-        // Same pattern jo startGame() me use kiya - Tambola ka specific
-        // response generic gameState-Map ke andar wrap hota hai.
-        Map<String, Object> gameState = new HashMap<>();
-        gameState.put("claimId", claimResponse.getClaimId());
-        gameState.put("ruleType", claimResponse.getRuleType());
-        gameState.put("claimStatus", claimResponse.getStatus());
-        gameState.put("winnersCount", claimResponse.getWinnersCount());
-        gameState.put("maxWinners", claimResponse.getMaxWinners());
+        gameState.put(
+                "claimStatus",
+                claimResponse.getStatus()
+        );
+
+        gameState.put(
+                "winnersCount",
+                claimResponse.getWinnersCount()
+        );
+
+        gameState.put(
+                "maxWinners",
+                claimResponse.getMaxWinners()
+        );
 
         return EngineGameStateResponseDTO.builder()
                 .gameState(gameState)
-                .status(GameStatusEnum.valueOf(claimResponse.getGameStatus()))
+                .status(GameStatusEnum.valueOf(
+                        claimResponse.getGameStatus()
+                ))
                 .build();
     }
 
+    @Override
+    public void publishLobbyState(
+            RealtimeLobbyDTO lobbyDTO) {
 
+        log.info("[TAMBOLA_ENGINE_LOBBY] Room:{} RoomCode:{} Status:{} Players:{}",
+                lobbyDTO.getRoomId(), lobbyDTO.getRoomCode(),
+                lobbyDTO.getRoomStatus(),
+                lobbyDTO.getPlayers() != null ? lobbyDTO.getPlayers().size() : 0);
+
+        feignClient.publishLobby(lobbyDTO);
+    }
 }

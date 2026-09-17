@@ -156,10 +156,25 @@ CREATE TABLE IF NOT EXISTS sound_events (
 
     );
 
-ALTER TABLE rooms
-    ADD COLUMN rule_config_json TEXT NULL;
-
 CREATE INDEX idx_sound_event_game_type
     ON sound_events (game_type);
 CREATE INDEX idx_sound_event_key
     ON sound_events (event_key);
+
+ALTER TABLE rooms
+    ADD COLUMN rule_config_json TEXT NULL;
+
+INSERT INTO game_config (
+    tenant_id,
+    game_type,
+    min_players,
+    max_players,
+    roles_json
+)
+VALUES (
+           'Test-1',
+           'TAMBOLA',
+           2,
+           4,
+           '["PLAYER"]'
+       );
