@@ -1,10 +1,7 @@
     package com.codemonks.api_gateway.auth.controller;
 
-    import com.codemonks.api_gateway.auth.dto.request.LoginRequest;
-    import com.codemonks.api_gateway.auth.dto.request.RegisterRequest;
-    import com.codemonks.api_gateway.auth.dto.request.SocialLoginRequest;
-    import com.codemonks.api_gateway.auth.dto.response.LoginResponse;
-    import com.codemonks.api_gateway.auth.dto.response.RegisterResponse;
+    import com.codemonks.api_gateway.auth.dto.request.*;
+    import com.codemonks.api_gateway.auth.dto.response.*;
     import com.codemonks.api_gateway.auth.service.AuthGatewayService;
 
     import jakarta.validation.Valid;
@@ -38,5 +35,25 @@
         @PostMapping("/login/social")
         public Mono<LoginResponse> socialLogin(@Valid @RequestBody SocialLoginRequest request) {
             return authGatewayService.socialLogin(request);
+        }
+
+        @PostMapping("/forgot-password")
+        public Mono<SendOtpResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+            return authGatewayService.forgotPassword(request);
+        }
+
+        @PostMapping("/forgot-password/verify-otp")
+        public Mono<VerifyForgotPasswordOtpResponse> verifyForgotPasswordOtp(@Valid @RequestBody VerifyForgotPasswordOtpRequest request) {
+            return authGatewayService.verifyForgotPasswordOtp(request);
+        }
+
+        @PostMapping("/forgot-password/reset")
+        public Mono<ChangePasswordResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+            return authGatewayService.resetPassword(request);
+        }
+
+        @PostMapping("/forgot-password/resend-otp")
+        public Mono<SendOtpResponse> resendForgotPasswordOtp(@Valid @RequestBody ForgotPasswordRequest request) {
+            return authGatewayService.resendForgotPasswordOtp(request);
         }
     }
