@@ -27,7 +27,12 @@ public class ProfileServiceImpl implements ProfileService {
     public ProfileResponseDTO createOrUpdateProfile(SocialProfileRequestDTO request) {
         ProfileEntity profile = profileRepository.findByUserId(request.getUserId()).orElseGet(ProfileEntity::new);
         profile.setUserId(request.getUserId());
-        profile.setFirstName(request.getName());
+        String fullName = request.getName();
+        if (fullName != null && !fullName.isBlank()) {
+            String[] nameParts = splitFullName(fullName);
+            profile.setFirstName(nameParts[0]);
+            profile.setLastName(nameParts[1]);
+        }
         profile.setEmail(request.getEmail());
         if (request.getDob() != null) {
             profile.setDob(request.getDob());
@@ -113,6 +118,15 @@ public class ProfileServiceImpl implements ProfileService {
                 .phoneNumber(profile.getPhoneNumber())
                 .profileStatus(profileStatus)
                 .build();
+    }
+
+    private String[] splitFullName(String fullName) {
+        String[] nameParts = fullName.trim().split("\\s+", 2);
+        String firstName = nameParts[0];
+        String lastName = nameParts.length > 1
+                ? nameParts[1]
+                : null;
+        return new String[]{firstName, lastName};
     }
 
 }
