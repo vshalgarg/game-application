@@ -80,6 +80,13 @@ public class TimerServiceImpl {
     private void processDueRooms() {
         List<TambolaGameState> dueRooms = roomRepository.findRoomsDueForTick(Instant.now());
 
+        if (dueRooms.isEmpty()) {
+            log.debug("[TAMBOLA_TICK_SKIP] no due rooms");
+            return;
+        }
+
+        log.info("[TAMBOLA_TICK] dueRooms={}", dueRooms.size());
+
         for (TambolaGameState room : dueRooms) {
             try {
                 if (room.getStatus() == GameStatusEnum.WIN) {
@@ -108,14 +115,21 @@ public class TimerServiceImpl {
                 List<Integer> updatedNumbers = new ArrayList<>(fresh.getCalledNumbers());
                 updatedNumbers.add(nextNumber);
 
-                Map<String, Object> blob = new HashMap<>();
-                blob.put("called_numbers", updatedNumbers);
-                blob.put("timer_interval_seconds", fresh.getTimerIntervalSeconds());
-                blob.put("next_tick_at",
+                Map<String, Object> changes = new HashMap<>();
+                changes.put("called_numbers", updatedNumbers);
+                changes.put("timer_interval_seconds", fresh.getTimerIntervalSeconds());
+                changes.put("next_tick_at",
                         Instant.now().plusSeconds(fresh.getTimerIntervalSeconds()).toString());
 
-                return roomRepository.updateIfVersionMatches(
-                        roomId, Map.of("game_state_data", blob), fresh.getVersion());
+                boolean updated = roomRepository.updateIfVersionMatches(
+                        roomId, changes, fresh.getVersion());
+
+                if (updated) {
+                    log.info("[TAMBOLA_NUMBER_CALLED] Room:{} Number:{} TotalCalled:{} NextTickAt:{}",
+                            roomId, nextNumber, updatedNumbers.size(),
+                            changes.get("next_tick_at"));
+                }
+                return updated;
 
             } catch (BoardExhaustedException e) {
                 log.info("Board exhausted for room {}, marking FINISHED", roomId);
@@ -133,17 +147,20 @@ public class TimerServiceImpl {
                 return true;
             }
 
-            Map<String, Object> blob = new HashMap<>();
-            blob.put("timer_interval_seconds", fresh.getTimerIntervalSeconds());
-            blob.put("next_tick_at",
-                    Instant.now().plusSeconds(fresh.getTimerIntervalSeconds()).toString());
-            blob.put("called_numbers", fresh.getCalledNumbers());
-
             Map<String, Object> changes = new HashMap<>();
             changes.put("game_status", GameStatusEnum.RUNNING.name());
-            changes.put("game_state_data", blob);
+            changes.put("called_numbers", fresh.getCalledNumbers());
+            changes.put("timer_interval_seconds", fresh.getTimerIntervalSeconds());
+            changes.put("next_tick_at",
+                    Instant.now().plusSeconds(fresh.getTimerIntervalSeconds()).toString());
 
-            return roomRepository.updateIfVersionMatches(roomId, changes, fresh.getVersion());
+            boolean updated = roomRepository.updateIfVersionMatches(roomId, changes, fresh.getVersion());
+
+            if (updated) {
+                log.info("[TAMBOLA_GAME_RESUMED] Room:{} TotalCalled:{} Status:{}",
+                        roomId, fresh.getCalledNumbers().size(), GameStatusEnum.RUNNING.name());
+            }
+            return updated;
         });
     }
 }

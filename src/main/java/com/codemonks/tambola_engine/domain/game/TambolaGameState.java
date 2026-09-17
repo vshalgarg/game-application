@@ -10,12 +10,6 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 import java.util.List;
 
-// STATELESS SNAPSHOT — ye ab "realtime_game_state" table ki ek row ka
-// Java-representation hai, ek request ke dauraan padha/update-kiya
-// jaata hai, phir bhula diya jaata hai. Koi lock, koi synchronized
-// method, koi embedded claims/tickets/rules list NAHI — wo sab ab
-// apne-apne alag tables/repositories se independently fetch hote hain
-// (TambolaRuleRepository, TambolaTicketRepository, TambolaClaimRepository).
 @Data
 @Builder
 @NoArgsConstructor
@@ -29,6 +23,5 @@ public class TambolaGameState {
     private Integer timerIntervalSeconds;
     private Instant nextTickAt;
     private List<PlayerDTO> players;
-    // Concurrency-guard — realtime_game_state.version ke against check hota hai.
-    private Long version;
+     private Long version;
 }

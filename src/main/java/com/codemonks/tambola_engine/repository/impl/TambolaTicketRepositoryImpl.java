@@ -84,6 +84,6 @@ public class TambolaTicketRepositoryImpl implements TambolaTicketRepository {
             throw new SupabaseStateException("Failed to insert tickets", e);
         }
     }
-    // ✅ Column name 'ticket_rows' match DB schema (JSON field name)
+
     private record InsertRow(Long room_id, Long player_id, List<TicketRow> ticket_rows) {}
 }

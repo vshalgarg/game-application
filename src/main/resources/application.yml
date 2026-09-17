@@ -20,3 +20,4 @@ supabase:
     realtime-tambola-rules: realtime_tambola_rules
     tambola-tickets: tambola_tickets
     tambola-claims: tambola_claims
+    realtime-tambola-game-state: realtime_tambola_game_state
