@@ -17,19 +17,18 @@ public class SupabaseProperties {
     private String apiKey;
     private Tables tables;
 
-    // IMPORTANT: Ye Ludo ke SAME generic tables hain (realtime_game_state,
-    // realtime_room_lobby) - Tambola ka apna alag ticket/claim table NAHI
-    // hai. Poora TambolaGameState (calledNumbers, tickets, claims, rules)
-    // realtime_game_state ke "game_state_data" jsonb column ke andar
-    // ek hi nested-object ke roop me jaata hai - bilkul jaisa Ludo apna
-    // poora board/token-state isi column me daalta hai.
+    // Tambola apna dedicated game-state table use karta hai
+    // (realtime_tambola_game_state) - shared realtime_game_state me
+    // ab kuch NAHI likhta. Room lobby sirf realtime_room_lobby se
+    // broadcast hota hai. Tickets/claims/rules apne apne tables me.
     @Getter
     @Setter
     public static class Tables {
         private String realtimeGameState;
         private String realtimeRoomLobby;
-        private String realtimeTambolaRules;   // realtime_tambola_rules
-        private String tambolaTickets;         // tambola_tickets (persisted only)
+        private String realtimeTambolaRules;        // realtime_tambola_rules
+        private String tambolaTickets;              // tambola_tickets (persisted only)
         private String tambolaClaims;
+        private String realtimeTambolaGameState;    // realtime_tambola_game_state
     }
 }

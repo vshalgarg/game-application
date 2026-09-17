@@ -19,9 +19,6 @@ public class ClaimResponseDTO {
     private RuleTypeEnum ruleType;
     private ClaimStatusEnum status;
 
-    // Game ab kis status pe hai claim-process hone ke baad
-    // (WIN agar approved hua, RUNNING agar reject hua aur game chal
-    // raha hai, FINISHED agar ye last rule thi).
     private String gameStatus;
     private Integer winnersCount;   // is rule me ab tak kitne jeet chuke
     private Integer maxWinners;

@@ -8,5 +8,5 @@ public final class ApiConstants {
     public static final String BASE_API = CONTEXT_PATH + "/api/v1";
     public static final String START_GAME = "/start-game";
     public static final String SUBMIT_CLAIM = "/claim";
-
+    public static final String LOBBY = "/lobby";
 }

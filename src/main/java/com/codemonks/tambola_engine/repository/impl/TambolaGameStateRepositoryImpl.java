@@ -14,7 +14,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestClient;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,17 +21,14 @@ import java.util.Map;
 @Slf4j
 @Repository("tambolaRoomRepositoryImpl")
 @RequiredArgsConstructor
-public class TambolaGameStateRepositoryImpl
-        implements TambolaGameStateRepository {
+public class TambolaGameStateRepositoryImpl implements TambolaGameStateRepository {
 
     private final RestClient tambolaSupabaseRestClient;
     private final SupabaseProperties properties;
 
     @Override
     public TambolaGameState findById(Long roomId) {
-
-        String table =
-                properties.getTables().getRealtimeGameState();
+        String table = properties.getTables().getRealtimeTambolaGameState();
 
         try {
 
@@ -82,7 +78,7 @@ public class TambolaGameStateRepositoryImpl
     public void insert(TambolaGameState state) {
 
         String table =
-                properties.getTables().getRealtimeGameState();
+                properties.getTables().getRealtimeTambolaGameState();
 
         try {
 
@@ -119,12 +115,9 @@ public class TambolaGameStateRepositoryImpl
             Long expectedVersion
     ) {
 
-        String table =
-                properties.getTables().getRealtimeGameState();
+        String table = properties.getTables().getRealtimeTambolaGameState();
 
-        Map<String, Object> body =
-                new HashMap<>(changes);
-
+        Map<String, Object> body = new HashMap<>(changes);
         body.put("version", expectedVersion + 1);
         body.put("updated_at", Instant.now().toString());
 
@@ -155,8 +148,15 @@ public class TambolaGameStateRepositoryImpl
                                     }
                             );
 
-            return updatedRows != null
-                    && !updatedRows.isEmpty();
+            if (updatedRows != null && !updatedRows.isEmpty()) {
+                log.info("[TAMBOLA_STATE_UPDATED] roomId={} version={}->{} keys={}",
+                        roomId, expectedVersion, expectedVersion + 1, body.keySet());
+                return true;
+            }
+
+            log.warn("[TAMBOLA_STATE_STALE] roomId={} expectedVersion={} - update skipped (concurrent write or already advanced)",
+                    roomId, expectedVersion);
+            return false;
 
         } catch (Exception e) {
 
@@ -180,7 +180,7 @@ public class TambolaGameStateRepositoryImpl
     ) {
 
         String table =
-                properties.getTables().getRealtimeGameState();
+                properties.getTables().getRealtimeTambolaGameState();
 
         try {
 
@@ -194,6 +194,10 @@ public class TambolaGameStateRepositoryImpl
                                                     + GameStatusEnum
                                                     .RUNNING
                                                     .name()
+                                    )
+                                    .queryParam(
+                                            "next_tick_at",
+                                            "lte." + now.toString()
                                     )
                                     .queryParam("select", "*")
                                     .build())
@@ -209,8 +213,9 @@ public class TambolaGameStateRepositoryImpl
             }
 
             /*
-             * next_tick_at is stored inside game_state_data JSONB,
-             * so filtering is performed on the Java side.
+             * next_tick_at is now a real TIMESTAMPTZ column, so the
+             * due-rooms filter runs server-side (next_tick_at=lte.now).
+             * The Java-side filter below is kept as a safety fallback.
              */
             return result.stream()
                     .map(GameStateRow::toDomain)
@@ -235,69 +240,23 @@ public class TambolaGameStateRepositoryImpl
         }
     }
 
-    /**
-     * Representation of the realtime_game_state row.
-     *
-     * Supabase columns:
-     *
-     * room_id
-     * room_code
-     * game_state_data
-     * players
-     * game_status
-     * version
-     */
     private record GameStateRow(
-
             Long room_id,
-
             String room_code,
-
-            Map<String, Object> game_state_data,
-
-            List<PlayerDTO> players,
-
             String game_status,
-
+            List<Integer> called_numbers,
+            Integer timer_interval_seconds,
+            String next_tick_at,
+            List<PlayerDTO> players,
             Long version
-
     ) {
 
-        /**
-         * Converts Supabase row into Tambola domain state.
-         */
         TambolaGameState toDomain() {
 
-            Map<String, Object> stateData =
-                    game_state_data != null
-                            ? game_state_data
-                            : Map.of();
-
             /*
-             * Jackson may deserialize JSON numbers as different
-             * numeric types, so convert them explicitly to Integer.
-             */
-            List<Integer> calledNumbers =
-                    extractCalledNumbers(stateData);
-
-            Integer timerIntervalSeconds =
-                    extractInteger(
-                            stateData,
-                            "timer_interval_seconds"
-                    );
-
-            String nextTickAtStr =
-                    extractString(
-                            stateData,
-                            "next_tick_at"
-                    );
-
-            /*
-             * players is already represented as List<PlayerDTO>.
-             *
-             * Never return null because the database column is
-             * NOT NULL and runtime code should also work with an
-             * empty player list.
+             * players is never null because the database column
+             * is NOT NULL and runtime code should also work with
+             * an empty player list.
              */
             List<PlayerDTO> statePlayers =
                     players != null
@@ -310,13 +269,17 @@ public class TambolaGameStateRepositoryImpl
                     .status(
                             GameStatusEnum.valueOf(game_status)
                     )
-                    .calledNumbers(calledNumbers)
+                    .calledNumbers(
+                            called_numbers != null
+                                    ? called_numbers
+                                    : List.of()
+                    )
                     .timerIntervalSeconds(
-                            timerIntervalSeconds
+                            timer_interval_seconds
                     )
                     .nextTickAt(
-                            nextTickAtStr != null
-                                    ? Instant.parse(nextTickAtStr)
+                            next_tick_at != null
+                                    ? Instant.parse(next_tick_at)
                                     : null
                     )
                     .players(statePlayers)
@@ -325,41 +288,17 @@ public class TambolaGameStateRepositoryImpl
         }
 
         /**
-         * Converts Tambola domain state into the Supabase row.
+         * Converts Tambola domain state into a dedicated
+         * realtime_tambola_game_state row (one field per column).
          */
         static GameStateRow fromDomain(
                 TambolaGameState state
         ) {
 
-            Map<String, Object> blob =
-                    new HashMap<>();
-
-            /*
-             * game_state_data JSONB
-             */
-            blob.put(
-                    "called_numbers",
-                    state.getCalledNumbers() != null
-                            ? state.getCalledNumbers()
-                            : List.of()
-            );
-
-            blob.put(
-                    "timer_interval_seconds",
-                    state.getTimerIntervalSeconds()
-            );
-
-            blob.put(
-                    "next_tick_at",
-                    state.getNextTickAt() != null
-                            ? state.getNextTickAt().toString()
-                            : null
-            );
-
             /*
              * IMPORTANT:
              *
-             * realtime_game_state.players is NOT NULL.
+             * realtime_tambola_game_state.players is NOT NULL.
              *
              * Therefore we must NEVER send null here.
              */
@@ -371,70 +310,17 @@ public class TambolaGameStateRepositoryImpl
             return new GameStateRow(
                     state.getRoomId(),
                     state.getRoomCode(),
-                    blob,
-                    players,
                     state.getStatus().name(),
+                    state.getCalledNumbers() != null
+                            ? state.getCalledNumbers()
+                            : List.of(),
+                    state.getTimerIntervalSeconds(),
+                    state.getNextTickAt() != null
+                            ? state.getNextTickAt().toString()
+                            : null,
+                    players,
                     state.getVersion()
             );
-        }
-
-        /**
-         * Safely extracts called_numbers from game_state_data.
-         */
-        private static List<Integer> extractCalledNumbers(
-                Map<String, Object> stateData
-        ) {
-
-            Object value =
-                    stateData.get("called_numbers");
-
-            if (!(value instanceof List<?> rawList)) {
-                return List.of();
-            }
-
-            List<Integer> numbers =
-                    new ArrayList<>();
-
-            for (Object item : rawList) {
-
-                if (item instanceof Number number) {
-                    numbers.add(number.intValue());
-                }
-            }
-
-            return numbers;
-        }
-
-        /**
-         * Safely extracts an Integer from JSONB data.
-         */
-        private static Integer extractInteger(
-                Map<String, Object> stateData,
-                String key
-        ) {
-
-            Object value = stateData.get(key);
-
-            if (value instanceof Number number) {
-                return number.intValue();
-            }
-
-            return null;
-        }
-
-        /**
-         * Safely extracts a String from JSONB data.
-         */
-        private static String extractString(
-                Map<String, Object> stateData,
-                String key
-        ) {
-
-            Object value = stateData.get(key);
-
-            return value != null
-                    ? value.toString()
-                    : null;
         }
     }
 }
