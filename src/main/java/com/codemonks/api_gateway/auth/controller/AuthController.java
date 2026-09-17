@@ -11,6 +11,8 @@
 
     import reactor.core.publisher.Mono;
 
+    import java.util.List;
+
     @RestController
     @RequestMapping("/game-gateway/auth/api/v1")
     @RequiredArgsConstructor
@@ -55,5 +57,15 @@
         @PostMapping("/forgot-password/resend-otp")
         public Mono<SendOtpResponse> resendForgotPasswordOtp(@Valid @RequestBody ForgotPasswordRequest request) {
             return authGatewayService.resendForgotPasswordOtp(request);
+        }
+
+        @GetMapping("/countries")
+        public Mono<String> getAllCountries() {
+            return authGatewayService.getAllCountries();
+        }
+
+        @GetMapping("/countries/{name}")
+        public Mono<CountryResponse> getCountryByName(@PathVariable String name) {
+            return authGatewayService.getCountryByName(name);
         }
     }
