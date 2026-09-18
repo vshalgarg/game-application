@@ -50,7 +50,7 @@ export const loadGameSounds = async (gameType, soundResponse) => {
   console.info(`${gameType} sounds loaded:`,Object.keys(audioCache[gameType]));
 };
 
-// when page refresh sound loading
+// page refresh sound loading
 export const initializeGameSounds = async (gameType) => {
   // Already loaded
   if (
@@ -104,7 +104,6 @@ export const playSound = (gameType, eventName) => {
       console.error(`Failed to play sound: ${gameType} -> ${eventName}`,error);
     });
 };
-
 
 // sound to be played when the animation ends (looping)
 export const playLoopingSound = (gameType, eventName) => {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Confetti from "react-confetti";
 import { useWindowSize } from "react-use";
@@ -12,6 +12,7 @@ import { useSnackbar } from "../context/SnackbarContext";
 import { useAuth } from "../context/AuthContext";
 import PageShell from "../components/layout/PageShell";
 import Button from "../components/ui/Button";
+import { playSound, initializeGameSounds } from "../services/soundManager";
 
 const RestartGameButton = ({ onClick }) => (
   <Button onClick={onClick}>
@@ -34,6 +35,8 @@ const GameRoom = () => {
     ["", "", ""],
     ["", "", ""],
   ]);
+  const previousBoardRef = useRef(null);
+  const myMovePendingRef = useRef(false);
 
   const [currentTurn, setCurrentTurn] = useState();
   const [winner, setWinner] = useState(null);
@@ -45,12 +48,27 @@ const GameRoom = () => {
   const [hostUserId, setHostUserId] = useState(null);
   const currentUserId = auth?.userId;
 
+  // for loading sounds on refresh
+  useEffect(() => {
+    initializeGameSounds("TIC_TAC_TOE");
+  }, []);
+
   // delay in winner pop up for line animation and cell highlighting
   useEffect(() => {
     if (winner) {
       const timer = setTimeout(() => {
         setShowWinnerPopup(true);
-      }, 2000); // 2 seconds
+
+        // winner hears win sound
+        if (winner === currentUserId) {
+          playSound("TIC_TAC_TOE", "TIC_TAC_WIN");
+        }
+
+        // Loser hears lose sound
+        if (winner !== currentUserId) {
+          playSound("TIC_TAC_TOE", "GAME_LOSE");
+        }
+      }, 2000); 
 
       return () => clearTimeout(timer);
     } else {
@@ -63,7 +81,8 @@ const GameRoom = () => {
     if (status === "DRAW") {
       const timer = setTimeout(() => {
         setShowDrawPopup(true);
-      }, 1000); // 1 second delay
+        playSound("TIC_TAC_TOE", "GAME_DRAW");
+      }, 1000);
 
       return () => clearTimeout(timer);
     } else {
@@ -76,7 +95,7 @@ const GameRoom = () => {
   useEffect(() => {
     const fetchRole = async () => {
       const { data, error } = await supabase
-        .from("realtime_room_lobby") // your table name
+        .from("realtime_room_lobby") 
         .select("players")
         .eq("room_code", roomCode)
         .single();
@@ -102,6 +121,7 @@ const GameRoom = () => {
 
   //  handleRestart Button Call
   const handleRestart = async () => {
+    playSound("TIC_TAC_TOE", "BUTTON CLICK");
     try {
       const res = await restartRoom({
         roomCode,
@@ -116,24 +136,66 @@ const GameRoom = () => {
       ]);
       setWinner(null);
       setStatus("INITIALIZED");
-      setWinningPattern(null); // remove the green highlighted cells
+      setWinningPattern(null); 
     } catch (err) {
       console.error("Restart failed:", err);
     }
   };
 
-  // Realtime Listener (listens for realtime events)
+  // Realtime Listener 
   useGameRealtime({
     roomCode,
 
     onGameUpdate: (game) => {
-      setBoard(
+      const newBoard =
         game.game_state_data?.board || [
           ["", "", ""],
           ["", "", ""],
           ["", "", ""],
-        ],
-      );
+        ];
+
+      const previousBoard = previousBoardRef.current;
+
+      if (previousBoard) {
+      let movedSymbol = null;
+
+      // detect where symbol is made through bot on ui
+      for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 3; col++) {
+          if (
+            previousBoard[row][col] !== newBoard[row][col] &&
+            newBoard[row][col] !== ""
+          ) {
+            movedSymbol = newBoard[row][col];
+            break;
+          }
+        }
+
+        if (movedSymbol) break;
+      }
+
+      // A new move was detected
+      if (movedSymbol) {
+        const movedPlayer = game.players?.find((player) => player.side === movedSymbol);
+
+        if (movedPlayer) {
+          const isBotMove = movedPlayer.isBot === true;
+
+          // for the sound of bot move through realtime update
+          if (isBotMove) {
+            if (movedSymbol === "X") {
+              playSound("TIC_TAC_TOE", "TIC_TAC_MOVE");
+            } else if (movedSymbol === "O") {
+              playSound("TIC_TAC_TOE", "OTHER_PLAYER_MOVE");
+            }
+          }
+        }
+      }
+    }
+
+      // board stored for the next realtime event
+      previousBoardRef.current = newBoard;
+      setBoard(newBoard);
 
       // to display the winning pattern green hightlighted cell on both tabs
       if (game.winner_user_id) {
@@ -155,6 +217,7 @@ const GameRoom = () => {
       setWinner(game.winner_user_id);
     },
   });
+
   // checking winning patterns from the api response
   const checkWinningPattern = (board) => {
     const lines = [
@@ -185,14 +248,22 @@ const GameRoom = () => {
   // Handle board click
   const handleCellClick = async (index) => {
     try {
-      // Disable board after winner is declared
-      if (winner) {
-        return;
-      }
+    // Disable board after winner is declared
+    if (winner) {
+      return;
+    }
 
-      const row = Math.floor(index / 3);
-      const col = index % 3;
+    const row = Math.floor(index / 3);
+    const col = index % 3;
+    
+    myMovePendingRef.current = true;
 
+    // sound on cell click
+    if (mySide === "X") {
+      playSound("TIC_TAC_TOE", "TIC_TAC_MOVE");
+    } else if (mySide === "O") {
+      playSound("TIC_TAC_TOE", "OTHER_PLAYER_MOVE");
+    }
       const res = await makeMove({
         roomCode,
         userId: currentUserId,
@@ -368,3 +439,5 @@ const GameRoom = () => {
 };
 
 export default GameRoom;
+
+

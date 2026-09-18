@@ -7,13 +7,11 @@ import GameCarousel from "../components/games/GameCarousel";
 import FeatureStrip from "../components/games/FeatureStrip";
 import { getGameSounds } from "../services/soundService";
 import { loadGameSounds } from "../services/soundManager";
-// import { playSound } from "../services/soundManager"; 
 
 const Landing = () => {
   const navigate = useNavigate();
 
   const handleSelect = async (game) => {
-  console.log("Selected game:", game);
 
   try {
     let gameType;
@@ -27,19 +25,12 @@ const Landing = () => {
     if (gameType) {
 
       const soundResponse = await getGameSounds(gameType);
-      console.log("Sound API response:", soundResponse);
 
-      // sounds
-      console.log("Before loading sounds");
+      // sounds loading
       await loadGameSounds(gameType, soundResponse);
-      // playSound("LUDO", "BUTTON_CLICK");
-
-      console.log("After loading sounds");
-      console.info(`${gameType} sounds loaded`);
     }
 
     if (game.path) {
-      console.log("Navigating now");
       navigate(game.path);
     }
   } catch (error) {
