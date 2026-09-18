@@ -79,7 +79,7 @@ const CompleteProfile = () => {
     try {
       setSaving(true);
       const response = await updateProfile(mapProfileToApi(form));
-      updateCurrentUser({ profileStatus: true });
+      updateCurrentUser({ isProfileCompleted: true });
       showSnackbar(response?.message || "Profile saved", "success");
       navigate("/", { replace: true });
     } catch (error) {
@@ -90,7 +90,7 @@ const CompleteProfile = () => {
     }
   };
 
-  if (auth?.profileStatus) {
+  if (auth?.isProfileCompleted) {
     return <Navigate to="/" replace />;
   }
 
