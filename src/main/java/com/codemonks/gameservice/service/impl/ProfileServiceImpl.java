@@ -100,10 +100,8 @@ public class ProfileServiceImpl implements ProfileService {
                 && profile.getGender() != null
                 && profile.getCountryCode() != null
                 && !profile.getCountryCode().isBlank()
-                && profile.getAvatarId() != null
                 && profile.getPhoneNumber() != null
                 && !profile.getPhoneNumber().isBlank();
-
 
         return ProfileResponseDTO.builder()
                 .userId(profile.getUserId())
