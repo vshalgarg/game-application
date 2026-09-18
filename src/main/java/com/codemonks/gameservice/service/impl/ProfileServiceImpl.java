@@ -1,0 +1,130 @@
+package com.codemonks.gameservice.service.impl;
+
+import com.codemonks.gameservice.context.UserContext;
+import com.codemonks.gameservice.dto.request.ProfileRequestDTO;
+import com.codemonks.gameservice.dto.request.SocialProfileRequestDTO;
+import com.codemonks.gameservice.dto.response.ProfileResponseDTO;
+import com.codemonks.gameservice.entity.ProfileEntity;
+import com.codemonks.gameservice.enums.AvatarId;
+import com.codemonks.gameservice.repository.ProfileEntityRepository;
+import com.codemonks.gameservice.service.ProfileService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+@Service
+@RequiredArgsConstructor
+public class ProfileServiceImpl implements ProfileService {
+
+    private final ProfileEntityRepository profileRepository;
+
+    @Override
+    @Transactional
+    public ProfileResponseDTO createOrUpdateProfile(SocialProfileRequestDTO request) {
+        ProfileEntity profile = profileRepository.findByUserId(request.getUserId()).orElseGet(ProfileEntity::new);
+        profile.setUserId(request.getUserId());
+        String fullName = request.getName();
+        if (fullName != null && !fullName.isBlank()) {
+            String[] nameParts = splitFullName(fullName);
+            profile.setFirstName(nameParts[0]);
+            profile.setLastName(nameParts[1]);
+        }
+        profile.setEmail(request.getEmail());
+        if (request.getDob() != null) {
+            profile.setDob(request.getDob());
+        }
+        profile = profileRepository.save(profile);
+        return buildProfileResponse(profile);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ProfileResponseDTO getProfile() {
+        Long userId = UserContext.getUserId();
+        ProfileEntity profile = profileRepository.findByUserId(userId).orElse(null);
+        if (profile == null) {
+            return ProfileResponseDTO.builder()
+                    .userId(userId)
+                    .displayName(null)
+                    .firstName(null)
+                    .lastName(null)
+                    .email(null)
+                    .dob(null)
+                    .gender(null)
+                    .countryCode(null)
+                    .avatarId(null)
+                    .phoneNumber(null)
+                    .IsProfileCompleted(false)
+                    .build();
+        }
+        return buildProfileResponse(profile);
+    }
+
+    @Override
+    @Transactional
+    public ProfileResponseDTO updateProfile(ProfileRequestDTO request) {
+        Long userId = UserContext.getUserId();
+        ProfileEntity profile = profileRepository
+                        .findByUserId(userId)
+                        .orElseGet(() -> ProfileEntity.builder().userId(userId).build());
+        profile.setDisplayName(request.getDisplayName());
+        profile.setFirstName(request.getFirstName());
+        profile.setLastName(request.getLastName());
+        profile.setDob(request.getDob());
+        profile.setGender(request.getGender());
+        profile.setCountryCode(request.getCountryCode());
+        String avatarId = request.getAvatarId();
+        AvatarId avatar = (avatarId == null || avatarId.isBlank())
+                ? null
+                : AvatarId.valueOf(avatarId);
+        profile.setAvatarId(avatar);
+        profile.setEmail(request.getEmail());
+        profile.setPhoneNumber(request.getPhoneNumber());
+        profile = profileRepository.save(profile);
+        return buildProfileResponse(profile);
+    }
+
+    private ProfileResponseDTO buildProfileResponse(ProfileEntity profile) {
+        String displayName = Stream.of(profile.getFirstName(), profile.getLastName())
+                        .filter(Objects::nonNull)
+                        .filter(value -> !value.isBlank())
+                        .collect(Collectors.joining(" "));
+        boolean IsProfileCompleted = profile.getFirstName() != null && !profile.getFirstName().isBlank()
+                && profile.getLastName() != null
+                && !profile.getLastName().isBlank()
+                && profile.getDob() != null
+                && profile.getGender() != null
+                && profile.getCountryCode() != null
+                && !profile.getCountryCode().isBlank()
+                && profile.getPhoneNumber() != null
+                && !profile.getPhoneNumber().isBlank();
+
+        return ProfileResponseDTO.builder()
+                .userId(profile.getUserId())
+                .displayName(profile.getDisplayName())
+                .firstName(profile.getFirstName())
+                .lastName(profile.getLastName())
+                .email(profile.getEmail())
+                .dob(profile.getDob())
+                .gender(profile.getGender())
+                .countryCode(profile.getCountryCode())
+                .avatarId(profile.getAvatarId())
+                .phoneNumber(profile.getPhoneNumber())
+                .IsProfileCompleted(IsProfileCompleted)
+                .build();
+    }
+
+    private String[] splitFullName(String fullName) {
+        String[] nameParts = fullName.trim().split("\\s+", 2);
+        String firstName = nameParts[0];
+        String lastName = nameParts.length > 1
+                ? nameParts[1]
+                : null;
+        return new String[]{firstName, lastName};
+    }
+
+}

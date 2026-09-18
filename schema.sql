@@ -137,6 +137,26 @@ ALTER TABLE game_db.rooms
     MODIFY COLUMN match_type VARCHAR(50) NULL;
 
 
+
+CREATE TABLE game_profile (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    email VARCHAR(255),
+    dob DATE,
+    gender VARCHAR(20),
+    country_code VARCHAR(20),
+    avatar_id VARCHAR(20),
+    phone_number VARCHAR(30),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT uq_game_profile_user UNIQUE (user_id),
+);
+
+
+
 CREATE TABLE IF NOT EXISTS sound_events (
 
                                             id               BIGINT AUTO_INCREMENT PRIMARY KEY,
