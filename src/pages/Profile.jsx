@@ -108,7 +108,7 @@ const Profile = () => {
       setSaving(true);
       const response = await updateProfile(mapProfileToApi(form));
       const mapped = mapProfileFromApi(response);
-      const nextProfile = { ...mapped, profileStatus: true };
+      const nextProfile = { ...mapped, isProfileCompleted: true };
 
       setSavedProfile(nextProfile);
       setForm(nextProfile);

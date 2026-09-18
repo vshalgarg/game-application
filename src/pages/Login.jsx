@@ -52,8 +52,8 @@ const Login = () => {
 
     try {
       const profileResponse = await getProfile();
-      updateCurrentUser({ profileStatus: profileResponse.profileStatus });
-      if (profileResponse.profileStatus) {
+      updateCurrentUser({ isProfileCompleted: profileResponse.isProfileCompleted });
+      if (profileResponse.isProfileCompleted) {
         navigate("/", { replace: true });
       } else {
         navigate("/complete-profile", { replace: true });
