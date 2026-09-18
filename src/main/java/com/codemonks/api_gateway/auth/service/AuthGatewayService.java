@@ -72,6 +72,17 @@ public class AuthGatewayService {
                 .retrieve()
                 .bodyToMono(String.class)
                 .flatMap(body -> responseParser.parseResponse(body, LoginResponse.class))
+                .flatMap(loginResponse -> {
+                    ProfileRequest profileRequest = ProfileRequest.builder()
+                            .userId(loginResponse.userId())
+                            .name(null)
+                            .email(loginResponse.username())
+                            .dob(null)
+                            .build();
+                    return gameProfileGatewayService
+                            .createOrUpdateProfile(profileRequest)
+                            .thenReturn(loginResponse);
+                })
                 .doOnSuccess(response -> log.info("[LOGIN] Login successful"))
                 .doOnError(error -> log.error("[LOGIN] {}", error.getMessage(), error));
     }
