@@ -21,5 +21,5 @@ public class ProfileResponseDTO {
     private String countryCode;
     private AvatarId avatarId;
     private String phoneNumber;
-    private Boolean profileStatus;
+    private Boolean IsProfileCompleted;
 }

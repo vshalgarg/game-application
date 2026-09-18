@@ -58,7 +58,7 @@ public class ProfileServiceImpl implements ProfileService {
                     .countryCode(null)
                     .avatarId(null)
                     .phoneNumber(null)
-                    .profileStatus(false)
+                    .IsProfileCompleted(false)
                     .build();
         }
         return buildProfileResponse(profile);
@@ -93,7 +93,7 @@ public class ProfileServiceImpl implements ProfileService {
                         .filter(Objects::nonNull)
                         .filter(value -> !value.isBlank())
                         .collect(Collectors.joining(" "));
-        boolean profileStatus = profile.getFirstName() != null && !profile.getFirstName().isBlank()
+        boolean IsProfileCompleted = profile.getFirstName() != null && !profile.getFirstName().isBlank()
                 && profile.getLastName() != null
                 && !profile.getLastName().isBlank()
                 && profile.getDob() != null
@@ -114,7 +114,7 @@ public class ProfileServiceImpl implements ProfileService {
                 .countryCode(profile.getCountryCode())
                 .avatarId(profile.getAvatarId())
                 .phoneNumber(profile.getPhoneNumber())
-                .profileStatus(profileStatus)
+                .IsProfileCompleted(IsProfileCompleted)
                 .build();
     }
 
