@@ -19,4 +19,14 @@ public class EngineStartGameRequestDTO {
     private List<Long> playerIds;
     private BotDifficultyEnum botDifficulty;
     private MatchTypeEnum matchType;
+
+    // NAYA — sirf Tambola ke liye populate hote hain (Ludo/TicTacToe
+    // ke liye hamesha null rahenge, harmless). Field-names aur types
+    // Tambola-engine ke apne EngineStartGameRequestDTO se EXACTLY match
+    // karte hain, taaki Feign-call bina kisi mapping-DTO ke directly kaam kare.
+    private Integer timerIntervalSeconds;
+    private List<TambolaPlayerRequestDTO> players;
+    private List<TambolaRuleConfigRequestDTO> rules;
+
+
 }

@@ -154,3 +154,47 @@ CREATE TABLE game_profile (
     PRIMARY KEY (id),
     CONSTRAINT uq_game_profile_user UNIQUE (user_id),
 );
+
+
+
+CREATE TABLE IF NOT EXISTS sound_events (
+
+                                            id               BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                            game_type        TINYINT NOT NULL,
+                                            theme_key        VARCHAR(50) NOT NULL DEFAULT 'DEFAULT',
+    event_key        VARCHAR(50) NOT NULL,
+    s3_object_key    VARCHAR(255) NOT NULL,
+    format           VARCHAR(10) NOT NULL DEFAULT 'mp3',
+    version          BIGINT NOT NULL DEFAULT 1,
+    is_active        TINYINT(1) NOT NULL DEFAULT 1,
+
+    created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT uk_sound_event_game_theme_key
+    UNIQUE (game_type, theme_key, event_key)
+
+    );
+
+CREATE INDEX idx_sound_event_game_type
+    ON sound_events (game_type);
+CREATE INDEX idx_sound_event_key
+    ON sound_events (event_key);
+
+ALTER TABLE rooms
+    ADD COLUMN rule_config_json TEXT NULL;
+
+INSERT INTO game_config (
+    tenant_id,
+    game_type,
+    min_players,
+    max_players,
+    roles_json
+)
+VALUES (
+           'Test-1',
+           'TAMBOLA',
+           2,
+           4,
+           '["PLAYER"]'
+       );

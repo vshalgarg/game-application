@@ -22,7 +22,6 @@ public class GameEngineFactory {
                         GameEngine::supports,
                         Function.identity()));
     }
-
     public GameEngine getStrategy(GameTypeEnum gameType) {
         GameEngine strategy = strategyMap.get(gameType);
         if(strategy == null) {

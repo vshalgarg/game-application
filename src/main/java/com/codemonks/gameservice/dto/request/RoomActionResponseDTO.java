@@ -11,4 +11,5 @@ public class RoomActionResponseDTO {
 
     private RoomDetailsResponseDTO roomDetails;
     private String message;
+
 }

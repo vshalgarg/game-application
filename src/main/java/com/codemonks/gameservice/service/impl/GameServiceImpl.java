@@ -14,6 +14,7 @@
     import com.codemonks.gameservice.entity.GameResultEntity;
     import com.codemonks.gameservice.entity.PlayerEntity;
     import com.codemonks.gameservice.entity.RoomEntity;
+    import com.codemonks.gameservice.enums.GameTypeEnum;
     import com.codemonks.gameservice.enums.RoomStatusEnum;
     import com.codemonks.gameservice.exceptions.GameException;
     import com.codemonks.gameservice.exceptions.ResourceNotFoundException;
@@ -49,8 +50,14 @@
             List<PlayerEntity> players = playerRepository.findByRoom_Id(room.getId());
             EngineStartGameRequestDTO request = GameMapper.toStartGameRequest(room, players);
             GameEngine engine = gameEngineFactory.getStrategy(room.getGameType());
+
+            log.info("[ENGINE_START_FLOW] gameType={} roomId={} roomCode={} players={}",
+                    room.getGameType(), room.getId(), room.getRoomCode(), players.size());
+
             EngineGameStateResponseDTO engineResponse = engine.startGame(request);
 
+            log.info("[ENGINE_START_RESPONSE] gameType={} roomId={} status={}",
+                    room.getGameType(), room.getId(), engineResponse.getStatus());
 
             RealtimeLobbyDTO lobbyDTO = LobbyMapper.toLobbyDTO(room,
                             players, RoomRealtimeStatusEnum.ACTIVE
@@ -81,7 +88,6 @@
             }
 
 
-
             List<PlayerEntity> roomPlayers = playerRepository.findByRoom_Id(room.getId());
 
             boolean isPlayerInRoom = roomPlayers.stream()
@@ -104,8 +110,13 @@
             GameEngine engine = gameEngineFactory.getStrategy(room.getGameType());
             EngineGameStateResponseDTO updatedState = engine.processMove(moveRequest);
 
-            if (GameStatusEnum.WIN.equals(updatedState.getStatus())
-                    || GameStatusEnum.DRAW.equals(updatedState.getStatus())) {
+            boolean isTambola = GameTypeEnum.TAMBOLA.equals(room.getGameType());
+            boolean isTerminal = isTambola
+                    ? GameStatusEnum.FINISHED.equals(updatedState.getStatus())
+                    : (GameStatusEnum.WIN.equals(updatedState.getStatus())
+                            || GameStatusEnum.DRAW.equals(updatedState.getStatus()));
+
+            if (isTerminal) {
                 room.setStatus(RoomStatusEnum.COMPLETED);
                 roomRepository.save(room);
                 RealtimeLobbyDTO lobbyDTO =
@@ -121,8 +132,8 @@
                         room.getId(), updatedState.getWinnerUserId());
             }
 
-            log.info("Move processed. roomId={}, userId={}",
-                    room.getId(), makeMoveRequestDTO.getUserId());
+            log.info("Move processed. roomId={}, gameType={}, userId={}",
+                    room.getId(), room.getGameType(), makeMoveRequestDTO.getUserId());
             return updatedState;
         }
 
@@ -144,11 +155,9 @@
                     .playerId(playerId)
                             .build();
 
-            // 5. Call engine via factory — generic, works for any game
             GameEngine engine = gameEngineFactory.getStrategy(room.getGameType());
             DiceRollResponseDTO result = engine.rollDice(engineRequest);
 
-            // 7. Supabase Realtime broadcasts to all clients automatically
             log.info("Dice rolled. roomId={}, playerId={}, dice={}",
                     room.getId(), playerId, result.getDice());
 

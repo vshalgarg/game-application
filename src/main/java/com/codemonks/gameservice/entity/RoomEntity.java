@@ -53,6 +53,11 @@ public class RoomEntity extends BaseEntity {
     @Column(name = "bot_difficulty", length = 20)
     private BotDifficultyEnum botDifficulty;
 
+    // NAYA — host ne waiting-room me jo rules select kiye, unka JSON snapshot.
+// Sirf Tambola ke liye use hota hai; Ludo/TicTacToe ke liye hamesha null.
+    @Column(columnDefinition = "TEXT")
+    private String ruleConfigJson;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private RoomStatusEnum status;
