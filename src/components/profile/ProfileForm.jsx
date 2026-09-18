@@ -66,6 +66,8 @@ const ProfileForm = ({
             placeholder="First name"
             autoComplete="given-name"
             leftIcon={<FaUser size={14} />}
+            error={errors.firstName}
+            helperText={errors.firstName}
           />
         </LabeledField>
         <LabeledField id="last-name" label="Last Name">
@@ -76,6 +78,8 @@ const ProfileForm = ({
             placeholder="Last name"
             autoComplete="family-name"
             leftIcon={<FaUser size={14} />}
+            error={errors.lastName}
+            helperText={errors.lastName}
           />
         </LabeledField>
       </div>

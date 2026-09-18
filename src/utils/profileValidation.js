@@ -14,23 +14,6 @@ export const todayIso = toIsoDate(new Date());
 
 export const minDobIso = toIsoDate(new Date(new Date().getFullYear() - 120, 0, 1));
 
-const getAge = (dob) => {
-  const birth = new Date(`${dob}T00:00:00`);
-
-  if (Number.isNaN(birth.getTime())) return NaN;
-
-  const today = new Date();
-
-  let age = today.getFullYear() - birth.getFullYear();
-
-  const monthDelta = today.getMonth() - birth.getMonth();
-
-  if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < birth.getDate())) {
-    age -= 1;
-  }
-
-  return age;
-};
 
 export const validateProfile = (form) => {
   const errors = {};
@@ -58,15 +41,7 @@ export const validateProfile = (form) => {
 
   if (!form.dob) {
     errors.dob = "Date of birth is required.";
-  } else {
-    const age = getAge(form.dob);
-
-    if (Number.isNaN(age) || age > 120) {
-      errors.dob = "Enter a valid date of birth.";
-    } else if (age < 13) {
-      errors.dob = "You must be at least 13 years old.";
-    }
-  }
+  } 
 
   if (!form.gender) {
     errors.gender = "Gender is required.";
