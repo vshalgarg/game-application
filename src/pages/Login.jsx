@@ -15,13 +15,15 @@ import {
 import AuthLayout from "../components/auth/AuthLayout";
 import AuthCard from "../components/auth/AuthCard";
 import SocialAuthButtons from "../components/auth/SocialAuthButtons";
+import ForgotPasswordModal from "../components/auth/ForgotPasswordModal";
 import TextField from "../components/ui/TextField";
 import Button from "../components/ui/Button";
+import { getProfile } from "../services/profileService";
 
 const Login = () => {
   const navigate = useNavigate();
   const { showSnackbar } = useSnackbar();
-  const { login } = useAuth();
+  const { login, updateCurrentUser } = useAuth();
 
   const savedEmail = loadRememberedEmail();
   const [email, setEmail] = useState(savedEmail || "");
@@ -29,9 +31,10 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(Boolean(savedEmail));
   const [loading, setLoading] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
 
-  const handleLoginSuccess = (response) => {
-    const { token, userId, username, roles, permissions, userProfile } = response;
+  const handleLoginSuccess = async (response) => {
+    const { token, userId, username, roles, permissions } = response;
 
     login({
       token,
@@ -39,7 +42,6 @@ const Login = () => {
       username,
       roles,
       permissions,
-      userProfile,
     });
 
     if (rememberMe) {
@@ -48,8 +50,23 @@ const Login = () => {
       clearRememberedEmail();
     }
 
-    showSnackbar(response.message || "Login Successful", "success");
-    navigate("/", { replace: true });
+    try {
+      const profileResponse = await getProfile();
+      updateCurrentUser({ isProfileCompleted: profileResponse.isProfileCompleted });
+      if (profileResponse.isProfileCompleted) {
+        navigate("/", { replace: true });
+      } else {
+        navigate("/complete-profile", { replace: true });
+      }
+
+      showSnackbar(response.message || "Login Successful", "success");
+    } catch (error) {
+      console.error("Profile Fetch Error:", error);
+      showSnackbar(
+        error.message || "Unable to load your profile. Please try again later.",
+        "error",
+      );
+    }
   };
 
   const handleLogin = async () => {
@@ -61,7 +78,7 @@ const Login = () => {
     try {
       setLoading(true);
       const response = await loginUser({ email, password });
-      handleLoginSuccess(response);
+      await handleLoginSuccess(response);
     } catch (error) {
       console.error("Login Error:", error);
       showSnackbar(error.message || "Login Failed.", "error");
@@ -83,20 +100,29 @@ const Login = () => {
       };
 
       const response = await socialLogin(payload);
-      handleLoginSuccess(response);
+      await handleLoginSuccess(response);
     } catch (error) {
       console.error(`${provider} Login Error:`, error);
-      showSnackbar(`${provider} login failed.`, "error");
+      showSnackbar(error.message || `${provider} login failed.`, "error");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogleError = (error) => {
     console.error("Google Login Error:", error);
+    setLoading(false);
+
+    if (error?.error === "google_login_cancelled") {
+      return;
+    }
+
     showSnackbar("Google login failed.", "error");
   };
 
   const handleFacebookError = (error) => {
     console.error("Facebook Login Error:", error);
+    setLoading(false);
 
     if (error?.error === "facebook_login_cancelled") {
       return;
@@ -105,7 +131,7 @@ const Login = () => {
     showSnackbar("Facebook login failed.", "error");
   };
 
-  const { loginWithGoogle } = useGoogleAuth({
+  const { loginWithGoogle, isReady: isGoogleReady } = useGoogleAuth({
     onSuccess: handleSocialSuccess,
     onError: handleGoogleError,
   });
@@ -116,6 +142,8 @@ const Login = () => {
   });
 
   const handleSocialSelect = (provider) => {
+    if (loading) return;
+    setLoading(true);
     if (provider === "google") {
       loginWithGoogle(provider);
       return;
@@ -123,6 +151,7 @@ const Login = () => {
       loginWithFacebook(provider);
       return;
     }
+    setLoading(false);
     showSnackbar(`${provider} login coming soon`, "info");
   };
 
@@ -130,26 +159,26 @@ const Login = () => {
     <AuthLayout>
       <AuthCard
         eyebrow="Welcome Back!"
-        title="Login"
-        subtitle="Enter your login credentials"
-        footer={
-          <>
-            Don&apos;t have an account?{" "}
-            <span
-              className="gz-link"
-              onClick={() => navigate("/signup", { replace: true })}
-              role="link"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  navigate("/signup", { replace: true });
-                }
-              }}
-            >
-              Create Account
-            </span>
-          </>
-        }
+        title="Continue to GameZone"
+        subtitle="Enter your email and password to continue"
+        // footer={
+        //   <>
+        //     Don&apos;t have an account?{" "}
+        //     <span
+        //       className="gz-link"
+        //       onClick={() => navigate("/signup", { replace: true })}
+        //       role="link"
+        //       tabIndex={0}
+        //       onKeyDown={(e) => {
+        //         if (e.key === "Enter" || e.key === " ") {
+        //           navigate("/signup", { replace: true });
+        //         }
+        //       }}
+        //     >
+        //       Create Account
+        //     </span>
+        //   </>
+        // }
       >
         <form onSubmit={handleSubmit} className="space-y-3">
           <TextField
@@ -196,19 +225,28 @@ const Login = () => {
             <button
               type="button"
               className="gz-link bg-transparent text-sm"
-              onClick={() => showSnackbar("Password reset coming soon", "info")}
+              onClick={() => setForgotPasswordOpen(true)}
             >
               Forgot Password?
             </button>
           </div>
 
           <Button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Authenticating in..." : "Continue"}
           </Button>
         </form>
 
-        <SocialAuthButtons onSelect={handleSocialSelect} />
+        <SocialAuthButtons
+          providerReady={{
+            google: isGoogleReady,
+            facebook: isFacebookReady,
+          }}
+          disabled={loading}
+          onSelect={handleSocialSelect}
+        />
       </AuthCard>
+
+      <ForgotPasswordModal open={forgotPasswordOpen} onClose={() => setForgotPasswordOpen(false)} />
     </AuthLayout>
   );
 };

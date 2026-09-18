@@ -6,7 +6,7 @@ const providers = [
   { id: "facebook", label: "Continue with facebook", Icon: FaFacebookF },
 ];
 
-const SocialAuthButtons = ({ onSelect }) => {
+const SocialAuthButtons = ({ providerReady = {}, disabled, onSelect }) => {
   return (
     <div className="mt-4">
       <div className="gz-divider mb-4 justify-center">
@@ -15,7 +15,13 @@ const SocialAuthButtons = ({ onSelect }) => {
 
       <div className="flex items-center justify-center gap-4">
         {providers.map(({ id, label, Icon }) => (
-          <Button key={id} variant="social" aria-label={label} onClick={() => onSelect?.(id)}>
+          <Button
+            key={id}
+            variant="social"
+            aria-label={label}
+            disabled={disabled || providerReady[id] === false}
+            onClick={() => onSelect?.(id)}
+          >
             <Icon size={20} />
           </Button>
         ))}

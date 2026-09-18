@@ -38,3 +38,70 @@ export const socialLogin = async (payload) => {
     throw new Error(handleApiError(error));
   }
 };
+
+export const forgotPassword = async ({ email }) => {
+  try {
+    const res = await authApi.post("/forgot-password", {
+      email,
+    });
+    return checkLogicalError(res.data);
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+export const verifyResetOtp = async ({ email, otp }) => {
+  try {
+    const res = await authApi.post("/forgot-password/verify-otp", {
+      email,
+      verificationCode: otp,
+    });
+    const result = checkLogicalError(res.data);
+    const resetToken = result?.resetToken;
+
+    if (!resetToken) {
+      throw new Error("Reset token missing from server response.");
+    }
+
+    return { ...result, resetToken };
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+export const resendResetOtp = async ({ email }) => {
+  try {
+    const res = await authApi.post("/forgot-password/resend-otp", {
+      email,
+    });
+    return checkLogicalError(res.data);
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+export const resetPassword = async ({ resetToken, newPassword }) => {
+  try {
+    const res = await authApi.post("/forgot-password/reset", {
+      resetToken,
+      newPassword,
+    });
+    return checkLogicalError(res.data);
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
+
+export const getCountries = async () => {
+  try {
+    const res = await authApi.get("/countries");
+    const data = checkLogicalError(res.data);
+
+    return (Array.isArray(data?.data) ? data.data : []).map((country) => ({
+      value: country.code,
+      label: country.name,
+    }));
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
