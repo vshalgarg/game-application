@@ -63,7 +63,18 @@ const LudoGameRoom = () => {
   const autoMoveKeyRef = useRef(null);
   const gameAreaRef = useRef(null);
 
+  // playing sound on SS SC and G
+  const boardGridRef = useRef([]);
+
   const currentUserId = auth?.userId;
+
+  useEffect(() => {
+  const latestGrid = boardData?.grid?.[0];
+
+  if (latestGrid) {
+    boardGridRef.current = latestGrid;
+  }
+  }, [boardData]);
 
   // for loading sounds on refresh
   useEffect(() => {
@@ -459,7 +470,7 @@ const LudoGameRoom = () => {
           // safe cell sound 
           if (newSteps.length > 0) {
             const finalCellId = newSteps[newSteps.length - 1];
-            const finalCell = boardData?.grid?.[0]?.[finalCellId];
+            const finalCell = boardGridRef.current?.[finalCellId];
 
             // Play safe-cell when finl cell is SC or SS
             if (finalCell?.type === "SC" || finalCell?.type === "SS") {
