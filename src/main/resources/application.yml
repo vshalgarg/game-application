@@ -45,5 +45,5 @@ services:
     base-url: http://localhost:8081/game-engine/tambola-engine/api/v1
     endpoints:
       start-game: /start-game
-      submit-claim: /submit-claim
+      submit-claim: /claim
       lobby: /lobby

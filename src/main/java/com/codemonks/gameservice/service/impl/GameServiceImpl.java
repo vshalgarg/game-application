@@ -14,6 +14,7 @@
     import com.codemonks.gameservice.entity.GameResultEntity;
     import com.codemonks.gameservice.entity.PlayerEntity;
     import com.codemonks.gameservice.entity.RoomEntity;
+    import com.codemonks.gameservice.enums.GameTypeEnum;
     import com.codemonks.gameservice.enums.RoomStatusEnum;
     import com.codemonks.gameservice.exceptions.GameException;
     import com.codemonks.gameservice.exceptions.ResourceNotFoundException;
@@ -109,8 +110,13 @@
             GameEngine engine = gameEngineFactory.getStrategy(room.getGameType());
             EngineGameStateResponseDTO updatedState = engine.processMove(moveRequest);
 
-            if (GameStatusEnum.WIN.equals(updatedState.getStatus())
-                    || GameStatusEnum.DRAW.equals(updatedState.getStatus())) {
+            boolean isTambola = GameTypeEnum.TAMBOLA.equals(room.getGameType());
+            boolean isTerminal = isTambola
+                    ? GameStatusEnum.FINISHED.equals(updatedState.getStatus())
+                    : (GameStatusEnum.WIN.equals(updatedState.getStatus())
+                            || GameStatusEnum.DRAW.equals(updatedState.getStatus()));
+
+            if (isTerminal) {
                 room.setStatus(RoomStatusEnum.COMPLETED);
                 roomRepository.save(room);
                 RealtimeLobbyDTO lobbyDTO =
