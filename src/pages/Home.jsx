@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState,  useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaBorderAll, FaGamepad, FaPlusCircle, FaSignInAlt } from "react-icons/fa";
 import { createRoom, joinRoom } from "../services/roomService";
@@ -8,6 +8,7 @@ import PageShell from "../components/layout/PageShell";
 import GameZoneLogo from "../components/brand/GameZoneLogo";
 import ModeOption from "../components/ui/ModeOption";
 import TextField from "../components/ui/TextField";
+import { playSound, initializeGameSounds } from "../services/soundManager";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -17,7 +18,13 @@ const Home = () => {
   const [roomCode, setRoomCode] = useState("");
   const [joining, setJoining] = useState(false);
 
+  // for loading sounds on refresh
+  useEffect(() => {
+    initializeGameSounds("TIC_TAC_TOE");
+  }, []);
+
   const handleCreateRoom = async () => {
+    playSound("TIC_TAC_TOE", "BUTTON CLICK");
     if (loading) return;
     setLoading(true);
     try {
@@ -38,6 +45,7 @@ const Home = () => {
   };
 
   const handleJoinRoom = async () => {
+    playSound("TIC_TAC_TOE", "BUTTON CLICK");
     if (joining) return;
     if (!roomCode) {
       showSnackbar("Please enter room ID", "error");

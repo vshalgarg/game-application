@@ -1,7 +1,7 @@
 import Dice from "./Dice";
 import TurnIndicator from "./TurnIndicator";
 
-const DiceHolder = ({colors, turnColorIndex, diceValue, onRoll, rolling, isCurrentTurn,}) => {
+const DiceHolder = ({colors, turnColorIndex, diceValue, onRoll, rolling, isCurrentTurn, diceUpdatedAt}) => {
   const turnColor = turnColorIndex != null ? colors[turnColorIndex] : "white";
 
   return (
@@ -26,6 +26,7 @@ const DiceHolder = ({colors, turnColorIndex, diceValue, onRoll, rolling, isCurre
         onRoll={onRoll}
         rolling={rolling}
         isCurrentTurn={isCurrentTurn}
+        diceUpdatedAt={diceUpdatedAt}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { FaCopy, FaGamepad, FaRobot, FaSignal, FaTrash, FaUserCircle } from "react-icons/fa";
 import { LuX } from "react-icons/lu";
 import { useSnackbar } from "../context/SnackbarContext";
@@ -13,6 +13,7 @@ import PageShell from "../components/layout/PageShell";
 import GameZoneLogo from "../components/brand/GameZoneLogo";
 import Button from "../components/ui/Button";
 import ExitGamePopup from "../components/ui/ExitGamePopup";
+import { playSound, initializeGameSounds } from "../services/soundManager";
 
 const BOT_DIFFICULTIES = [
   {
@@ -50,6 +51,11 @@ const WaitingRoom = () => {
 
   useBackExitGuard(openExitPopup);
 
+  // for loading sounds on refresh
+  useEffect(() => {
+    initializeGameSounds("TIC_TAC_TOE");
+  }, []);
+
   const { players } = useWaitingRoomRealtime(roomCode);
 
   useRoomRealtime({
@@ -69,6 +75,7 @@ const WaitingRoom = () => {
   };
 
   const handleStartGame = async () => {
+    playSound("TIC_TAC_TOE", "BUTTON CLICK");
     try {
       if (players.length < 2) {
         showSnackbar("Waiting for another player...", "error");
@@ -86,6 +93,8 @@ const WaitingRoom = () => {
   };
 
   const handleAddBot = async (difficulty) => {
+    playSound("TIC_TAC_TOE", "BUTTON CLICK");
+    if (addingBot) return;
     if (addingBot || players.length >= 2) return;
     setSelectedDifficulty(difficulty);
     try {
@@ -105,6 +114,7 @@ const WaitingRoom = () => {
   };
 
   const handleRemovePlayer = async (player) => {
+    playSound("TIC_TAC_TOE", "BUTTON CLICK");
     try {
       const result = await removePlayer({
         roomCode,

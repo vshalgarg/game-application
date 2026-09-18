@@ -10,13 +10,13 @@ import WinModal from "../../modals/FinalWinner.jsx";
 import ExitGamePopup from "../../components/ui/ExitGamePopup";
 import useBackExitGuard from "../../hooks/useBackExitGuard";
 import { LuX } from "react-icons/lu";
+import { playSound, playLoopingSound, stopSound, initializeGameSounds, } from "../../services/soundManager";
 
 const LudoGameRoom = () => {
   const { auth } = useAuth();
   const { roomCode } = useParams();
   const navigate = useNavigate();
 
-  // for get board api
   const [boardData, setBoardData] = useState(null);
   const [boardLoading, setBoardLoading] = useState(true);
   const [boardError, setBoardError] = useState(null);
@@ -36,6 +36,7 @@ const LudoGameRoom = () => {
   const [showMovableTokens, setShowMovableTokens] = useState(false);
   const closeExitPopup = useCallback(() => setShowExitPopup(false), []);
   const openExitPopup = useCallback(() => setShowExitPopup(true), []);
+  const [diceUpdatedAt, setDiceUpdatedAt] = useState(null);
 
   useBackExitGuard(openExitPopup);
 
@@ -43,6 +44,10 @@ const LudoGameRoom = () => {
   const previousTurnUserIdRef = useRef(null);
   const previousPlayerTurnStageRef = useRef(null);
   const turnTransitionTimeoutRef = useRef(null);
+
+  // 800ms spin and 800ms CSS transform
+  const DICE_SETTLE_DELAY = 1600; 
+  const revealTimeoutRef = useRef(null);
 
   // for winning players confetti
   const [celebratingPlayers, setCelebratingPlayers] = useState([]);
@@ -58,9 +63,25 @@ const LudoGameRoom = () => {
   const autoMoveKeyRef = useRef(null);
   const gameAreaRef = useRef(null);
 
+  // playing sound on SS SC and G
+  const boardGridRef = useRef([]);
+
   const currentUserId = auth?.userId;
 
-  // Fetch board layout from API
+  useEffect(() => {
+  const latestGrid = boardData?.grid?.[0];
+
+  if (latestGrid) {
+    boardGridRef.current = latestGrid;
+  }
+  }, [boardData]);
+
+  // for loading sounds on refresh
+  useEffect(() => {
+  initializeGameSounds("LUDO");
+  }, []);
+
+  // fetch board layout from API
   useEffect(() => {
     let cancelled = false;
 
@@ -98,7 +119,7 @@ const LudoGameRoom = () => {
     roomCode,
 
     onGameUpdate: async (game) => {
-      // if an animation is currently running don't process the update 
+      // if animation currently running don't process the update 
       if (animatingRef.current) {
         pendingUpdateRef.current = game;
         return;
@@ -108,17 +129,20 @@ const LudoGameRoom = () => {
     },
   });
 
-  // for queue inside realtime update 
+  // for queue inside realtime update
   const processGameUpdate = async (game) => {
     const board = game.game_state_data.board;
     console.info("Realtime received:", game);
+    const newDiceUpdatedAt = game.updated_at;
 
-    // for player confetti celebration
+    // player confetti celebration
     board.players.forEach((player) => {
       const wasFinished = previousFinishedRef.current[player.playerId] ?? false;
 
       if (!wasFinished && player.hasFinished) {
         triggerCelebration(player.playerId);
+        playSound("LUDO", "SINGLE_PLAYER_WIN");
+
       }
       previousFinishedRef.current[player.playerId] = player.hasFinished;
     });
@@ -126,17 +150,40 @@ const LudoGameRoom = () => {
     const newTurnUserId = game.current_turn_user_id;
     const newDiceValue = board.lastDice;
     const newPlayerTurnStage = board.playerTurnStage;
+    const relevantPlayerId = board.lastDicePlayerId ?? board.currentTurnPlayerId;
 
-    const rollerId = previousTurnUserIdRef.current;
-    const previousStage = previousPlayerTurnStageRef.current;
-    const turnChanged = rollerId !== null && newTurnUserId !== rollerId;
+    const isInitialLoad = !previousBoardRef.current;
 
-    const isAutoSkipAfterRoll = turnChanged && previousStage === "ROLL_DICE";
+    // pendingDice grew for the relevant player for avoiding dice animation on make move updated at
+    let pendingDiceIncreased = false;
+    if (previousBoardRef.current) {
+      const oldPlayer = previousBoardRef.current.players.find((p) => p.playerId === relevantPlayerId);
+      const newPlayer = board.players.find((p) => p.playerId === relevantPlayerId);
+      const oldLen = oldPlayer?.pendingDice?.length ?? 0;
+      const newLen = newPlayer?.pendingDice?.length ?? 0;
+      pendingDiceIncreased = newLen > oldLen;
+    }
+
+    // animation when all token at base and pending dice null 
+    const relevantPlayer = board.players.find((p) => p.playerId === board.lastDicePlayerId);
+    const allTokensAtBase = relevantPlayer?.tokens?.every((t) => t.state === "BASE") ?? false;
+    const rollerDiffersFromCurrentTurn = board.lastDicePlayerId != null && board.lastDicePlayerId !== board.currentTurnPlayerId;
+
+    const isAutoSkipAfterRoll = !isInitialLoad && rollerDiffersFromCurrentTurn &&
+      newPlayerTurnStage === "ROLL_DICE" && (board.legalMoves?.length ?? 0) === 0 && allTokensAtBase;
+
+    // A genuine roll happened pending dice increased or through updated at
+    const isRollEvent = pendingDiceIncreased || isAutoSkipAfterRoll;
 
     previousTurnUserIdRef.current = newTurnUserId;
     previousPlayerTurnStageRef.current = newPlayerTurnStage;
 
     clearTimeout(turnTransitionTimeoutRef.current);
+
+    // for final winning sound
+    if (game.winner_user_id) {
+      playSound("LUDO", "GAME_WIN");
+    }
 
     setWinnerUserId(game.winner_user_id);
     setStatus(game.game_status);
@@ -144,14 +191,39 @@ const LudoGameRoom = () => {
     const applyTurnUpdate = () => {
       setCurrentTurnUserId(newTurnUserId);
       setDiceValue(newDiceValue);
+
+      if (isRollEvent) {
+        setDiceUpdatedAt(newDiceUpdatedAt);
+      }
     };
+
+    const turnPlayerForCount = board.players.find((p) => p.playerId === newTurnUserId);
+    const actualPendingLen = turnPlayerForCount?.pendingDice?.length ?? 0;
+
+    clearTimeout(revealTimeoutRef.current);
+
+    if (isRollEvent) {
+      // pending dice and movable tokens display when dice rolled completed
+      revealTimeoutRef.current = setTimeout(() => {
+        setVisiblePendingDiceCount(actualPendingLen);
+        setShowMovableTokens(newPlayerTurnStage === "TOKEN_MOVE");
+      }, DICE_SETTLE_DELAY);
+    } else {
+      setVisiblePendingDiceCount(actualPendingLen);
+      setShowMovableTokens(newPlayerTurnStage === "TOKEN_MOVE");
+    }
 
     if (isAutoSkipAfterRoll) {
       setDiceValue(newDiceValue);
 
+      if (isRollEvent) {
+        setDiceUpdatedAt(newDiceUpdatedAt);
+      }
+
+      // dice roll animation and number displaying timing when all token at base
       turnTransitionTimeoutRef.current = setTimeout(() => {
         setCurrentTurnUserId(newTurnUserId);
-      }, 2000);
+      }, 3000);
     }
 
     if (!previousBoardRef.current) {
@@ -182,7 +254,10 @@ const LudoGameRoom = () => {
 
   // Cleanup any pending turn-transition timeout on unmount
   useEffect(() => {
-    return () => clearTimeout(turnTransitionTimeoutRef.current);
+    return () => {
+      clearTimeout(turnTransitionTimeoutRef.current);
+      clearTimeout(revealTimeoutRef.current);
+    };
   }, []);
 
   const board = gameState?.board;
@@ -196,10 +271,11 @@ const LudoGameRoom = () => {
 
   // for automatic move when single token is on track
   useEffect(() => {
-    // Don't auto move while rolling animation is running
+
+    // no auto move while rolling animation is running
     if (!animationComplete) return;
 
-    // Don't auto move while API call is running
+    // no auto move while API call is running
     if (moveInProgress) return;
 
     if (!isMyTurn) {
@@ -217,7 +293,6 @@ const LudoGameRoom = () => {
     const move = legalMoves[0];
     const moveKey = `${roomCode}-${currentTurnUserId}-${move.tokenId}-${move.dice}`;
 
-    // Already processed exact move
     if (autoMoveKeyRef.current === moveKey) return;
 
     autoMoveKeyRef.current = moveKey;
@@ -225,12 +300,12 @@ const LudoGameRoom = () => {
     // Dice animation duration when single token on track(delay)
     const timer = setTimeout(async () => {
       await handleTokenClick(move.tokenId, move.dice);
-    }, 1500);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [legalMoves, playerTurnStage, isMyTurn, currentTurnUserId, roomCode, animationComplete, moveInProgress]);
 
-  // Gamearena responsiveness
+  // board responsiveness
   useLayoutEffect(() => {
     const el = gameAreaRef.current;
     if (!el) return;
@@ -247,7 +322,7 @@ const LudoGameRoom = () => {
     return () => observer.disconnect();
   }, []);
 
-  // Player card position according to player corner
+   // Player card position according to player corner
   const playerCardPositions = {
     1: { right: "-34%", bottom: "1%", transformOrigin: "bottom left" },
     2: { left: "-34%", bottom: "1%", transformOrigin: "bottom right" },
@@ -263,25 +338,29 @@ const LudoGameRoom = () => {
       setShowMovableTokens(false);
       setRolling(true);
 
+      // Start dice rolling sound
+      playSound("LUDO", "DICE_ROLL");
+
       await rollDice({
         roomCode,
         userId: currentUserId,
       });
 
+      // Only stops the local spin animation state, reveal timing owned by processGameUpdate when realtime update arrives
       setTimeout(() => {
-        setVisiblePendingDiceCount(pendingDice.length);
-        setShowMovableTokens(true);
+        // Stop dice rolling sound
+        stopSound("LUDO", "DICE_ROLL");
         setRolling(false);
       }, 800);
     } catch (error) {
       console.error(error);
+      stopSound("LUDO", "DICE_ROLL");
       setRolling(false);
     }
   };
 
   // Make move api
   const moveToken = async (tokenId, consumedDice) => {
-    // Prevent duplicate API calls
     if (moveInProgress) return;
     setMoveInProgress(true);
 
@@ -308,7 +387,7 @@ const LudoGameRoom = () => {
     if (currentTurnUserId !== currentUserId) return;
     if (playerTurnStage !== "TOKEN_MOVE") return;
 
-    // All legal moves for this token
+    // All legal moves for a token
     const tokenMoves = legalMoves.filter((move) => move.tokenId === tokenId);
 
     if (tokenMoves.length === 0) return;
@@ -331,7 +410,7 @@ const LudoGameRoom = () => {
       return;
     }
 
-    // Find which dice to consume
+    // dice number to consume
     const consumedDice = selectedDice ?? tokenMoves[0].dice;
     await moveToken(tokenId, consumedDice);
   };
@@ -342,7 +421,7 @@ const LudoGameRoom = () => {
     await moveToken(selectedToken, dice);
   };
 
-  // Find current player's color
+  // current player's color
   const currentTurnColorIndex = currentPlayer?.colorIndex;
 
   const animateBoard = async (oldBoard, newBoard) => {
@@ -351,7 +430,7 @@ const LudoGameRoom = () => {
 
     const board = structuredClone(oldBoard);
 
-    // Store killed tokens here
+    // killed tokens stored
     const killedAnimations = [];
 
     for (const latestPlayer of newBoard.players) {
@@ -377,12 +456,31 @@ const LudoGameRoom = () => {
           for (const cellId of newSteps) {
             currentToken.pathId = cellId;
 
+            // Play movement sound for every cell
+            playSound("LUDO", "TOKEN_MOVEMENT");
+
             setGameState((prev) => ({
               ...prev,
               board: structuredClone(board),
             }));
 
             await new Promise((resolve) => setTimeout(resolve, 150));
+          }
+
+          // safe cell sound 
+          if (newSteps.length > 0) {
+            const finalCellId = newSteps[newSteps.length - 1];
+            const finalCell = boardGridRef.current?.[finalCellId];
+
+            // Play safe-cell when finl cell is SC or SS
+            if (finalCell?.type === "SC" || finalCell?.type === "SS") {
+              playSound("LUDO", "SAFE_CELL");
+            }
+
+            // goal cell sound
+            if (finalCell?.type === "G") {
+              playSound("LUDO", "SINGLE_TOKEN_GOAL");
+            }
           }
 
           currentToken.forwardJourney = latestToken.forwardJourney;
@@ -405,12 +503,15 @@ const LudoGameRoom = () => {
           }));
         }
 
-        // Killed Token Animation
+        // Kill Detection
         if (
           currentToken.state === "TRACK" &&
           latestToken.state === "BASE" &&
           latestToken.tokenKilled
         ) {
+
+          // Play kill sound immediately when kill is detected 
+          playSound("LUDO", "TOKEN_KILL");
           killedAnimations.push({
             currentToken,
             latestToken,
@@ -425,6 +526,9 @@ const LudoGameRoom = () => {
         ? latestToken.backwardJourney
         : (currentToken.backwardJourney ?? []);
 
+      // Start kill sound when backward animation starts
+      // playLoopingSound("LUDO", "TOKEN_KILL");
+
       for (let i = backwardJourney.length - 1; i >= 0; i--) {
         currentToken.pathId = backwardJourney[i];
         currentToken.pathIndex = i;
@@ -436,6 +540,10 @@ const LudoGameRoom = () => {
 
         await new Promise((resolve) => setTimeout(resolve, 70));
       }
+
+      // Stop kill sound when backward animation finishes
+      // stopSound("LUDO", "TOKEN_KILL");
+
 
       currentToken.state = "BASE";
       currentToken.pathId = null;
@@ -471,14 +579,7 @@ const LudoGameRoom = () => {
     }, 3500);
   };
 
-  // for displaying previous pending dice number while next rolling in playercard
-  useEffect(() => {
-    if (!rolling) {
-      setVisiblePendingDiceCount(pendingDice.length);
-    }
-  }, [rolling, pendingDice]);
-
-  // while loading board through api
+  // board loading through api
   if (boardLoading) {
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
@@ -513,12 +614,8 @@ const LudoGameRoom = () => {
       <ExitGamePopup open={showExitPopup} onClose={closeExitPopup} />
 
       <div className="flex flex-col items-center gap-4 w-full">
-
-        {/* Game Area */}
         <div className="relative">
           <div ref={gameAreaRef} className="relative w-fit">
-            
-            {/* Board */}
             <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl md:rounded-3xl p-2 sm:p-4 w-fit">
               <LudoBoard
                 boardData={boardData}
@@ -534,7 +631,6 @@ const LudoGameRoom = () => {
               />
             </div>
 
-            {/* Player Cards and Dice */}
             {(board?.players ?? []).map((player) => {
               const isTurnPlayer = player.playerId === currentTurnUserId;
               const isTopPlayer = player.colorIndex === 3 || player.colorIndex === 4;
@@ -547,6 +643,7 @@ const LudoGameRoom = () => {
                   onRoll={handleRollDice}
                   colors={boardData.metadata.colors}
                   isCurrentTurn={isMyTurn}
+                  diceUpdatedAt={diceUpdatedAt}
                 />
               );
 

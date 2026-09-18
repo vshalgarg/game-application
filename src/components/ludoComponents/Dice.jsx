@@ -27,12 +27,13 @@ const faces = [
   { className: "dice-bottom", number: 4 },
 ];
 
-const Dice = ({ value = 0, onRoll, rolling, isCurrentTurn }) => {
+const Dice = ({ value = 0, onRoll, rolling, isCurrentTurn, diceUpdatedAt }) => {
   const [cubeRotation, setCubeRotation] = useState(faceRotations[1]);
   const [spectatorRolling, setSpectatorRolling] = useState(false);
   const [displayedValue, setDisplayedValue] = useState(value || 1);
 
-  const previousValue = useRef(value);
+  const previousDiceUpdatedAt = useRef(null);
+  const hasMountedRef = useRef(false);
   const currentRotation = useRef(faceRotations[1]);
   const prevRolling = useRef(false);
 
@@ -40,19 +41,32 @@ const Dice = ({ value = 0, onRoll, rolling, isCurrentTurn }) => {
   const actualRolling = isCurrentTurn ? rolling : spectatorRolling;
 
   useEffect(() => {
+    // Current player uses backend rolling exactly as before
     if (isCurrentTurn) {
       setDisplayedValue(value || 1);
-      previousValue.current = value;
       return;
     }
 
-    if (previousValue.current === undefined) {
-      previousValue.current = value;
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+
+      if (diceUpdatedAt) {
+        // mounting mid-game with an existing roll, nothing new happened.
+        previousDiceUpdatedAt.current = diceUpdatedAt;
+        setDisplayedValue(value || 1);
+      } else {
+        // No roll has ever happened yet, leave previousDiceUpdatedAt as null then first real diceUpdatedAt animates.
+        previousDiceUpdatedAt.current = null;
+        setDisplayedValue(value || 1);
+      }
       return;
     }
 
-    if (previousValue.current !== value) {
-      previousValue.current = value;
+    if (!diceUpdatedAt) return;
+
+    // Every new timestamp means a new dice roll
+    if (previousDiceUpdatedAt.current !== diceUpdatedAt) {
+      previousDiceUpdatedAt.current = diceUpdatedAt;
 
       setSpectatorRolling(true);
 
@@ -63,10 +77,9 @@ const Dice = ({ value = 0, onRoll, rolling, isCurrentTurn }) => {
 
       return () => clearTimeout(timer);
     }
-  }, [value, isCurrentTurn]);
+  }, [value, diceUpdatedAt, isCurrentTurn]);
 
   useEffect(() => {
-
     const justStoppedRolling = prevRolling.current && !actualRolling;
     const target = faceRotations[displayedValue] || faceRotations[1];
 
@@ -90,40 +103,29 @@ const Dice = ({ value = 0, onRoll, rolling, isCurrentTurn }) => {
 
   return (
     <div
-      onClick={ isCurrentTurn && !actualRolling ? onRoll : undefined}
+      onClick={isCurrentTurn && !actualRolling ? onRoll : undefined}
       className={`dice-scene ${
         isCurrentTurn ? "cursor-pointer" : "cursor-not-allowed"
-      } ${
-        isCurrentTurn && !actualRolling
-          ? "dice-active"
-          : ""
-        }`
-      }
+      } ${isCurrentTurn && !actualRolling ? "dice-active" : ""}`}
     >
       <div
         className={`dice-cube ${actualRolling ? "rolling" : ""}`}
-        style={actualRolling ? undefined : 
-          {transform: `rotateX(${cubeRotation.x}deg) rotateY(${cubeRotation.y}deg)`,}
+        style={
+          actualRolling
+            ? undefined
+            : { transform: `rotateX(${cubeRotation.x}deg) rotateY(${cubeRotation.y}deg)` }
         }
       >
         {faces.map(({ className, number }) => (
-          <div
-            key={number}
-            className={`dice-face ${className}`}
-          >
-            {isCurrentTurn && !actualRolling && (
-              <div className="dice-shine" />
-            )}
+          <div key={number} className={`dice-face ${className}`}>
+            {isCurrentTurn && !actualRolling && <div className="dice-shine" />}
 
             <div className="grid h-full w-full grid-cols-3 grid-rows-3">
               {Array.from({ length: 9 }, (_, index) => {
                 const cell = index + 1;
 
                 return (
-                  <div
-                    key={cell}
-                    className="flex items-center justify-center"
-                  >
+                  <div key={cell} className="flex items-center justify-center">
                     {dotPositions[number]?.includes(cell) && (
                       <div className="w-2.5 h-2.5 rounded-full bg-black" />
                     )}
