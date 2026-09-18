@@ -1,0 +1,37 @@
+package com.codemonks.api_gateway.auth.dto.response;
+
+import lombok.Builder;
+import lombok.Data;
+import reactor.core.publisher.Mono;
+
+@Builder
+@Data
+public class ApiResponse<T> {
+
+    private boolean success;
+    private T data;
+    private String message;
+    private ApiError error;
+    private Meta meta;
+
+    public static <T> ApiResponse<T> success(T data) {
+        return success(data, null);
+    }
+
+    public static <T> ApiResponse<T> success(T data, String message) {
+        return ApiResponse.<T>builder()
+                .success(true)
+                .data(data)
+                .message(message)
+                .meta(Meta.now())
+                .build();
+    }
+
+    public static <T> ApiResponse<T> failure(int code, String message) {
+        return ApiResponse.<T>builder()
+                .success(false)
+                .error(new ApiError(code, message))
+                .meta(Meta.now())
+                .build();
+    }
+}
