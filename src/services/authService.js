@@ -69,10 +69,10 @@ export const verifyResetOtp = async ({ email, otp }) => {
   }
 };
 
-export const resendResetOtp = async ({ phoneNumber }) => {
+export const resendResetOtp = async ({ email }) => {
   try {
     const res = await authApi.post("/forgot-password/resend-otp", {
-      phoneNumber,
+      email,
     });
     return checkLogicalError(res.data);
   } catch (error) {
