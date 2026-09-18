@@ -190,10 +190,15 @@ public class TambolaGameStateRepositoryImpl implements TambolaGameStateRepositor
                                     .path("/rest/v1/" + table)
                                     .queryParam(
                                             "game_status",
-                                            "eq."
+                                            "in.("
                                                     + GameStatusEnum
                                                     .RUNNING
                                                     .name()
+                                                    + ","
+                                                    + GameStatusEnum
+                                                    .WIN
+                                                    .name()
+                                                    + ")"
                                     )
                                     .queryParam(
                                             "next_tick_at",

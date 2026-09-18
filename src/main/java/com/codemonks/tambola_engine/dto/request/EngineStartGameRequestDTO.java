@@ -7,12 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-/**
- * Sent by game-service to the engine to start a new Tambola game.
- * Carries everything the engine needs to initialize TambolaGameState:
- * the room, its players, the timer interval, and which claim rules
- * are active for this game.
- */
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
