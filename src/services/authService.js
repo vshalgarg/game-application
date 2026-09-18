@@ -71,7 +71,7 @@ export const verifyResetOtp = async ({ email, otp }) => {
 
 export const resendResetOtp = async ({ phoneNumber }) => {
   try {
-    const res = await authApi.post("/resend-reset-otp", {
+    const res = await authApi.post("/forgot-password/resend-otp", {
       phoneNumber,
     });
     return checkLogicalError(res.data);
@@ -97,7 +97,7 @@ export const getCountries = async () => {
     const res = await authApi.get("/countries");
     const data = checkLogicalError(res.data);
 
-    return (Array.isArray(data) ? data : []).map((country) => ({
+    return (Array.isArray(data?.data) ? data.data : []).map((country) => ({
       value: country.code,
       label: country.name,
     }));
