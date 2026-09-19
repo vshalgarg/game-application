@@ -33,7 +33,15 @@ public enum ResponseErrorCodes {
     SOUND_ALREADY_EXISTS(1018, "Sound already exists for this game, theme and event"),
     INVALID_GAME_TYPE(1019, "Invalid game type"),
     SOUND_FILE_READ_FAILED(1020, "Failed to read uploaded sound file"),
-    RULES_NOT_CONFIGURED(1021, "Rules have not been configured for this room");
+    RULES_NOT_CONFIGURED(1021, "Rules have not been configured for this room"),
+
+    // Tambola rules specific
+    RULES_REQUIRED(1022, "At least one rule must be selected"),
+    DUPLICATE_RULE_TYPE(1023, "Duplicate rule type selected"),
+    INVALID_RULE_ORDER(1024, "Rule order must be unique, start from 1 and be sequential"),
+    INVALID_MAX_WINNERS(1025, "maxWinners must be greater than 0 and within the allowed limit"),
+    RULE_TYPE_NOT_FOUND(1026, "Invalid rule type"),
+    RULES_NOT_ALLOWED_FOR_GAME(1027, "Rules are not supported for this game type");
 
 
 

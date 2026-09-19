@@ -4,9 +4,11 @@ package com.codemonks.gameservice.service;
 import com.codemonks.gameservice.dto.request.*;
 import com.codemonks.gameservice.dto.response.RoomDetailsResponseDTO;
 import com.codemonks.gameservice.dto.response.RoomResponseDTO;
+import com.codemonks.gameservice.dto.response.TambolaAvailableRuleResponseDTO;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.gameservice.engineModule.model.BoardLayout;
 
+import java.util.List;
 
 public interface RoomService {
 
@@ -19,5 +21,7 @@ public interface RoomService {
     RoomActionResponseDTO addBot(String roomCode, AddBotRequestDTO request);
     RoomActionResponseDTO removePlayer(String roomCode, RemovePlayerRequestDTO request);
     void setRoomRules(String roomCode, SetRoomRulesRequestDTO request);
+
+    List<TambolaAvailableRuleResponseDTO> getRoomRules(String roomCode);
 
 }
