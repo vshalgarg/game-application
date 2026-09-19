@@ -6,7 +6,7 @@ import CircuitMark from "../components/brand/CircuitMark";
 import GameCarousel from "../components/games/GameCarousel";
 import FeatureStrip from "../components/games/FeatureStrip";
 import { getGameSounds } from "../services/soundService";
-import { loadGameSounds } from "../services/soundManager";
+import { loadGameSounds, playBackgroundMusic } from "../services/soundManager";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -24,10 +24,14 @@ const Landing = () => {
 
     if (gameType) {
 
+      // sound response api 
       const soundResponse = await getGameSounds(gameType);
-
-      // sounds loading
       await loadGameSounds(gameType, soundResponse);
+
+      // playing bg music
+      if (gameType === "TIC_TAC_TOE") {
+        playBackgroundMusic(gameType);
+      }
     }
 
     if (game.path) {

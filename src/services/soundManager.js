@@ -23,6 +23,11 @@ export const loadGameSounds = async (gameType, soundResponse) => {
         audio.preload = "auto";
         audio.src = soundData.url;
 
+        // Background music plays continuously loop
+        if (eventName === "BACKGROUND_MUSIC") {
+          audio.loop = true;
+        }
+
         audio.addEventListener(
           "canplaythrough",
           () => {
@@ -52,6 +57,7 @@ export const loadGameSounds = async (gameType, soundResponse) => {
 
 // page refresh sound loading
 export const initializeGameSounds = async (gameType) => {
+
   // Already loaded
   if (
     audioCache[gameType] &&
@@ -105,7 +111,44 @@ export const playSound = (gameType, eventName) => {
     });
 };
 
-// sound to be played when the animation ends (looping)
+// playing bg music
+export const playBackgroundMusic = (gameType) => {
+  const audio = audioCache[gameType]?.["BACKGROUND_MUSIC"];
+
+  if (!audio) {
+    console.warn(`Background music not found for ${gameType}`);
+    return;
+  }
+
+  // music already playing 
+  if (!audio.paused) {
+    return;
+  }
+
+  audio.loop = true;
+
+  audio.play()
+    .then(() => {
+      console.info(`Background music started: ${gameType}`);
+    })
+    .catch((error) => {
+      console.error(`Failed to play background music: ${gameType}`,error);
+    });
+};
+
+// stoping bg music
+export const stopBackgroundMusic = (gameType) => {
+  const audio = audioCache[gameType]?.["BACKGROUND_MUSIC"];
+
+  if (!audio) {
+    return;
+  }
+
+  audio.pause();
+  audio.currentTime = 0;
+};
+
+// sounds to be played when the animation starts (looping)
 export const playLoopingSound = (gameType, eventName) => {
   const audio = audioCache[gameType]?.[eventName];
 
