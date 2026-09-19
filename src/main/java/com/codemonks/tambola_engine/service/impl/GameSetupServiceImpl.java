@@ -8,6 +8,7 @@ import com.codemonks.tambola_engine.dto.common.PlayerDTO;
 import com.codemonks.tambola_engine.dto.request.EngineStartGameRequestDTO;
 import com.codemonks.tambola_engine.dto.request.RuleConfigRequestDTO;
 import com.codemonks.tambola_engine.enums.GameStatusEnum;
+import com.codemonks.tambola_engine.enums.RuleTypeEnum;
 import com.codemonks.tambola_engine.exception.RoomNotFoundException;
 import com.codemonks.tambola_engine.repository.TambolaGameStateRepository;
 import com.codemonks.tambola_engine.repository.TambolaRuleRepository;
@@ -174,12 +175,24 @@ public class GameSetupServiceImpl implements GameSetupService {
                             : 1
             );
             rule.setWinnerPlayerIds(new ArrayList<>());
-            rule.setThreshold(config.getThreshold());
+            rule.setThreshold(resolveThreshold(config.getRuleType(), config.getThreshold()));
             rule.setVersion(0L);
             rules.add(rule);
         }
 
         return rules;
+    }
+
+    /**
+     * Threshold is a static/master rule property. Engine-side default ke
+     * against resolve hota hai — client/auth kabhi bhi arbitrary threshold
+     * nahi bhejega. EARLY_FIVE keliye 5 default.
+     */
+    private Integer resolveThreshold(RuleTypeEnum ruleType, Integer requested) {
+        if (ruleType == RuleTypeEnum.EARLY_FIVE && (requested == null || requested < 1)) {
+            return 5;
+        }
+        return requested;
     }
 
     private int resolveTicketCount(PlayerDTO playerDTO) {

@@ -80,6 +80,24 @@ public class TambolaRuleRepositoryImpl implements TambolaRuleRepository {
     }
 
     @Override
+    public void deleteByRoom(Long roomId) {
+        String table = properties.getTables().getRealtimeTambolaRules();
+        try {
+            tambolaSupabaseRestClient.delete()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/rest/v1/" + table)
+                            .queryParam("room_id", "eq." + roomId)
+                            .build())
+                    .retrieve()
+                    .toBodilessEntity();
+            log.info("[TAMBOLA_RULES_DELETED] roomId={}", roomId);
+        } catch (Exception e) {
+            log.error("Failed to delete rules. roomId={}", roomId, e);
+            throw new SupabaseStateException("Failed to delete rules for roomId=" + roomId, e);
+        }
+    }
+
+    @Override
     public boolean updateWinnersIfVersionMatches(Long roomId, RuleTypeEnum ruleType,
                                                  List<Long> newWinnerPlayerIds, Long expectedVersion) {
         String table = properties.getTables().getRealtimeTambolaRules();

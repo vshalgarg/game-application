@@ -55,6 +55,17 @@ public class ClaimServiceImpl implements ClaimService {
             throw new InvalidClaimException(TambolaErrorCodesEnum.RULE_SLOTS_FULL);
         }
 
+        // 2.1) Sequential rule progression — sirf current active rule par claim hota hai.
+        //      Current = sabse chhota rule_order jis me abhi winner-slots khula ho.
+        //      Pehle ka rule complete (slots full) hone tak aage wale rules locked rehte hain.
+        List<GameRule> roomRules = ruleRepository.findAllByRoom(request.getRoomId());
+        GameRule currentActiveRule = findCurrentActiveRule(roomRules);
+        if (!currentActiveRule.getRuleType().equals(request.getRuleType())) {
+            throw new InvalidClaimException(TambolaErrorCodesEnum.RULE_NOT_ACTIVE,
+                    "Rule " + request.getRuleType() + " is not active yet — complete "
+                            + currentActiveRule.getRuleType() + " first.");
+        }
+
         // 3) Ticket padho — pattern validate karo
         TambolaTicket ticket = findTicket(request.getRoomId(), request.getPlayerId(), request.getTicketId());
         Set<Integer> calledNumbersSet = new HashSet<>(state.getCalledNumbers());
@@ -150,6 +161,15 @@ public class ClaimServiceImpl implements ClaimService {
         );
         claimRepository.insert(claim);
         return claim;
+    }
+
+    private GameRule findCurrentActiveRule(List<GameRule> allRules) {
+        return allRules.stream()
+                .filter(GameRule::hasOpenSlots)
+                .min(Comparator.comparing(GameRule::getOrder))
+                .orElseThrow(() -> new InvalidClaimException(
+                        TambolaErrorCodesEnum.RULE_SLOTS_FULL,
+                        "All rules for this game are already complete"));
     }
 
     private TambolaTicket findTicket(Long roomId, Long playerId, Long ticketId) {

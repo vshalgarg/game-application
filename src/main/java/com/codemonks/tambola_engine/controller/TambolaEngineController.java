@@ -4,9 +4,11 @@ import com.codemonks.tambola_engine.domain.game.GameSetupResult;
 import com.codemonks.tambola_engine.dto.realtime.RealtimeLobbyDTO;
 import com.codemonks.tambola_engine.dto.request.ClaimRequestDTO;
 import com.codemonks.tambola_engine.dto.request.EngineStartGameRequestDTO;
+import com.codemonks.tambola_engine.dto.request.ReplaceRulesRequestDTO;
 import com.codemonks.tambola_engine.dto.response.ClaimResponseDTO;
 import com.codemonks.tambola_engine.service.ClaimService;
 import com.codemonks.tambola_engine.service.GameSetupService;
+import com.codemonks.tambola_engine.service.RuleService;
 import com.codemonks.tambola_engine.service.SupabaseRealtimeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,11 +16,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import static com.codemonks.tambola_engine.constant.ApiConstants.BASE_API;
 import static com.codemonks.tambola_engine.constant.ApiConstants.LOBBY;
+import static com.codemonks.tambola_engine.constant.ApiConstants.RULES;
 import static com.codemonks.tambola_engine.constant.ApiConstants.START_GAME;
 import static com.codemonks.tambola_engine.constant.ApiConstants.SUBMIT_CLAIM;
 
@@ -30,6 +34,7 @@ public class TambolaEngineController {
 
     private final GameSetupService gameSetupService;
     private final ClaimService claimService;
+    private final RuleService ruleService;
     private final SupabaseRealtimeService supabaseRealtimeService;
 
     @PostMapping(START_GAME)
@@ -83,6 +88,27 @@ public class TambolaEngineController {
         );
 
         supabaseRealtimeService.publishLobbyState(request);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping(RULES)
+    public ResponseEntity<Void> replaceRules(
+            @Valid @RequestBody ReplaceRulesRequestDTO request) {
+
+        log.info(
+                "[RULES_PUT_REQUEST] Room:{} RuleCount:{}",
+                request.getRoomId(),
+                request.getRules() != null ? request.getRules().size() : 0
+        );
+
+        ruleService.replaceRules(request.getRoomId(), request.getRules());
+
+        log.info(
+                "[RULES_PUT_RESPONSE] Room:{} Rules:{}",
+                request.getRoomId(),
+                request.getRules() != null ? request.getRules().size() : 0
+        );
 
         return ResponseEntity.ok().build();
     }
