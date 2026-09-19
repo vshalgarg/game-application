@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useSnackbar } from "../context/SnackbarContext";
 import GameZoneLogo from "./brand/GameZoneLogo";
 import Button from "./ui/Button";
+import { stopBackgroundMusic } from "../services/soundManager";
 
 const navItems = [
   { label: "Home", path: "/" },
@@ -31,6 +32,12 @@ const Navbar = () => {
     navigate("/login", { replace: true });
   };
 
+  const handleHome = () => {
+  setMenuOpen(false);
+  stopBackgroundMusic("TIC_TAC_TOE");
+  navigate("/");
+};
+
   const authButton = auth ? (
     <Button variant="nav" className="px-4 py-1.5 text-xs sm:px-5 sm:py-2 sm:text-sm" onClick={handleLogout}>
       Logout
@@ -47,10 +54,7 @@ const Navbar = () => {
         <button
           type="button"
           className="flex min-w-0 cursor-pointer items-center gap-2 bg-transparent"
-          onClick={() => {
-            setMenuOpen(false);
-            navigate("/");
-          }}
+          onClick={handleHome}
           aria-label="GameZone home"
         >
           <GameZoneLogo className="h-8 w-8 shrink-0" />
@@ -66,6 +70,12 @@ const Navbar = () => {
                 key={path}
                 to={path}
                 end={path === "/"}
+                onClick={() => {
+                  if (path === "/") {
+                    stopBackgroundMusic("TIC_TAC_TOE");
+                  }
+                }}
+
                 className={({ isActive }) =>
                   `gz-navbar__link ${isActive ? "gz-navbar__link--active" : ""}`
                 }
@@ -97,7 +107,12 @@ const Navbar = () => {
                 key={path}
                 to={path}
                 end={path === "/"}
-                onClick={() => setMenuOpen(false)}
+                onClick={() => {
+                  setMenuOpen(false);
+                  if (path === "/") {
+                    stopBackgroundMusic("TIC_TAC_TOE");
+                  }
+                }}
                 className={({ isActive }) =>
                   `gz-navbar__link py-1 ${isActive ? "gz-navbar__link--active" : ""}`
                 }

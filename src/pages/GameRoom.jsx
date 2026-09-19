@@ -12,7 +12,7 @@ import { useSnackbar } from "../context/SnackbarContext";
 import { useAuth } from "../context/AuthContext";
 import PageShell from "../components/layout/PageShell";
 import Button from "../components/ui/Button";
-import { playSound, initializeGameSounds } from "../services/soundManager";
+import { playSound, initializeGameSounds, stopBackgroundMusic } from "../services/soundManager";
 
 const RestartGameButton = ({ onClick }) => (
   <Button onClick={onClick}>
@@ -47,6 +47,12 @@ const GameRoom = () => {
   const [mySide, setMySide] = useState(null);
   const [hostUserId, setHostUserId] = useState(null);
   const currentUserId = auth?.userId;
+
+  const handleBackToHome = () => {
+  playSound("TIC_TAC_TOE", "BUTTON CLICK");
+  stopBackgroundMusic("TIC_TAC_TOE");
+  navigate("/");
+};
 
   // for loading sounds on refresh
   useEffect(() => {
@@ -159,7 +165,7 @@ const GameRoom = () => {
       if (previousBoard) {
       let movedSymbol = null;
 
-      // detect where symbol is made through bot on ui
+      // bot played move on ui
       for (let row = 0; row < 3; row++) {
         for (let col = 0; col < 3; col++) {
           if (
@@ -173,8 +179,8 @@ const GameRoom = () => {
 
         if (movedSymbol) break;
       }
-
-      // A new move was detected
+    
+      
       if (movedSymbol) {
         const movedPlayer = game.players?.find((player) => player.side === movedSymbol);
 
@@ -320,7 +326,7 @@ const GameRoom = () => {
             </p>
             <div className="flex flex-col gap-3">
               {isHost && <RestartGameButton onClick={handleRestart} />}
-              <Button variant="secondary" onClick={() => navigate("/")}>
+              <Button variant="secondary" onClick={handleBackToHome}>
                 Back To Home
               </Button>
             </div>
@@ -384,7 +390,7 @@ const GameRoom = () => {
             </p>
             <div className="flex flex-col gap-3">
               {isHost && <RestartGameButton onClick={handleRestart} />}
-              <Button variant="secondary" onClick={() => navigate("/")}>
+              <Button variant="secondary" onClick={handleBackToHome}>
                 Back To Home
               </Button>
             </div>
