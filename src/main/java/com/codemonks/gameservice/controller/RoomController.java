@@ -6,6 +6,7 @@ import com.codemonks.gameservice.dto.ResponseMessages;
 import com.codemonks.gameservice.dto.request.*;
 import com.codemonks.gameservice.dto.response.RoomDetailsResponseDTO;
 import com.codemonks.gameservice.dto.response.RoomResponseDTO;
+import com.codemonks.gameservice.dto.response.TambolaAvailableRuleResponseDTO;
 import com.codemonks.gameservice.engineModule.dto.response.DiceRollResponseDTO;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.gameservice.service.GameService;
@@ -14,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 import static com.codemonks.gameservice.constants.ApiUrlConstants.Room.*;
 
@@ -99,6 +102,15 @@ public class RoomController {
         return ResponseEntity.ok(ApiResponse.success(null, ResponseMessages.RULES_SAVED));
     }
 
+    @GetMapping(GET_RULES)
+    public ResponseEntity<ApiResponse<List<TambolaAvailableRuleResponseDTO>>> getRoomRules(
+            @PathVariable String roomCode
+    ) {
+        log.info("Get rules request. roomCode={}", roomCode);
+        List<TambolaAvailableRuleResponseDTO> response = roomService.getRoomRules(roomCode);
+        return ResponseEntity.ok(ApiResponse.success(response, ResponseMessages.TAMBOLA_RULES_FETCHED));
+    }
+
     @PostMapping(ADD_BOT)
     public ResponseEntity<ApiResponse<RoomDetailsResponseDTO>> addBot(
             @PathVariable String roomCode,
@@ -124,11 +136,9 @@ public class RoomController {
             @PathVariable String roomCode,
             @RequestBody RemovePlayerRequestDTO request
     ) {
-
         log.info(
                 "Remove participant request received. roomCode={}, hostUserId={}, userId={}",
                 roomCode, request.getHostUserId(), request.getUserId());
-
         RoomActionResponseDTO response = roomService.removePlayer(roomCode, request);
         return ResponseEntity.ok(ApiResponse.success(response.getRoomDetails(),
                         response.getMessage()));

@@ -50,3 +50,4 @@ services:
       start-game: /start-game
       submit-claim: /claim
       lobby: /lobby
+      rules: /rules

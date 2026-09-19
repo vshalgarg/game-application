@@ -7,6 +7,8 @@ import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeLobbyDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineMoveRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.TambolaClaimRequestDTO;
+import com.codemonks.gameservice.engineModule.dto.request.TambolaReplaceRulesRequestDTO;
+import com.codemonks.gameservice.engineModule.dto.request.TambolaRuleConfigRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.gameservice.engineModule.dto.response.TambolaClaimResponseDTO;
 import com.codemonks.gameservice.engineModule.dto.response.TambolaGameSetupResponseDTO;
@@ -19,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -148,5 +151,18 @@ public class TambolaEngineImpl implements GameEngine {
                 lobbyDTO.getPlayers() != null ? lobbyDTO.getPlayers().size() : 0);
 
         feignClient.publishLobby(lobbyDTO);
+    }
+
+    @Override
+    public void replaceRules(Long roomId, List<TambolaRuleConfigRequestDTO> rules) {
+
+        log.info("[TAMBOLA_ENGINE_RULES_PUT] Room:{} RuleCount:{}",
+                roomId, rules != null ? rules.size() : 0);
+
+        feignClient.replaceRules(
+                new TambolaReplaceRulesRequestDTO(roomId, rules));
+
+        log.info("[TAMBOLA_ENGINE_RULES_SYNCED] Room:{} RuleCount:{}",
+                roomId, rules != null ? rules.size() : 0);
     }
 }

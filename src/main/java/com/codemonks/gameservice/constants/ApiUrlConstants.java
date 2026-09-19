@@ -16,6 +16,7 @@ public class ApiUrlConstants {
         public static final String ADD_BOT = "/{roomCode}/bots";
         public static final String REMOVE_PLAYER = "/{roomCode}/players";
         public static final String SET_RULES = "/{roomCode}/rules";
+        public static final String GET_RULES = "/{roomCode}/available-rules";
 
     }
 

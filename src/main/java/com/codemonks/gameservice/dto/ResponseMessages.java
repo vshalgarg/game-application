@@ -15,5 +15,8 @@ public class ResponseMessages {
     public static final String BOT_REMOVED = "Bot removed successfully";
     public static final String PLAYER_REMOVED = "Player removed successfully";
     public static final String RULES_SAVED = "Rules saved successfully";
+    public static final String RULES_FETCHED = "Rules fetched successfully";
+    public static final String TAMBOLA_RULES_FETCHED = "Tambola rules fetched successfully";
+    public static final String TAMBOLA_RULES_SAVED = "Tambola rules saved successfully";
 
 }

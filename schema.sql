@@ -195,6 +195,37 @@ VALUES (
            'Test-1',
            'TAMBOLA',
            2,
-           4,
+           10,
            '["PLAYER"]'
        );
+
+
+
+CREATE TABLE IF NOT EXISTS tambola_rule_config (
+                                                   id               BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                                   rule_type        VARCHAR(50) NOT NULL,
+    threshold        INT NULL,
+
+    created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT uk_tambola_rule_type
+    UNIQUE (rule_type)
+    );
+
+CREATE INDEX idx_tambola_rule_type
+    ON tambola_rule_config (rule_type);
+
+
+
+INSERT INTO tambola_rule_config (
+    rule_type,
+    threshold
+)
+VALUES
+    ('EARLY_FIVE',   5),
+    ('TOP_LINE',     NULL),
+    ('MIDDLE_LINE',  NULL),
+    ('BOTTOM_LINE',  NULL),
+    ('FULL_HOUSE',   7);

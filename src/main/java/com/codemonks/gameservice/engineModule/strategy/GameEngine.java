@@ -4,10 +4,13 @@ import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeLobbyDTO;
 import com.codemonks.gameservice.engineModule.dto.request.DiceRollRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineMoveRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.request.EngineStartGameRequestDTO;
+import com.codemonks.gameservice.engineModule.dto.request.TambolaRuleConfigRequestDTO;
 import com.codemonks.gameservice.engineModule.dto.response.DiceRollResponseDTO;
 import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
 import com.codemonks.gameservice.engineModule.model.BoardLayout;
 import com.codemonks.gameservice.enums.GameTypeEnum;
+
+import java.util.List;
 
 public interface GameEngine {
 
@@ -23,6 +26,11 @@ public interface GameEngine {
     default BoardLayout getBoardLayout() {
         throw new UnsupportedOperationException(
                 supports().name() + " does not support board layout");
+    }
+
+    default void replaceRules(Long roomId, List<TambolaRuleConfigRequestDTO> rules) {
+        // Non-Tambola games ke liye no-op — sirf Tambola ke paas
+        // Supabase realtime_tambola_rules sync hota hai.
     }
 
 }

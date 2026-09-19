@@ -24,6 +24,7 @@ services:
       start-game: /start-game
       submit-claim: /claim
       lobby: /lobby
+      rules: /rules
 
 supabase:
   url: https://urbbdsdaamsxtxthqxbm.supabase.co

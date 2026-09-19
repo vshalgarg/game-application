@@ -4,6 +4,7 @@
     import com.codemonks.gameservice.dto.request.*;
     import com.codemonks.gameservice.dto.response.RoomDetailsResponseDTO;
     import com.codemonks.gameservice.dto.response.RoomResponseDTO;
+    import com.codemonks.gameservice.dto.response.TambolaAvailableRuleResponseDTO;
     import com.codemonks.gameservice.engineModule.dto.realtime.RealtimeLobbyDTO;
     import com.codemonks.gameservice.engineModule.dto.realtime.enums.RoomRealtimeStatusEnum;
     import com.codemonks.gameservice.engineModule.dto.response.EngineGameStateResponseDTO;
@@ -12,9 +13,11 @@
     import com.codemonks.gameservice.entity.GameConfigEntity;
     import com.codemonks.gameservice.entity.PlayerEntity;
     import com.codemonks.gameservice.entity.RoomEntity;
+    import com.codemonks.gameservice.entity.TambolaRuleConfigEntity;
     import com.codemonks.gameservice.enums.GameTypeEnum;
     import com.codemonks.gameservice.enums.RoomPlayerRole;
     import com.codemonks.gameservice.enums.RoomStatusEnum;
+    import com.codemonks.gameservice.enums.TambolaRuleTypeEnum;
     import com.codemonks.gameservice.exceptions.GameException;
     import com.codemonks.gameservice.exceptions.ResourceNotFoundException;
     import com.codemonks.gameservice.mapper.LobbyMapper;
@@ -22,11 +25,13 @@
     import com.codemonks.gameservice.repository.GameConfigEntityRepository;
     import com.codemonks.gameservice.repository.PlayerEntityRepository;
     import com.codemonks.gameservice.repository.RoomEntityRepository;
+    import com.codemonks.gameservice.repository.TambolaRuleConfigRepository;
     import com.codemonks.gameservice.service.BotService;
     import com.codemonks.gameservice.service.GameService;
     import com.codemonks.gameservice.service.RoomService;
     import com.codemonks.gameservice.service.gameroom.factory.GameRoomStrategyFactory;
     import com.fasterxml.jackson.core.JsonProcessingException;
+    import com.fasterxml.jackson.core.type.TypeReference;
     import com.fasterxml.jackson.databind.ObjectMapper;
     import lombok.RequiredArgsConstructor;
     import lombok.extern.slf4j.Slf4j;
@@ -34,8 +39,13 @@
     import org.springframework.transaction.annotation.Transactional;
 
     import java.time.LocalDateTime;
+    import java.util.ArrayList;
+    import java.util.Comparator;
+    import java.util.HashSet;
     import java.util.List;
+    import java.util.Set;
     import java.util.UUID;
+    import java.util.stream.Collectors;
 
     import static com.codemonks.gameservice.constants.ResponseErrorCodes.*;
     import static com.codemonks.gameservice.enums.RoomStatusEnum.ACTIVE;
@@ -49,6 +59,7 @@
         private final RoomEntityRepository roomRepository;
         private final PlayerEntityRepository playerRepository;
         private final GameConfigEntityRepository gameConfigRepository;
+        private final TambolaRuleConfigRepository tambolaRuleConfigRepository;
         private final GameService gameService;
         private final GameEngineFactory gameEngineFactory;
         private final BotService botService;
@@ -401,6 +412,14 @@
             RoomEntity room = roomRepository.findByRoomCode(roomCode)
                     .orElseThrow(() -> new ResourceNotFoundException(ROOM_NOT_FOUND));
 
+            if (room.getGameType() != GameTypeEnum.TAMBOLA) {
+                throw new GameException(RULES_NOT_ALLOWED_FOR_GAME);
+            }
+
+            if (room.getStatus() != RoomStatusEnum.WAITING) {
+                throw new GameException(GAME_ALREADY_STARTED);
+            }
+
             PlayerEntity host = playerRepository.findByRoom_IdAndUserId(room.getId(), request.getHostUserId())
                     .orElseThrow(() -> new ResourceNotFoundException(USER_NOT_FOUND));
 
@@ -408,15 +427,160 @@
                 throw new GameException(ONLY_HOST_CAN_START_GAME);
             }
 
+            GameConfigEntity config = gameConfigRepository
+                    .findByIdTenantIdAndIdGameType(room.getTenantId(), room.getGameType())
+                    .orElseThrow(() -> new GameException(GAME_CONFIG_NOT_FOUND));
+
+            List<ResolvedRuleConfig> resolvedRules =
+                    validateAndResolveRuleConfigs(request.getRules(), config.getMaxPlayers());
+
             try {
-                String json = objectMapper.writeValueAsString(request.getRules());
+                String json = objectMapper.writeValueAsString(resolvedRules);
                 room.setRuleConfigJson(json);
                 roomRepository.save(room);
             } catch (JsonProcessingException e) {
-                throw new GameException(INVALID_REQUEST);   // "ResponseErrorCodes." prefix hataya
+                throw new GameException(INVALID_REQUEST);
             }
 
-            log.info("Rules saved. roomId={}, ruleCount={}", room.getId(), request.getRules().size());
+            log.info("Rules saved. roomId={}, ruleCount={}", room.getId(), resolvedRules.size());
+
+            // Tambola ke liye rule snapshot ko engine ke through Supabase
+            // (realtime_tambola_rules) me bhi sync karo — frontend direct-upsert
+            // ke bina bhi har client ko host ke latest selection mile.
+            gameEngineFactory.getStrategy(room.getGameType()).replaceRules(
+                    room.getId(),
+                    resolvedRules.stream()
+                            .map(r -> new com.codemonks.gameservice.engineModule.dto.request.TambolaRuleConfigRequestDTO(
+                                    r.getRuleType(), r.getOrder(), r.getMaxWinners(), r.getThreshold()))
+                            .collect(Collectors.toList())
+            );
+        }
+
+        /**
+         * Validates the host-provided rule configuration and resolves each rule's
+         * threshold from the MySQL master table (client-supplied threshold is ignored).
+         */
+        private List<ResolvedRuleConfig> validateAndResolveRuleConfigs(
+                List<SetRoomRulesRequestDTO.RuleSelection> selections,
+                Integer maxPlayersUpperBound) {
+
+            if (selections == null || selections.isEmpty()) {
+                throw new GameException(RULES_REQUIRED);
+            }
+
+            List<ResolvedRuleConfig> result = new ArrayList<>();
+            Set<String> seenRuleTypes = new HashSet<>();
+            Set<Integer> seenOrders = new HashSet<>();
+
+            // RuleType valid & active hota hai agar wo master table (tambola_rule_config) me exist karta hai.
+            for (SetRoomRulesRequestDTO.RuleSelection selection : selections) {
+
+                if (selection.getRuleType() == null || selection.getRuleType().isBlank()) {
+                    throw new GameException(RULE_TYPE_NOT_FOUND);
+                }
+
+                TambolaRuleTypeEnum knownType = TambolaRuleTypeEnum.fromName(selection.getRuleType());
+                if (knownType == null) {
+                    throw new GameException(RULE_TYPE_NOT_FOUND);
+                }
+
+                if (!seenRuleTypes.add(knownType.name())) {
+                    throw new GameException(DUPLICATE_RULE_TYPE);
+                }
+
+                TambolaRuleConfigEntity masterRule = tambolaRuleConfigRepository
+                        .findByRuleType(knownType.name())
+                        .orElseThrow(() -> new GameException(RULE_TYPE_NOT_FOUND));
+
+                if (selection.getOrder() == null || selection.getOrder() < 1) {
+                    throw new GameException(INVALID_RULE_ORDER);
+                }
+                if (!seenOrders.add(selection.getOrder())) {
+                    throw new GameException(INVALID_RULE_ORDER);
+                }
+
+                if (selection.getMaxWinners() == null
+                        || selection.getMaxWinners() < 1
+                        || (maxPlayersUpperBound != null && selection.getMaxWinners() > maxPlayersUpperBound)) {
+                    throw new GameException(INVALID_MAX_WINNERS);
+                }
+
+                result.add(new ResolvedRuleConfig(
+                        knownType.name(),
+                        selection.getOrder(),
+                        selection.getMaxWinners(),
+                        masterRule.getThreshold()
+                ));
+            }
+
+            // Order 1 se start hokar strictly sequential (no gaps) honi chahiye.
+            List<Integer> orders = result.stream()
+                    .map(ResolvedRuleConfig::getOrder)
+                    .sorted()
+                    .toList();
+            for (int i = 0; i < orders.size(); i++) {
+                if (orders.get(i) != i + 1) {
+                    throw new GameException(INVALID_RULE_ORDER);
+                }
+            }
+
+            return result;
+        }
+
+        private static class ResolvedRuleConfig {
+            private final String ruleType;
+            private final Integer order;
+            private final Integer maxWinners;
+            private final Integer threshold;
+
+            ResolvedRuleConfig(String ruleType, Integer order, Integer maxWinners, Integer threshold) {
+                this.ruleType = ruleType;
+                this.order = order;
+                this.maxWinners = maxWinners;
+                this.threshold = threshold;
+            }
+
+            public String getRuleType() { return ruleType; }
+            public Integer getOrder() { return order; }
+            public Integer getMaxWinners() { return maxWinners; }
+            public Integer getThreshold() { return threshold; }
+        }
+
+        @Transactional(readOnly = true)
+        @Override
+        public List<TambolaAvailableRuleResponseDTO> getRoomRules(String roomCode) {
+
+            log.info("Fetching rules for roomCode={}", roomCode);
+
+            RoomEntity room = roomRepository.findByRoomCode(roomCode)
+                    .orElseThrow(() -> new ResourceNotFoundException(ROOM_NOT_FOUND));
+
+            if (room.getGameType() != GameTypeEnum.TAMBOLA) {
+                throw new GameException(RULES_NOT_ALLOWED_FOR_GAME);
+            }
+
+            // Master rules MySQL se — room-specific selection (order/maxWinners)
+            // intentionally nahi, sirf available master rules return hote hain.
+            List<TambolaRuleConfigEntity> masterRules = tambolaRuleConfigRepository.findAll();
+
+            return masterRules.stream()
+                    .sorted(Comparator.comparingInt(m -> tambolaRuleTypeIndex(m.getRuleType())))
+                    .map(m -> {
+                        TambolaRuleTypeEnum meta = TambolaRuleTypeEnum.fromName(m.getRuleType());
+                        return TambolaAvailableRuleResponseDTO.builder()
+                                .ruleType(m.getRuleType())
+                                .displayName(meta != null ? meta.getDisplayName() : m.getRuleType())
+                                .description(meta != null ? meta.getDescription() : null)
+                                .threshold(m.getThreshold())
+                                .build();
+                    })
+                    .collect(Collectors.toList());
+        }
+
+        // Canonical order: EARLY_FIVE, TOP_LINE, MIDDLE_LINE, BOTTOM_LINE, FULL_HOUSE
+        private int tambolaRuleTypeIndex(String ruleType) {
+            TambolaRuleTypeEnum meta = TambolaRuleTypeEnum.fromName(ruleType);
+            return meta != null ? meta.ordinal() : Integer.MAX_VALUE;
         }
 
 
