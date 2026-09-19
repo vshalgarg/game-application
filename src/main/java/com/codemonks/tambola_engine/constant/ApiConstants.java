@@ -9,4 +9,5 @@ public final class ApiConstants {
     public static final String START_GAME = "/start-game";
     public static final String SUBMIT_CLAIM = "/claim";
     public static final String LOBBY = "/lobby";
+    public static final String RULES = "/rules";
 }
