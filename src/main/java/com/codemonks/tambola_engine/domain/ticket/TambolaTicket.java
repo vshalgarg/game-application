@@ -15,13 +15,10 @@ public class TambolaTicket {
 
     @JsonProperty("room_id")
     private Long roomId;
-
     @JsonProperty("ticket_id")
     private Long ticketId;
-
     @JsonProperty("player_id")
     private Long playerId;
-
     @JsonProperty("ticket_rows")
     private List<TicketRow> rows;
 }

@@ -27,10 +27,10 @@ public class Claim {
     private Long ticketId;
 
     @JsonProperty("rule_type")
-    private RuleTypeEnum ruleType;  // ✅ Change from String to RuleTypeEnum
+    private RuleTypeEnum ruleType;
 
     @JsonProperty("status")
-    private ClaimStatusEnum status;  // ✅ Change from String to ClaimStatusEnum
+    private ClaimStatusEnum status;
 
     @JsonProperty("submitted_at")
     private Instant submittedAt;

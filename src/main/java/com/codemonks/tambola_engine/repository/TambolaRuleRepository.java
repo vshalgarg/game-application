@@ -12,15 +12,7 @@ public interface TambolaRuleRepository {
     List<GameRule> findAllByRoom(Long roomId);
 
     void insertAll(List<GameRule> rules);
-
-    /**
-     * Agreed replace-semantics (PUT):
-     * host ke latest selection ko daalne se PEHLE is room ke puraane
-     * (stale) rules hata dete hain, taaki Supabase me stale rows na
-     * pade reh jaayein.
-     */
     void deleteByRoom(Long roomId);
-
     boolean updateWinnersIfVersionMatches(
             Long roomId, RuleTypeEnum ruleType,
             List<Long> newWinnerPlayerIds, Long expectedVersion);

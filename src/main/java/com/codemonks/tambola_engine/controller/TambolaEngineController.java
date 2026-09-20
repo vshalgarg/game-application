@@ -47,12 +47,10 @@ public class TambolaEngineController {
                 request.getPlayers().size()
         );
 
-        GameSetupResult result =
-                gameSetupService.initializeGame(request);
+        GameSetupResult result = gameSetupService.initializeGame(request);
 
         log.info("[START_GAME_RESPONSE] Room:{} Status:{} TotalTickets:{}",
                 request.getRoomId(), result.getStatus(), result.getTotalTicketsGenerated());
-
         return ResponseEntity.ok(result);
     }
 
@@ -67,49 +65,40 @@ public class TambolaEngineController {
                 request.getRuleType()
         );
 
-        ClaimResponseDTO result =
-                claimService.submitClaim(request);
+        ClaimResponseDTO result = claimService.submitClaim(request);
 
         log.info("[CLAIM_RESPONSE] Room:{} Player:{} Rule:{} ClaimId:{} Status:{}",
                 request.getRoomId(), request.getPlayerId(), request.getRuleType(),
                 result.getClaimId(), result.getStatus());
-
         return ResponseEntity.ok(result);
     }
 
     @PostMapping(LOBBY)
     public ResponseEntity<Void> publishLobby(
             @RequestBody RealtimeLobbyDTO request) {
-
         log.info(
                 "[LOBBY_REQUEST] Room:{} RoomCode:{}",
                 request.getRoomId(),
                 request.getRoomCode()
         );
-
         supabaseRealtimeService.publishLobbyState(request);
-
         return ResponseEntity.ok().build();
     }
 
     @PutMapping(RULES)
     public ResponseEntity<Void> replaceRules(
             @Valid @RequestBody ReplaceRulesRequestDTO request) {
-
         log.info(
                 "[RULES_PUT_REQUEST] Room:{} RuleCount:{}",
                 request.getRoomId(),
                 request.getRules() != null ? request.getRules().size() : 0
         );
-
         ruleService.replaceRules(request.getRoomId(), request.getRules());
-
         log.info(
                 "[RULES_PUT_RESPONSE] Room:{} Rules:{}",
                 request.getRoomId(),
                 request.getRules() != null ? request.getRules().size() : 0
         );
-
         return ResponseEntity.ok().build();
     }
 }

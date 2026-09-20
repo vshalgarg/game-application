@@ -7,24 +7,13 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Represents a single row of a Tambola ticket.
- * A standard row has 9 columns, of which exactly 5 contain a
- * number (1-90) and 4 are blank (represented as null).
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class TicketRow {
 
-    /** The 9 cells of this row. A null entry means that column is blank. */
     private List<Integer> numbers;
 
-    /**
-     * Convenience check used during claim validation
-     * (TOP_LINE/MIDDLE_LINE/BOTTOM_LINE) to see whether every
-     * non-blank number in this row has already been called.
-     */
     public boolean isFullyMarked(Set<Integer> calledNumbers) {
         return numbers.stream()
                 .filter(n -> n != null)

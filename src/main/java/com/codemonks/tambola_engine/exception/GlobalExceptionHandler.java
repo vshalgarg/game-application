@@ -10,8 +10,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-// Named bean - Ludo ke GlobalExceptionHandler se clash na ho isliye
-// (poora project ek hi Spring context me chalta hai).
 @RestControllerAdvice
 @Component("tambolaGlobalExceptionHandler")
 @Slf4j

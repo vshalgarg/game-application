@@ -24,8 +24,6 @@ public class RuleServiceImpl implements RuleService {
         log.info("[RULES_PUT_REQUEST] Room:{} RuleCount:{}", roomId,
                 ruleConfigs != null ? ruleConfigs.size() : 0);
 
-        // Host ke latest selection daalne se pehle is room ke puraane
-        // (stale) rules hata do — replace-semantics, koi row piche na bache.
         ruleRepository.deleteByRoom(roomId);
 
         if (ruleConfigs == null || ruleConfigs.isEmpty()) {
@@ -63,11 +61,6 @@ public class RuleServiceImpl implements RuleService {
         return rules;
     }
 
-    /**
-     * Threshold is a static/master rule property. Engine-side default ke
-     * against resolve hota hai — client/auth ya game-service kabhi bhi
-     * arbitrary threshold nahi bhejega. EARLY_FIVE keliye 5 default.
-     */
     private Integer resolveThreshold(RuleTypeEnum ruleType, Integer requested) {
         if (ruleType == RuleTypeEnum.EARLY_FIVE && (requested == null || requested < 1)) {
             return 5;

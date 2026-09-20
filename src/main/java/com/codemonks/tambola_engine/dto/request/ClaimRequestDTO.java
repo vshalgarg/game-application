@@ -15,13 +15,10 @@ public class ClaimRequestDTO {
 
     @NotNull(message = "Room ID is required")
     private Long roomId;
-
     @NotNull(message = "Player ID is required")
     private Long playerId;
-
     @NotNull(message = "Ticket ID is required")
     private Long ticketId;
-
     @NotNull(message = "Rule type is required")
     private RuleTypeEnum ruleType;
 }

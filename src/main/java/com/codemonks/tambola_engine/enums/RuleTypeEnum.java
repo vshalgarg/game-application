@@ -1,7 +1,6 @@
 
 package com.codemonks.tambola_engine.enums;
 
-
 public enum RuleTypeEnum {
     EARLY_FIVE,
     TOP_LINE,

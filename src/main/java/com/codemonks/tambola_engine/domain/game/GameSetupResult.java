@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-// GameSetupService.initializeGame() ka return type.
+
 
 @Data
 @NoArgsConstructor
@@ -14,12 +14,6 @@ import lombok.NoArgsConstructor;
 public class GameSetupResult {
 
     private Long roomId;
-
-    // Ab dynamic hai (state.getStatus().name() se aata hai
-    // GameSetupServiceImpl me) - hamesha "INITIALIZED" nahi hoga,
-    // Option-A design ke hisaab se seedha "RUNNING" ho sakta hai.
     private String status;
-
-
     private Integer totalTicketsGenerated;
 }

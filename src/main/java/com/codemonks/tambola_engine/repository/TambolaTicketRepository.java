@@ -8,8 +8,6 @@ import java.util.List;
 public interface TambolaTicketRepository {
 
     TambolaTicket findById(Long ticketId);
-
     List<TambolaTicket> findByRoomAndPlayer(Long roomId, Long playerId);
-
     void insertAll(List<TambolaTicket> tickets);
 }

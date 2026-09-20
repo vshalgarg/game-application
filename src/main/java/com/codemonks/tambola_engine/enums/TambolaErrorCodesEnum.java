@@ -21,21 +21,10 @@ public enum TambolaErrorCodesEnum {
     PLAYER_HAS_NO_TICKETS(4013, "Player has no tickets in this room."),
     TICKET_NOT_OWNED(4014, "Ticket does not belong to this player."),
 
-    // NAYA: jab rule ke saare winner-slots already fill ho chuke hon
-    // (jaise limit 5 thi, 5 log jeet chuke, 6th player claim kare)
     RULE_SLOTS_FULL(4015, "Sorry, all winner-slots for this rule are already taken."),
-
-    // NAYA: jab claim kisi aise rule pe aaye jo abhi active nahi hai
-    // (pehle ka rule abhi complete nahi hua — sequential rule progression)
     RULE_NOT_ACTIVE(4016, "This claim is not open yet. Complete the previous rule first."),
-
-    // Ticket generation
     TICKET_GENERATION_FAILED(4020, "Failed to generate a valid ticket layout."),
-
-    // External / Supabase
     SUPABASE_STATE_ERROR(5001, "Failed to sync game state with Supabase."),
-
-    // Internal
     INTERNAL_ERROR(5000, "Internal server error.");
 
     private final int code;

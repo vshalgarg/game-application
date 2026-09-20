@@ -32,8 +32,7 @@ public class TambolaGameStateRepositoryImpl implements TambolaGameStateRepositor
 
         try {
 
-            List<GameStateRow> result =
-                    tambolaSupabaseRestClient.get()
+            List<GameStateRow> result = tambolaSupabaseRestClient.get()
                             .uri(uriBuilder -> uriBuilder
                                     .path("/rest/v1/" + table)
                                     .queryParam(
@@ -52,21 +51,17 @@ public class TambolaGameStateRepositoryImpl implements TambolaGameStateRepositor
             if (result == null || result.isEmpty()) {
                 throw new RoomNotFoundException(roomId);
             }
-
             return result.get(0).toDomain();
 
         } catch (RoomNotFoundException e) {
-
             throw e;
 
         } catch (Exception e) {
-
             log.error(
                     "Failed to fetch game-state. roomId={}",
                     roomId,
                     e
             );
-
             throw new SupabaseStateException(
                     "Failed to fetch game-state for roomId=" + roomId,
                     e
@@ -217,11 +212,6 @@ public class TambolaGameStateRepositoryImpl implements TambolaGameStateRepositor
                 return List.of();
             }
 
-            /*
-             * next_tick_at is now a real TIMESTAMPTZ column, so the
-             * due-rooms filter runs server-side (next_tick_at=lte.now).
-             * The Java-side filter below is kept as a safety fallback.
-             */
             return result.stream()
                     .map(GameStateRow::toDomain)
                     .filter(state ->
@@ -257,12 +247,6 @@ public class TambolaGameStateRepositoryImpl implements TambolaGameStateRepositor
     ) {
 
         TambolaGameState toDomain() {
-
-            /*
-             * players is never null because the database column
-             * is NOT NULL and runtime code should also work with
-             * an empty player list.
-             */
             List<PlayerDTO> statePlayers =
                     players != null
                             ? players
@@ -292,21 +276,10 @@ public class TambolaGameStateRepositoryImpl implements TambolaGameStateRepositor
                     .build();
         }
 
-        /**
-         * Converts Tambola domain state into a dedicated
-         * realtime_tambola_game_state row (one field per column).
-         */
         static GameStateRow fromDomain(
                 TambolaGameState state
         ) {
 
-            /*
-             * IMPORTANT:
-             *
-             * realtime_tambola_game_state.players is NOT NULL.
-             *
-             * Therefore we must NEVER send null here.
-             */
             List<PlayerDTO> players =
                     state.getPlayers() != null
                             ? state.getPlayers()

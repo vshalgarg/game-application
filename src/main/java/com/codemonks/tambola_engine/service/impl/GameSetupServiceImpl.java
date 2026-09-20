@@ -43,13 +43,6 @@ public class GameSetupServiceImpl implements GameSetupService {
                 request.getTimerIntervalSeconds(),
                 request.getPlayers().stream().map(PlayerDTO::getPlayerId).toList());
 
-        // ---------------------------------------------------------
-        // 1. Rules — per-resource idempotency check.
-        //    Agar is room ke liye rules already Supabase me hain
-        //    (pichli successful/partial attempt se), dobara insert
-        //    mat karo - warna (room_id, rule_type) primary-key
-        //    conflict aayega (jo humne production-logs me dekha).
-        // ---------------------------------------------------------
         List<GameRule> existingRules = ruleRepository.findAllByRoom(request.getRoomId());
 
         if (!existingRules.isEmpty()) {
@@ -62,14 +55,6 @@ public class GameSetupServiceImpl implements GameSetupService {
                     request.getRoomId(), activeRules.size());
         }
 
-        // ---------------------------------------------------------
-        // 2. Tickets — per-player idempotency check.
-        //    tambola_tickets ke paas koi natural unique-constraint
-        //    nahi hai (ticket_id sirf auto-increment hai) - isliye
-        //    ye check khud humein karna padta hai, warna retry pe
-        //    silently duplicate tickets ban jaate hain (koi error
-        //    nahi aata, jo sabse khatarnak scenario hai).
-        // ---------------------------------------------------------
         List<PlayerDTO> players = new ArrayList<>();
         int totalTickets = 0;
 
@@ -107,18 +92,11 @@ public class GameSetupServiceImpl implements GameSetupService {
             players.add(playerDTO);
         }
 
-        // ---------------------------------------------------------
-        // 3. Room-state row — idempotency check.
-        //    findById() RoomNotFoundException throw karta hai jab
-        //    row na mile (doosri repos ki tarah null/empty-list nahi
-        //    deta) - isliye try-catch se check karna padta hai.
-        // ---------------------------------------------------------
         TambolaGameState existingState = null;
         try {
             existingState = roomRepository.findById(request.getRoomId());
         } catch (RoomNotFoundException e) {
-            // Expected on first-ever call for this room - room abhi tak
-            // initialize nahi hui, aage insert karenge.
+
             log.debug("[TAMBOLA_SETUP_ROOM_ABSENT] Room:{} not found - will be created", request.getRoomId());
         }
 
@@ -183,11 +161,6 @@ public class GameSetupServiceImpl implements GameSetupService {
         return rules;
     }
 
-    /**
-     * Threshold is a static/master rule property. Engine-side default ke
-     * against resolve hota hai — client/auth kabhi bhi arbitrary threshold
-     * nahi bhejega. EARLY_FIVE keliye 5 default.
-     */
     private Integer resolveThreshold(RuleTypeEnum ruleType, Integer requested) {
         if (ruleType == RuleTypeEnum.EARLY_FIVE && (requested == null || requested < 1)) {
             return 5;
@@ -201,7 +174,6 @@ public class GameSetupServiceImpl implements GameSetupService {
         if (requested == null || requested < 1) {
             return 1;
         }
-
         if (requested > MAX_TICKETS_PER_PLAYER) {
             log.warn("[TAMBOLA_TICKET_LIMIT] Player:{} Requested:{} Max:{}",
                     playerDTO.getPlayerId(), requested, MAX_TICKETS_PER_PLAYER);

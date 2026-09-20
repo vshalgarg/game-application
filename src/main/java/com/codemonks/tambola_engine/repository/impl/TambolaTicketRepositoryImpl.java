@@ -68,7 +68,7 @@ public class TambolaTicketRepositoryImpl implements TambolaTicketRepository {
         if (tickets.isEmpty()) return;
         String table = properties.getTables().getTambolaTickets();
         try {
-            // ✅ Use getRows() - @Data annotation se auto-generated hai
+
             List<InsertRow> body = tickets.stream()
                     .map(t -> new InsertRow(t.getRoomId(), t.getPlayerId(), t.getRows()))
                     .toList();
@@ -84,6 +84,5 @@ public class TambolaTicketRepositoryImpl implements TambolaTicketRepository {
             throw new SupabaseStateException("Failed to insert tickets", e);
         }
     }
-
     private record InsertRow(Long room_id, Long player_id, List<TicketRow> ticket_rows) {}
 }

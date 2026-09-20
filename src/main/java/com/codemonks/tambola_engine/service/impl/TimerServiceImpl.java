@@ -18,17 +18,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-// AUTONOMOUS POLLER — Spring ke @EnableScheduling/@Scheduled infra ka
-// use NAHI karta, jaanbujh kar. Wajah: @Scheduled poore application-
-// context me ek SHARED TaskScheduler-bean pe depend karta hai - agar
-// kal Ludo/TicTacToe bhi apna @Scheduled ya SchedulingConfigurer add
-// karein, to unka aur Tambola ka scheduler-config ek-doosre ko
-// silently override kar sakta hai (ScheduledTaskRegistrar context-wide
-// singleton hota hai). Isse bachne ke liye ye class apna KHUD KA,
-// fully-isolated ScheduledExecutorService manage karti hai - koi bhi
-// Spring-bean-naming/uniqueness-conflict possible hi nahi hai, chahe
-// combo-app me raho ya kal alag microservice bano, code bilkul same
-// rahega.
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -40,9 +29,6 @@ public class TimerServiceImpl {
     private final NumberGeneratorService numberGeneratorService;
 
     private ScheduledExecutorService executor;
-
-    // Bean fully construct hone ke baad hi thread start karo (constructor
-    // ke andar nahi - taaki dependencies pehle se hi wire ho chuki hon).
     @PostConstruct
     public void start() {
         executor = Executors.newSingleThreadScheduledExecutor(
@@ -58,17 +44,12 @@ public class TimerServiceImpl {
         log.info("[TAMBOLA_POLLER_STARTED] interval={}ms", POLL_INTERVAL_MS);
     }
 
-    // App shutdown hote waqt thread ko cleanly band karo.
     @PreDestroy
     public void stop() {
         if (executor != null) {
             executor.shutdown();
         }
     }
-
-    // ScheduledExecutorService ka rule: agar scheduled-task ke andar
-    // exception uncaught gaya, to poora recurring-schedule silently
-    // hamesha ke liye ruk jaata hai. Isliye try-catch yahan mandatory hai.
     private void safeProcessDueRooms() {
         try {
             processDueRooms();

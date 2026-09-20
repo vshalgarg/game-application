@@ -7,8 +7,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-// Claim submit karne ke baad caller (controller) ko ye response milta
-// hai - approved hua ya reject, konsi rule thi, kaunsi game-status ab hai.
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

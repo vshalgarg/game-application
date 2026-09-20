@@ -19,7 +19,6 @@ public class TambolaClaimRepositoryImpl implements TambolaClaimRepository {
     private final RestClient tambolaSupabaseRestClient;
     private final SupabaseProperties properties;
 
-    // Sirf insert — audit-record hai, kabhi update nahi hota, isliye version bhi nahi chahiye.
     @Override
     public void insert(Claim claim) {
         String table = properties.getTables().getTambolaClaims();
@@ -29,8 +28,8 @@ public class TambolaClaimRepositoryImpl implements TambolaClaimRepository {
                     claim.getRoomId(),
                     claim.getPlayerId(),
                     claim.getTicketId(),
-                    claim.getRuleType().name(),  // ✅ Convert Enum to String
-                    claim.getStatus().name()     // ✅ Convert Enum to String
+                    claim.getRuleType().name(),
+                    claim.getStatus().name()
             );
 
             tambolaSupabaseRestClient.post()

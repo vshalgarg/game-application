@@ -17,18 +17,14 @@ public class SupabaseProperties {
     private String apiKey;
     private Tables tables;
 
-    // Tambola apna dedicated game-state table use karta hai
-    // (realtime_tambola_game_state) - shared realtime_game_state me
-    // ab kuch NAHI likhta. Room lobby sirf realtime_room_lobby se
-    // broadcast hota hai. Tickets/claims/rules apne apne tables me.
     @Getter
     @Setter
     public static class Tables {
         private String realtimeGameState;
         private String realtimeRoomLobby;
-        private String realtimeTambolaRules;        // realtime_tambola_rules
-        private String tambolaTickets;              // tambola_tickets (persisted only)
+        private String realtimeTambolaRules;
+        private String tambolaTickets;
         private String tambolaClaims;
-        private String realtimeTambolaGameState;    // realtime_tambola_game_state
+        private String realtimeTambolaGameState;
     }
 }
