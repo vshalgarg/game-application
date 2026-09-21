@@ -9,9 +9,13 @@ ludo:
   board:
     layout-file: board-layout.json
 
+#supabase:
+ # url: https://urbbdsdaamsxtxthqxbm.supabase.co
+  #api-key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyYmJkc2RhYW1zeHR4dGhxeGJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODAzNDYsImV4cCI6MjA5Nzk1NjM0Nn0.NswzTNj_X1gQC7YE9zjofvN49skiqX3_4Gka69UsLgY
 supabase:
-  url: https://urbbdsdaamsxtxthqxbm.supabase.co
-  api-key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyYmJkc2RhYW1zeHR4dGhxeGJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODAzNDYsImV4cCI6MjA5Nzk1NjM0Nn0.NswzTNj_X1gQC7YE9zjofvN49skiqX3_4Gka69UsLgY
+  url: https://veuhkewyrnuaofnanycz.supabase.co
+  api-key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZldWhrZXd5cm51YW9mbmFueWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5NjUzNDMsImV4cCI6MjEwNTU0MTM0M30.1fCbWLiTuk4kcsnLmYBnsOmyRte7r7gutVW0cnspacg
+
   tables:
     realtime-game-state: realtime_game_state
     realtime-room-lobby: realtime_room_lobby
