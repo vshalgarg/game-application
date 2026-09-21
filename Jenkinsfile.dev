@@ -81,7 +81,7 @@ pipeline {
                             variable: 'MYSQL_PASSWORD'
                     ),
                     string(
-                            credentialsId: 'TIC_TAC_TOE_SUPABASE_SECRET_KEY_DEV',
+                            credentialsId: 'TIC_TAC_TOE_SUPABASE_SECRET_KEY_DEV_NEW',
                             variable: 'TIC_TAC_TOE_SUPABASE_SECRET_KEY_DEV'
                     )
                 ]) {
