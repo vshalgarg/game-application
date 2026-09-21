@@ -3,45 +3,39 @@ import { initializeGameSounds, playBackgroundMusic } from "../services/soundMana
 
 const useGameBackgroundMusic = (gameType) => {
   useEffect(() => {
+    if (!gameType) return undefined;
+
+    let cancelled = false;
     let musicStarted = false;
 
-    const removeInteractionListener = () => {
-      window.removeEventListener("pointerdown", resumeMusic);
-    };
-
     const resumeMusic = async () => {
-      if (musicStarted) {
-        return;
-      }
+      if (cancelled || musicStarted) return;
 
       const started = await playBackgroundMusic(gameType);
-
       if (started) {
         musicStarted = true;
-        removeInteractionListener();
+        window.removeEventListener("pointerdown", resumeMusic);
       }
     };
 
     const initializeSounds = async () => {
-      // Load all sounds for gameType
       await initializeGameSounds(gameType);
+      if (cancelled) return;
 
-      // start bg music 
       const started = await playBackgroundMusic(gameType);
-
       if (started) {
         musicStarted = true;
-      } else {
-        
-        // Browser blocked autoplay, music plays on first user interaction
-        window.addEventListener("pointerdown", resumeMusic);
+        return;
       }
+
+      window.addEventListener("pointerdown", resumeMusic);
     };
 
     initializeSounds();
 
     return () => {
-      removeInteractionListener();
+      cancelled = true;
+      window.removeEventListener("pointerdown", resumeMusic);
     };
   }, [gameType]);
 };

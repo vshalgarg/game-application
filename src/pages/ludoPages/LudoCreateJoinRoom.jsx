@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { FaBorderAll, FaGamepad, FaPlusCircle, FaSignInAlt } from "react-icons/fa";
 import { createRoom, joinRoom } from "../../services/roomService";
 import { useSnackbar } from "../../context/SnackbarContext";
@@ -8,7 +8,8 @@ import PageShell from "../../components/layout/PageShell";
 import GameZoneLogo from "../../components/brand/GameZoneLogo";
 import ModeOption from "../../components/ui/ModeOption";
 import TextField from "../../components/ui/TextField";
-import { playSound, initializeGameSounds, } from "../../services/soundManager";
+import { playSound } from "../../services/soundManager";
+import useGameBackgroundMusic from "../../hooks/useGameBackgroundMusic";
 
 const LudoCreateJoinRoom = () => {
   const navigate = useNavigate();
@@ -19,10 +20,7 @@ const LudoCreateJoinRoom = () => {
   const [roomCode, setRoomCode] = useState("");
   const [joining, setJoining] = useState(false);
 
-  // for loading sounds on refresh
-  useEffect(() => {
-  initializeGameSounds("LUDO");
-  }, []);
+  useGameBackgroundMusic("LUDO");
 
   const handleCreateRoom = async () => {
     playSound("LUDO", "BUTTON_CLICK");

@@ -50,10 +50,10 @@ const GameRoom = () => {
   const currentUserId = auth?.userId;
 
   const handleBackToHome = () => {
-  playSound("TIC_TAC_TOE", "BUTTON CLICK");
-  stopBackgroundMusic("TIC_TAC_TOE");
-  navigate("/");
-};
+    playSound("TIC_TAC_TOE", "BUTTON CLICK");
+    stopBackgroundMusic();
+    navigate("/");
+  };
 
   // for loading sounds on refresh
   useGameBackgroundMusic("TIC_TAC_TOE");
@@ -73,7 +73,7 @@ const GameRoom = () => {
         if (winner !== currentUserId) {
           playSound("TIC_TAC_TOE", "GAME_LOSE");
         }
-      }, 2000); 
+      }, 2000);
 
       return () => clearTimeout(timer);
     } else {
@@ -100,7 +100,7 @@ const GameRoom = () => {
   useEffect(() => {
     const fetchRole = async () => {
       const { data, error } = await supabase
-        .from("realtime_room_lobby") 
+        .from("realtime_room_lobby")
         .select("players")
         .eq("room_code", roomCode)
         .single();
@@ -141,62 +141,57 @@ const GameRoom = () => {
       ]);
       setWinner(null);
       setStatus("INITIALIZED");
-      setWinningPattern(null); 
+      setWinningPattern(null);
     } catch (err) {
       console.error("Restart failed:", err);
     }
   };
 
-  // Realtime Listener 
+  // Realtime Listener
   useGameRealtime({
     roomCode,
 
     onGameUpdate: (game) => {
-      const newBoard =
-        game.game_state_data?.board || [
-          ["", "", ""],
-          ["", "", ""],
-          ["", "", ""],
-        ];
+      const newBoard = game.game_state_data?.board || [
+        ["", "", ""],
+        ["", "", ""],
+        ["", "", ""],
+      ];
 
       const previousBoard = previousBoardRef.current;
 
       if (previousBoard) {
-      let movedSymbol = null;
+        let movedSymbol = null;
 
-      // bot played move on ui
-      for (let row = 0; row < 3; row++) {
-        for (let col = 0; col < 3; col++) {
-          if (
-            previousBoard[row][col] !== newBoard[row][col] &&
-            newBoard[row][col] !== ""
-          ) {
-            movedSymbol = newBoard[row][col];
-            break;
+        // bot played move on ui
+        for (let row = 0; row < 3; row++) {
+          for (let col = 0; col < 3; col++) {
+            if (previousBoard[row][col] !== newBoard[row][col] && newBoard[row][col] !== "") {
+              movedSymbol = newBoard[row][col];
+              break;
+            }
           }
+
+          if (movedSymbol) break;
         }
 
-        if (movedSymbol) break;
-      }
-    
+        if (movedSymbol) {
+          const movedPlayer = game.players?.find((player) => player.side === movedSymbol);
 
-      if (movedSymbol) {
-        const movedPlayer = game.players?.find((player) => player.side === movedSymbol);
+          if (movedPlayer) {
+            const isBotMove = movedPlayer.isBot === true;
 
-        if (movedPlayer) {
-          const isBotMove = movedPlayer.isBot === true;
-
-          // for the sound of bot move through realtime update
-          if (isBotMove) {
-            if (movedSymbol === "X") {
-              playSound("TIC_TAC_TOE", "TIC_TAC_MOVE");
-            } else if (movedSymbol === "O") {
-              playSound("TIC_TAC_TOE", "OTHER_PLAYER_MOVE");
+            // for the sound of bot move through realtime update
+            if (isBotMove) {
+              if (movedSymbol === "X") {
+                playSound("TIC_TAC_TOE", "TIC_TAC_MOVE");
+              } else if (movedSymbol === "O") {
+                playSound("TIC_TAC_TOE", "OTHER_PLAYER_MOVE");
+              }
             }
           }
         }
       }
-    }
 
       // board stored for the next realtime event
       previousBoardRef.current = newBoard;
@@ -253,22 +248,22 @@ const GameRoom = () => {
   // Handle board click
   const handleCellClick = async (index) => {
     try {
-    // Disable board after winner is declared
-    if (winner) {
-      return;
-    }
+      // Disable board after winner is declared
+      if (winner) {
+        return;
+      }
 
-    const row = Math.floor(index / 3);
-    const col = index % 3;
-    
-    myMovePendingRef.current = true;
+      const row = Math.floor(index / 3);
+      const col = index % 3;
 
-    // sound on cell click
-    if (mySide === "X") {
-      playSound("TIC_TAC_TOE", "TIC_TAC_MOVE");
-    } else if (mySide === "O") {
-      playSound("TIC_TAC_TOE", "OTHER_PLAYER_MOVE");
-    }
+      myMovePendingRef.current = true;
+
+      // sound on cell click
+      if (mySide === "X") {
+        playSound("TIC_TAC_TOE", "TIC_TAC_MOVE");
+      } else if (mySide === "O") {
+        playSound("TIC_TAC_TOE", "OTHER_PLAYER_MOVE");
+      }
       const res = await makeMove({
         roomCode,
         userId: currentUserId,
@@ -444,5 +439,3 @@ const GameRoom = () => {
 };
 
 export default GameRoom;
-
-
