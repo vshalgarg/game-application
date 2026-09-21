@@ -112,28 +112,35 @@ export const playSound = (gameType, eventName) => {
 };
 
 // playing bg music
-export const playBackgroundMusic = (gameType) => {
+export const playBackgroundMusic = async (gameType) => {
   const audio = audioCache[gameType]?.["BACKGROUND_MUSIC"];
 
   if (!audio) {
     console.warn(`Background music not found for ${gameType}`);
-    return;
+    return false;
   }
 
-  // music already playing 
+  // Music is already playing
   if (!audio.paused) {
-    return;
+    return true;
   }
 
   audio.loop = true;
 
-  audio.play()
-    .then(() => {
-      console.info(`Background music started: ${gameType}`);
-    })
-    .catch((error) => {
-      console.error(`Failed to play background music: ${gameType}`,error);
-    });
+  try {
+    await audio.play();
+
+    console.info(`Background music started: ${gameType}`);
+
+    return true;
+  } catch (error) {
+    console.warn(
+      `Failed to play background music: ${gameType}`,
+      error
+    );
+
+    return false;
+  }
 };
 
 // stoping bg music

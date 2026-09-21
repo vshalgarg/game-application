@@ -12,7 +12,8 @@ import { useSnackbar } from "../context/SnackbarContext";
 import { useAuth } from "../context/AuthContext";
 import PageShell from "../components/layout/PageShell";
 import Button from "../components/ui/Button";
-import { playSound, initializeGameSounds, stopBackgroundMusic } from "../services/soundManager";
+import { playSound, stopBackgroundMusic } from "../services/soundManager";
+import useGameBackgroundMusic from "../hooks/useGameBackgroundMusic";
 
 const RestartGameButton = ({ onClick }) => (
   <Button onClick={onClick}>
@@ -55,9 +56,7 @@ const GameRoom = () => {
 };
 
   // for loading sounds on refresh
-  useEffect(() => {
-    initializeGameSounds("TIC_TAC_TOE");
-  }, []);
+  useGameBackgroundMusic("TIC_TAC_TOE");
 
   // delay in winner pop up for line animation and cell highlighting
   useEffect(() => {
@@ -180,7 +179,7 @@ const GameRoom = () => {
         if (movedSymbol) break;
       }
     
-      
+
       if (movedSymbol) {
         const movedPlayer = game.players?.find((player) => player.side === movedSymbol);
 

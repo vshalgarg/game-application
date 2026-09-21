@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { FaCopy, FaGamepad, FaRobot, FaSignal, FaTrash, FaUserCircle } from "react-icons/fa";
 import { LuX } from "react-icons/lu";
 import { useSnackbar } from "../context/SnackbarContext";
@@ -13,7 +13,8 @@ import PageShell from "../components/layout/PageShell";
 import GameZoneLogo from "../components/brand/GameZoneLogo";
 import Button from "../components/ui/Button";
 import ExitGamePopup from "../components/ui/ExitGamePopup";
-import { playSound, initializeGameSounds } from "../services/soundManager";
+import { playSound } from "../services/soundManager";
+import useGameBackgroundMusic from "../hooks/useGameBackgroundMusic";
 
 const BOT_DIFFICULTIES = [
   {
@@ -52,9 +53,7 @@ const WaitingRoom = () => {
   useBackExitGuard(openExitPopup);
 
   // for loading sounds on refresh
-  useEffect(() => {
-    initializeGameSounds("TIC_TAC_TOE");
-  }, []);
+  useGameBackgroundMusic("TIC_TAC_TOE");
 
   const { players } = useWaitingRoomRealtime(roomCode);
 
