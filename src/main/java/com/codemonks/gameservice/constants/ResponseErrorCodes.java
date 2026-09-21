@@ -41,7 +41,8 @@ public enum ResponseErrorCodes {
     INVALID_RULE_ORDER(1024, "Rule order must be unique, start from 1 and be sequential"),
     INVALID_MAX_WINNERS(1025, "maxWinners must be greater than 0 and within the allowed limit"),
     RULE_TYPE_NOT_FOUND(1026, "Invalid rule type"),
-    RULES_NOT_ALLOWED_FOR_GAME(1027, "Rules are not supported for this game type");
+    RULES_NOT_ALLOWED_FOR_GAME(1027, "Rules are not supported for this game type"),
+    RULES_ALREADY_LOCKED(1028, "Rules have already been saved for this room and cannot be changed");
 
 
 
