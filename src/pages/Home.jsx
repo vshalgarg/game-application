@@ -8,7 +8,8 @@ import PageShell from "../components/layout/PageShell";
 import GameZoneLogo from "../components/brand/GameZoneLogo";
 import ModeOption from "../components/ui/ModeOption";
 import TextField from "../components/ui/TextField";
-import { playSound, initializeGameSounds } from "../services/soundManager";
+import { playSound } from "../services/soundManager";
+import useGameBackgroundMusic from "../hooks/useGameBackgroundMusic";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -19,9 +20,7 @@ const Home = () => {
   const [joining, setJoining] = useState(false);
 
   // for loading sounds on refresh
-  useEffect(() => {
-    initializeGameSounds("TIC_TAC_TOE");
-  }, []);
+  useGameBackgroundMusic("TIC_TAC_TOE");
 
   const handleCreateRoom = async () => {
     playSound("TIC_TAC_TOE", "BUTTON CLICK");

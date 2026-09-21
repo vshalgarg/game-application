@@ -29,9 +29,9 @@ const Landing = () => {
       await loadGameSounds(gameType, soundResponse);
 
       // playing bg music
-      if (gameType === "TIC_TAC_TOE") {
+      
         playBackgroundMusic(gameType);
-      }
+      
     }
 
     if (game.path) {
