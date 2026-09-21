@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { FaCopy, FaGamepad, FaRobot, FaUserCircle, FaTrash } from "react-icons/fa";
 import { LuX } from "react-icons/lu";
 import { useSnackbar } from "../../context/SnackbarContext";
@@ -13,7 +13,8 @@ import PageShell from "../../components/layout/PageShell";
 import GameZoneLogo from "../../components/brand/GameZoneLogo";
 import Button from "../../components/ui/Button";
 import ExitGamePopup from "../../components/ui/ExitGamePopup";
-import { playSound, initializeGameSounds, } from "../../services/soundManager";
+import { playSound } from "../../services/soundManager";
+import useGameBackgroundMusic from "../../hooks/useGameBackgroundMusic";
 
 const LudoWaitingRoom = () => {
   const navigate = useNavigate();
@@ -31,10 +32,7 @@ const LudoWaitingRoom = () => {
   const { players } = useWaitingRoomRealtime(roomCode);
   console.info("Players in waiting room", players);
 
-  // for loading sounds on refresh
-  useEffect(() => {
-  initializeGameSounds("LUDO");
-  }, []);
+  useGameBackgroundMusic("LUDO");
 
   useRoomRealtime({
     roomCode,
@@ -59,9 +57,9 @@ const LudoWaitingRoom = () => {
         showSnackbar("Waiting for another player...", "error");
         return;
       }
-      const result = await startRoom({ 
-        roomCode, 
-        userId: currentUserId 
+      const result = await startRoom({
+        roomCode,
+        userId: currentUserId,
       });
       showSnackbar(result.message, "success");
     } catch (error) {

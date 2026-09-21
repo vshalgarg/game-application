@@ -10,7 +10,13 @@ import WinModal from "../../modals/FinalWinner.jsx";
 import ExitGamePopup from "../../components/ui/ExitGamePopup";
 import useBackExitGuard from "../../hooks/useBackExitGuard";
 import { LuX } from "react-icons/lu";
-import { playSound, playLoopingSound, stopSound, initializeGameSounds, } from "../../services/soundManager";
+import {
+  playSound,
+  playLoopingSound,
+  stopSound,
+  stopBackgroundMusic,
+} from "../../services/soundManager";
+import useGameBackgroundMusic from "../../hooks/useGameBackgroundMusic";
 
 const LudoGameRoom = () => {
   const { auth } = useAuth();
@@ -46,7 +52,7 @@ const LudoGameRoom = () => {
   const turnTransitionTimeoutRef = useRef(null);
 
   // 800ms spin and 800ms CSS transform
-  const DICE_SETTLE_DELAY = 1600; 
+  const DICE_SETTLE_DELAY = 1600;
   const revealTimeoutRef = useRef(null);
 
   // for winning players confetti
@@ -69,17 +75,14 @@ const LudoGameRoom = () => {
   const currentUserId = auth?.userId;
 
   useEffect(() => {
-  const latestGrid = boardData?.grid?.[0];
+    const latestGrid = boardData?.grid?.[0];
 
-  if (latestGrid) {
-    boardGridRef.current = latestGrid;
-  }
+    if (latestGrid) {
+      boardGridRef.current = latestGrid;
+    }
   }, [boardData]);
 
-  // for loading sounds on refresh
-  useEffect(() => {
-  initializeGameSounds("LUDO");
-  }, []);
+  useGameBackgroundMusic("LUDO");
 
   // fetch board layout from API
   useEffect(() => {
@@ -102,8 +105,7 @@ const LudoGameRoom = () => {
           setBoardError(error.message || "Failed to load board");
         }
       } finally {
-        if (!cancelled)
-          setBoardLoading(false);
+        if (!cancelled) setBoardLoading(false);
       }
     };
 
@@ -119,7 +121,7 @@ const LudoGameRoom = () => {
     roomCode,
 
     onGameUpdate: async (game) => {
-      // if animation currently running don't process the update 
+      // if animation currently running don't process the update
       if (animatingRef.current) {
         pendingUpdateRef.current = game;
         return;
@@ -142,7 +144,6 @@ const LudoGameRoom = () => {
       if (!wasFinished && player.hasFinished) {
         triggerCelebration(player.playerId);
         playSound("LUDO", "SINGLE_PLAYER_WIN");
-
       }
       previousFinishedRef.current[player.playerId] = player.hasFinished;
     });
@@ -157,20 +158,27 @@ const LudoGameRoom = () => {
     // pendingDice grew for the relevant player for avoiding dice animation on make move updated at
     let pendingDiceIncreased = false;
     if (previousBoardRef.current) {
-      const oldPlayer = previousBoardRef.current.players.find((p) => p.playerId === relevantPlayerId);
+      const oldPlayer = previousBoardRef.current.players.find(
+        (p) => p.playerId === relevantPlayerId,
+      );
       const newPlayer = board.players.find((p) => p.playerId === relevantPlayerId);
       const oldLen = oldPlayer?.pendingDice?.length ?? 0;
       const newLen = newPlayer?.pendingDice?.length ?? 0;
       pendingDiceIncreased = newLen > oldLen;
     }
 
-    // animation when all token at base and pending dice null 
+    // animation when all token at base and pending dice null
     const relevantPlayer = board.players.find((p) => p.playerId === board.lastDicePlayerId);
     const allTokensAtBase = relevantPlayer?.tokens?.every((t) => t.state === "BASE") ?? false;
-    const rollerDiffersFromCurrentTurn = board.lastDicePlayerId != null && board.lastDicePlayerId !== board.currentTurnPlayerId;
+    const rollerDiffersFromCurrentTurn =
+      board.lastDicePlayerId != null && board.lastDicePlayerId !== board.currentTurnPlayerId;
 
-    const isAutoSkipAfterRoll = !isInitialLoad && rollerDiffersFromCurrentTurn &&
-      newPlayerTurnStage === "ROLL_DICE" && (board.legalMoves?.length ?? 0) === 0 && allTokensAtBase;
+    const isAutoSkipAfterRoll =
+      !isInitialLoad &&
+      rollerDiffersFromCurrentTurn &&
+      newPlayerTurnStage === "ROLL_DICE" &&
+      (board.legalMoves?.length ?? 0) === 0 &&
+      allTokensAtBase;
 
     // A genuine roll happened pending dice increased or through updated at
     const isRollEvent = pendingDiceIncreased || isAutoSkipAfterRoll;
@@ -267,11 +275,11 @@ const LudoGameRoom = () => {
   const pendingDice = currentPlayer?.pendingDice ?? [];
   const isMyTurn = currentTurnUserId === currentUserId;
   const canRoll = isMyTurn && playerTurnStage === "ROLL_DICE" && !rolling;
-  const movableTokenIds = isMyTurn && playerTurnStage === "TOKEN_MOVE" ? legalMoves.map((move) => move.tokenId) : [];
+  const movableTokenIds =
+    isMyTurn && playerTurnStage === "TOKEN_MOVE" ? legalMoves.map((move) => move.tokenId) : [];
 
   // for automatic move when single token is on track
   useEffect(() => {
-
     // no auto move while rolling animation is running
     if (!animationComplete) return;
 
@@ -303,7 +311,15 @@ const LudoGameRoom = () => {
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [legalMoves, playerTurnStage, isMyTurn, currentTurnUserId, roomCode, animationComplete, moveInProgress]);
+  }, [
+    legalMoves,
+    playerTurnStage,
+    isMyTurn,
+    currentTurnUserId,
+    roomCode,
+    animationComplete,
+    moveInProgress,
+  ]);
 
   // board responsiveness
   useLayoutEffect(() => {
@@ -322,7 +338,7 @@ const LudoGameRoom = () => {
     return () => observer.disconnect();
   }, []);
 
-   // Player card position according to player corner
+  // Player card position according to player corner
   const playerCardPositions = {
     1: { right: "-34%", bottom: "1%", transformOrigin: "bottom left" },
     2: { left: "-34%", bottom: "1%", transformOrigin: "bottom right" },
@@ -467,7 +483,7 @@ const LudoGameRoom = () => {
             await new Promise((resolve) => setTimeout(resolve, 150));
           }
 
-          // safe cell sound 
+          // safe cell sound
           if (newSteps.length > 0) {
             const finalCellId = newSteps[newSteps.length - 1];
             const finalCell = boardGridRef.current?.[finalCellId];
@@ -509,8 +525,7 @@ const LudoGameRoom = () => {
           latestToken.state === "BASE" &&
           latestToken.tokenKilled
         ) {
-
-          // Play kill sound immediately when kill is detected 
+          // Play kill sound immediately when kill is detected
           playSound("LUDO", "TOKEN_KILL");
           killedAnimations.push({
             currentToken,
@@ -544,7 +559,6 @@ const LudoGameRoom = () => {
       // Stop kill sound when backward animation finishes
       // stopSound("LUDO", "TOKEN_KILL");
 
-
       currentToken.state = "BASE";
       currentToken.pathId = null;
       currentToken.pathIndex = null;
@@ -573,9 +587,7 @@ const LudoGameRoom = () => {
   const triggerCelebration = (playerId) => {
     setCelebratingPlayers((prev) => [...prev, playerId]);
     setTimeout(() => {
-      setCelebratingPlayers((prev) =>
-        prev.filter((id) => id !== playerId)
-      );
+      setCelebratingPlayers((prev) => prev.filter((id) => id !== playerId));
     }, 3500);
   };
 
@@ -593,9 +605,7 @@ const LudoGameRoom = () => {
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
         <ExitGamePopup open={showExitPopup} onClose={closeExitPopup} />
-        <p className="text-red-400 text-sm sm:text-base">
-          {boardError || "Board not found"}
-        </p>
+        <p className="text-red-400 text-sm sm:text-base">{boardError || "Board not found"}</p>
       </div>
     );
   }
@@ -701,7 +711,10 @@ const LudoGameRoom = () => {
               // navigate(`/ludo-waiting-room/${roomCode}`);
             }}
             onClose={() => setWinnerUserId(null)}
-            onBackToHome={() => navigate("/")}
+            onBackToHome={() => {
+              stopBackgroundMusic();
+              navigate("/");
+            }}
           />
         )}
       </div>

@@ -15,54 +15,32 @@ export const loadGameSounds = async (gameType, soundResponse) => {
     audioCache[gameType] = {};
   }
 
-  const loadPromises = Object.entries(events).map(
-    ([eventName, soundData]) => {
-      return new Promise((resolve) => {
-        const audio = new Audio();
+  Object.entries(events).forEach(([eventName, soundData]) => {
+    const audio = new Audio();
+    audio.preload = "auto";
+    audio.src = soundData.url;
 
-        audio.preload = "auto";
-        audio.src = soundData.url;
-
-        // Background music plays continuously loop
-        if (eventName === "BACKGROUND_MUSIC") {
-          audio.loop = true;
-        }
-
-        audio.addEventListener(
-          "canplaythrough",
-          () => {
-            audioCache[gameType][eventName] = audio;
-            resolve();
-          },
-          { once: true }
-        );
-
-        audio.addEventListener(
-          "error",
-          () => {
-            console.error(`Failed to load sound: ${gameType} -> ${eventName}`);
-            resolve();
-          },
-          { once: true }
-        );
-        audio.load();
-      });
+    if (eventName === "BACKGROUND_MUSIC") {
+      audio.loop = true;
     }
-  );
 
-  await Promise.all(loadPromises);
+    audio.addEventListener(
+      "error",
+      () => {
+        console.error(`Failed to load sound: ${gameType} -> ${eventName}`);
+      },
+      { once: true },
+    );
 
-  console.info(`${gameType} sounds loaded:`,Object.keys(audioCache[gameType]));
+    audioCache[gameType][eventName] = audio;
+    audio.load();
+  });
 };
 
 // page refresh sound loading
 export const initializeGameSounds = async (gameType) => {
-
   // Already loaded
-  if (
-    audioCache[gameType] &&
-    Object.keys(audioCache[gameType]).length > 0
-  ) {
+  if (audioCache[gameType] && Object.keys(audioCache[gameType]).length > 0) {
     return;
   }
 
@@ -75,12 +53,9 @@ export const initializeGameSounds = async (gameType) => {
     try {
       const soundResponse = await getGameSounds(gameType);
 
-      await loadGameSounds(
-        gameType,
-        soundResponse
-      );
+      await loadGameSounds(gameType, soundResponse);
     } catch (error) {
-      console.error(`Failed to initialize ${gameType} sounds:`,error);
+      console.error(`Failed to initialize ${gameType} sounds:`, error);
     } finally {
       delete loadingPromises[gameType];
     }
@@ -91,7 +66,6 @@ export const initializeGameSounds = async (gameType) => {
 
 // for sound playing
 export const playSound = (gameType, eventName) => {
-
   const audio = audioCache[gameType]?.[eventName];
 
   if (!audio) {
@@ -102,17 +76,24 @@ export const playSound = (gameType, eventName) => {
 
   audio.currentTime = 0;
 
-  audio.play()
+  audio
+    .play()
     .then(() => {
       console.info(`Playing sound: ${gameType} -> ${eventName}`);
     })
     .catch((error) => {
-      console.error(`Failed to play sound: ${gameType} -> ${eventName}`,error);
+      console.error(`Failed to play sound: ${gameType} -> ${eventName}`, error);
     });
 };
 
 // playing bg music
 export const playBackgroundMusic = async (gameType) => {
+  Object.keys(audioCache).forEach((type) => {
+    if (type !== gameType) {
+      stopBackgroundMusic(type);
+    }
+  });
+
   const audio = audioCache[gameType]?.["BACKGROUND_MUSIC"];
 
   if (!audio) {
@@ -134,10 +115,7 @@ export const playBackgroundMusic = async (gameType) => {
 
     return true;
   } catch (error) {
-    console.warn(
-      `Failed to play background music: ${gameType}`,
-      error
-    );
+    console.warn(`Failed to play background music: ${gameType}`, error);
 
     return false;
   }
@@ -145,6 +123,11 @@ export const playBackgroundMusic = async (gameType) => {
 
 // stoping bg music
 export const stopBackgroundMusic = (gameType) => {
+  if (!gameType) {
+    Object.keys(audioCache).forEach((type) => stopBackgroundMusic(type));
+    return;
+  }
+
   const audio = audioCache[gameType]?.["BACKGROUND_MUSIC"];
 
   if (!audio) {
@@ -168,7 +151,7 @@ export const playLoopingSound = (gameType, eventName) => {
   audio.currentTime = 0;
 
   audio.play().catch((error) => {
-    console.warn(`Failed to play looping sound: ${gameType} -> ${eventName}`,error);
+    console.warn(`Failed to play looping sound: ${gameType} -> ${eventName}`, error);
   });
 };
 
