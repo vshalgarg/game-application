@@ -1,9 +1,8 @@
 spring:
-
   datasource:
     url: jdbc:mysql://host.docker.internal:3306/game_db
     username: game_user
-    password:
+    password: ${DB_PASSWORD}
 
   jpa:
     hibernate:
@@ -15,9 +14,11 @@ server:
 
 services:
   tic-tac-toe-engine:
-    base-url:  http://192.168.1.100/game-engine/tic-tac-toe-engine/api/v1
+    base-url: http://192.168.1.100/game-engine/tic-tac-toe-engine/api/v1
+
   ludo-engine:
     base-url: http://192.168.1.100/game-engine/ludo-engine/api/v1
+
   tambola-engine:
     base-url: http://192.168.1.100/game-engine/tambola-engine/api/v1
     endpoints:
@@ -26,11 +27,6 @@ services:
       lobby: /lobby
       rules: /rules
 
-#supabase:
- # url: https://urbbdsdaamsxtxthqxbm.supabase.co
-  #api-key:
-
-
 supabase:
-  url: https://veuhkewyrnuaofnanycz.supabase.co
-  api-key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZldWhrZXd5cm51YW9mbmFueWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5NjUzNDMsImV4cCI6MjEwNTU0MTM0M30.1fCbWLiTuk4kcsnLmYBnsOmyRte7r7gutVW0cnspacg
+  url: https://urbbdsdaamsxtxthqxbm.supabase.co
+  api-key: ${SUPABASE_API_KEY}
