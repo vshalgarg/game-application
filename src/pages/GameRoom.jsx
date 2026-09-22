@@ -12,8 +12,7 @@ import { useSnackbar } from "../context/SnackbarContext";
 import { useAuth } from "../context/AuthContext";
 import PageShell from "../components/layout/PageShell";
 import Button from "../components/ui/Button";
-import { playSound, stopBackgroundMusic } from "../services/soundManager";
-import useGameBackgroundMusic from "../hooks/useGameBackgroundMusic";
+import { playSound } from "../services/soundManager";
 
 const RestartGameButton = ({ onClick }) => (
   <Button onClick={onClick}>
@@ -51,12 +50,8 @@ const GameRoom = () => {
 
   const handleBackToHome = () => {
     playSound("TIC_TAC_TOE", "BUTTON CLICK");
-    stopBackgroundMusic();
     navigate("/");
   };
-
-  // for loading sounds on refresh
-  useGameBackgroundMusic("TIC_TAC_TOE");
 
   // delay in winner pop up for line animation and cell highlighting
   useEffect(() => {

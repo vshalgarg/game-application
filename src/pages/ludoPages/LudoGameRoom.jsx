@@ -14,9 +14,7 @@ import {
   playSound,
   playLoopingSound,
   stopSound,
-  stopBackgroundMusic,
 } from "../../services/soundManager";
-import useGameBackgroundMusic from "../../hooks/useGameBackgroundMusic";
 
 const LudoGameRoom = () => {
   const { auth } = useAuth();
@@ -81,8 +79,6 @@ const LudoGameRoom = () => {
       boardGridRef.current = latestGrid;
     }
   }, [boardData]);
-
-  useGameBackgroundMusic("LUDO");
 
   // fetch board layout from API
   useEffect(() => {
@@ -712,7 +708,6 @@ const LudoGameRoom = () => {
             }}
             onClose={() => setWinnerUserId(null)}
             onBackToHome={() => {
-              stopBackgroundMusic();
               navigate("/");
             }}
           />

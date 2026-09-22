@@ -14,7 +14,6 @@ import GameZoneLogo from "../../components/brand/GameZoneLogo";
 import Button from "../../components/ui/Button";
 import ExitGamePopup from "../../components/ui/ExitGamePopup";
 import { playSound } from "../../services/soundManager";
-import useGameBackgroundMusic from "../../hooks/useGameBackgroundMusic";
 
 const LudoWaitingRoom = () => {
   const navigate = useNavigate();
@@ -31,8 +30,6 @@ const LudoWaitingRoom = () => {
 
   const { players } = useWaitingRoomRealtime(roomCode);
   console.info("Players in waiting room", players);
-
-  useGameBackgroundMusic("LUDO");
 
   useRoomRealtime({
     roomCode,
