@@ -1,4 +1,4 @@
-import { FaChessKnight, FaDice, FaFlagCheckered, FaTimes } from "react-icons/fa";
+import { FaTicketAlt, FaDice, FaFlagCheckered, FaTimes } from "react-icons/fa";
 
 export const popularGames = [
   {
@@ -18,11 +18,11 @@ export const popularGames = [
     accent: "purple",
   },
   {
-    id: "chess",
-    title: "Chess",
-    genre: "Strategy",
-    path: null,
-    icon: FaChessKnight,
+    id: "tambola",
+    title: "Tambola",
+    genre: "Numbers",
+    path: "/tambola-mode",
+    icon: FaTicketAlt,
     accent: "cyan",
   },
   {

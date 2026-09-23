@@ -15,6 +15,10 @@ const About = lazy(() => import("../pages/About"));
 const Contact = lazy(() => import("../pages/Contact"));
 const Profile = lazy(() => import("../pages/Profile"));
 const CompleteProfile = lazy(() => import("../pages/CompleteProfile"));
+const TambolaCreateJoin = lazy(() => import("../pages/tambolaPages/tambolaCreateJoin"));
+const TambolaMode = lazy(() => import("../pages/tambolaPages/TambolaMode"));
+const TambolaWaiting = lazy(() => import("../pages/tambolaPages/TambolaWaiting"));
+const TambolaGameRoom = lazy(() => import("../pages/tambolaPages/TambolaGameRoom"));
 
 const AppRoutes = () => {
   return (
@@ -40,22 +44,25 @@ const AppRoutes = () => {
                 <Routes>
                   <Route path="/" element={<Landing />} /> {/*select game page */}
                   {/* tic-tac-toe */}
-                  <Route path="/tic-tac-toe" element={<Home />} />{" "}
-                  {/*create room, enter room ID, and join on the same screen */}
-                  <Route path="/waiting-room/:roomCode" element={<WaitingRoom />} />{" "}
-                  {/*waiting room page for both host and player */}
-                  <Route path="/game-room/:roomCode" element={<GameRoom />} />{" "}
-                  {/*actual tic tac toe game room page */}
+                  <Route path="/tic-tac-toe" element={<Home />} />{" "}       {/*create room, enter room ID, and join on the same screen */}
+                  <Route path="/waiting-room/:roomCode" element={<WaitingRoom />} />{" "}   {/*waiting room page for both host and player */}
+                  <Route path="/game-room/:roomCode" element={<GameRoom />} />{" "}     {/*actual tic tac toe game room page */}
+
                   {/* Ludo */}
                   <Route path="/ludoGame-mode" element={<Navigate to="/createjoin-room" replace />} />
-                  <Route path="/createjoin-room" element={<LudoCreateJoinRoom />} />{" "}
-                  {/*create and join room button page */}
+                  <Route path="/createjoin-room" element={<LudoCreateJoinRoom />} />{" "}     {/*create and join room button page */}
                   <Route path="/ludowaiting-room/:roomCode" element={<LudoWaitingRoom />} />
                   <Route path="/ludogame-room/:roomCode" element={<LudoGameRoom />} />
+
+                  {/* Tambola */}
+                  <Route path="/tcreate-join" element={<TambolaCreateJoin />} />
+                  <Route path="/tambola-mode" element={<TambolaMode />} />
+                  <Route path="/tambola-waiting/:roomCode" element={<TambolaWaiting />} />
+                  <Route path="/tambola-gameroom/:roomCode" element={<TambolaGameRoom />} />
+
                   {/* Navbar */}
                   <Route path="/about" element={<About />} /> {/*about page for of navigation bar */}
-                  <Route path="/contact" element={<Contact />} />{" "}
-                  {/*contact page of navigation bar */}
+                  <Route path="/contact" element={<Contact />} />{" "}    {/*contact page of navigation bar */}
                   <Route path="/profile" element={<Profile />} /> {/*profile page of navigation bar*/}
                 </Routes>
               </MainLayout>

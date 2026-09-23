@@ -1,17 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaBorderAll, FaGamepad, FaPlusCircle, FaSignInAlt } from "react-icons/fa";
-import { createRoom, joinRoom } from "../services/roomService";
-import { useSnackbar } from "../context/SnackbarContext";
-import { useAuth } from "../context/AuthContext";
-import PageShell from "../components/layout/PageShell";
-import GameZoneLogo from "../components/brand/GameZoneLogo";
-import ModeOption from "../components/ui/ModeOption";
-import TextField from "../components/ui/TextField";
-import { playSound } from "../services/soundManager";
-import useGameBackgroundMusic from "../hooks/useGameBackgroundMusic";
+import { createRoom, joinRoom } from "../../services/roomService";
+import { useSnackbar } from "../../context/SnackbarContext";
+import { useAuth } from "../../context/AuthContext";
+import PageShell from "../../components/layout/PageShell";
+import GameZoneLogo from "../../components/brand/GameZoneLogo";
+import ModeOption from "../../components/ui/ModeOption";
+import TextField from "../../components/ui/TextField";
 
-const Home = () => {
+const TambolaCreateJoin = () => {
   const navigate = useNavigate();
   const { showSnackbar } = useSnackbar();
   const { auth } = useAuth();
@@ -19,21 +17,17 @@ const Home = () => {
   const [roomCode, setRoomCode] = useState("");
   const [joining, setJoining] = useState(false);
 
-  // for loading sounds on refresh
-  useGameBackgroundMusic("TIC_TAC_TOE");
-
   const handleCreateRoom = async () => {
-    playSound("TIC_TAC_TOE", "BUTTON CLICK");
     if (loading) return;
     setLoading(true);
     try {
       const res = await createRoom({
         tenantId: "test-1",
         userId: auth?.userId,
-        gameType: "TIC_TAC_TOE",
+        gameType: "TAMBOLA"
       });
       showSnackbar(res.message, "success");
-      navigate(`/waiting-room/${res.data.roomCode}`, { replace: true });
+      navigate(`/tambola-waiting/${res.data.roomCode}`, { replace: true });
     } catch (error) {
       console.error("Failed to create room:", error);
       showSnackbar(error.message || "Failed to create room", "error");
@@ -43,7 +37,6 @@ const Home = () => {
   };
 
   const handleJoinRoom = async () => {
-    playSound("TIC_TAC_TOE", "BUTTON CLICK");
     if (joining) return;
     if (!roomCode) {
       showSnackbar("Please enter room ID", "error");
@@ -57,7 +50,7 @@ const Home = () => {
         userId: auth?.userId,
       });
       showSnackbar(res.message, "success");
-      navigate(`/waiting-room/${roomCode}`, { replace: true });
+      navigate(`/tambola-waiting/${roomCode}`, { replace: true });
     } catch (error) {
       showSnackbar(error.message || "Failed to join room.", "error");
       console.error("Failed to join room:", error);
@@ -121,4 +114,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default TambolaCreateJoin;
