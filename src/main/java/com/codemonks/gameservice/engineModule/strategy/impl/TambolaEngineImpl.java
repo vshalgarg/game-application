@@ -1,4 +1,3 @@
-
 package com.codemonks.gameservice.engineModule.strategy.impl;
 
 import com.codemonks.gameservice.client.TambolaFeignClient;
@@ -56,6 +55,16 @@ public class TambolaEngineImpl implements GameEngine {
         gameState.put(
                 "totalTicketsGenerated",
                 engineResponse.getTotalTicketsGenerated()
+        );
+        // >>> CHANGED: Tambola-players (ticketCount, ticketIds, hasWon,
+        // isBot) gameState-map ke andar daal rahe hain — EngineGameStateResponseDTO.players
+        // field ludo/tictactoe-shaped hai (turnOrder/side/consecutiveSixCount),
+        // Tambola ke liye fit nahi baithta, isliye usko null-hi-rehne-diya
+        // (jaisa currentTurnUserId/winnerUserId bhi Tambola ke liye null
+        // rehte hain — koi bug nahi, ye fields Tambola-me-apply-hi-nahi-hote).
+        gameState.put(
+                "players",
+                engineResponse.getPlayers()
         );
 
         return EngineGameStateResponseDTO.builder()
