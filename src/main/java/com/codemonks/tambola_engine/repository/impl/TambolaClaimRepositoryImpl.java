@@ -26,6 +26,7 @@ public class TambolaClaimRepositoryImpl implements TambolaClaimRepository {
 
             InsertClaim body = new InsertClaim(
                     claim.getRoomId(),
+                    claim.getRoomCode(),   // >>> CHANGED: room_code ab body me pass ho raha hai
                     claim.getPlayerId(),
                     claim.getTicketId(),
                     claim.getRuleType().name(),
@@ -44,8 +45,10 @@ public class TambolaClaimRepositoryImpl implements TambolaClaimRepository {
         }
     }
 
+    // >>> CHANGED: room_code field add kiya (NOT NULL column hai ab table me)
     private record InsertClaim(
             Long room_id,
+            String room_code,
             Long player_id,
             Long ticket_id,
             String rule_type,

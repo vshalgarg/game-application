@@ -20,6 +20,15 @@ public class Claim {
     @JsonProperty("room_id")
     private Long roomId;
 
+    // >>> CHANGED: naya field add kiya — tambola_claims table me ab
+    // >>> room_code column hai (NOT NULL). NOTE: @AllArgsConstructor
+    // >>> use karta hai, isliye is field ki position IMPORTANT hai —
+    // >>> jahan bhi "new Claim(...)" call hota hai (ClaimServiceImpl
+    // >>> me), wahan constructor-args ka order isी se match karna
+    // >>> padega. Maine roomId ke turant baad rakha hai for consistency.
+    @JsonProperty("room_code")
+    private String roomCode;
+
     @JsonProperty("player_id")
     private Long playerId;
 

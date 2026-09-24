@@ -64,13 +64,13 @@ public class TambolaTicketRepositoryImpl implements TambolaTicketRepository {
         }
     }
     @Override
-    public void insertAll(List<TambolaTicket> tickets) {
+    public void insertAll(String roomCode, List<TambolaTicket> tickets) {
         if (tickets.isEmpty()) return;
         String table = properties.getTables().getTambolaTickets();
         try {
 
             List<InsertRow> body = tickets.stream()
-                    .map(t -> new InsertRow(t.getRoomId(), t.getPlayerId(), t.getRows()))
+                    .map(t -> new InsertRow(t.getRoomId(), roomCode, t.getPlayerId(), t.getRows()))
                     .toList();
 
             tambolaSupabaseRestClient.post()
@@ -84,5 +84,5 @@ public class TambolaTicketRepositoryImpl implements TambolaTicketRepository {
             throw new SupabaseStateException("Failed to insert tickets", e);
         }
     }
-    private record InsertRow(Long room_id, Long player_id, List<TicketRow> ticket_rows) {}
+    private record InsertRow(Long room_id, String room_code, Long player_id, List<TicketRow> ticket_rows) {}
 }

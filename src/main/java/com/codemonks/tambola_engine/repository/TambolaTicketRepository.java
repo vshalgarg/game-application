@@ -9,5 +9,5 @@ public interface TambolaTicketRepository {
 
     TambolaTicket findById(Long ticketId);
     List<TambolaTicket> findByRoomAndPlayer(Long roomId, Long playerId);
-    void insertAll(List<TambolaTicket> tickets);
+    void insertAll(String roomCode, List<TambolaTicket> tickets);
 }

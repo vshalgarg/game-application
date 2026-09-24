@@ -72,7 +72,9 @@ public class ClaimServiceImpl implements ClaimService {
         boolean isValid = claimValidationService.validate(rule, ticket, calledNumbersSet);
 
         if (!isValid) {
-            recordClaim(request, ClaimStatusEnum.REJECTED);
+            // >>> CHANGED: state.getRoomCode() pass kiya — Claim table me
+            // >>> ab room_code NOT NULL hai.
+            recordClaim(request, state.getRoomCode(), ClaimStatusEnum.REJECTED);
             log.info("[CLAIM_REJECTED] Room:{} Player:{} Rule:{} Reason: pattern mismatch",
                     request.getRoomId(), request.getPlayerId(), request.getRuleType());
             throw new InvalidClaimException(TambolaErrorCodesEnum.INVALID_CLAIM_PATTERN,
@@ -101,7 +103,7 @@ public class ClaimServiceImpl implements ClaimService {
         });
 
         if (!slotWon) {
-            recordClaim(request, ClaimStatusEnum.REJECTED);
+            recordClaim(request, state.getRoomCode(), ClaimStatusEnum.REJECTED);
             log.info("[CLAIM_REJECTED] Room:{} Player:{} Rule:{} Reason: slots filled by others",
                     request.getRoomId(), request.getPlayerId(), request.getRuleType());
             throw new InvalidClaimException(TambolaErrorCodesEnum.RULE_SLOTS_FULL);
@@ -110,7 +112,7 @@ public class ClaimServiceImpl implements ClaimService {
         GameRule wonRule = wonRuleHolder[0];
 
         // 5) Claim record karo (audit — tambola_claims table)
-        Claim claim = recordClaim(request, ClaimStatusEnum.APPROVED);
+        Claim claim = recordClaim(request, state.getRoomCode(), ClaimStatusEnum.APPROVED);
 
         log.info("[CLAIM_APPROVED] Room:{} Player:{} Rule:{} Winners so far:{}/{}",
                 request.getRoomId(), request.getPlayerId(), request.getRuleType(),
@@ -127,11 +129,41 @@ public class ClaimServiceImpl implements ClaimService {
         GameStatusEnum newStatus = allRulesFullyClosed ? GameStatusEnum.FINISHED : GameStatusEnum.WIN;
 
         // 7) Room-status update karo — version-checked
+        // >>> CHANGED: Pehle sirf "game_status" update hota tha, "next_tick_at"
+        // >>> touch hi nahi hota tha — matlab WIN-pause ka actual-duration sirf
+        // >>> "jo-bhi-purana-next_tick_at-bacha-tha" hota tha, ek proper
+        // >>> announcement-window nahi milta tha.
+        // >>>
+        // >>> AB: jab status WIN set ho raha ho, next_tick_at ko
+        // >>> "purana_next_tick_at + ek_aur_fresh_interval" pe extend kar rahe
+        // >>> hain. Isse total-wait = (jo-time-bacha-tha) + (poora-fresh-interval)
+        // >>> ho jata hai — jaisa humne decide kiya tha.
+        // >>>
+        // >>> NOTE: Ye extend-karna sirf WIN ke liye hai, FINISHED ke liye nahi
+        // >>> (FINISHED me next_tick_at ka matlab hi nahi, game khatam ho chuka).
+        // >>>
+        // >>> IMPORTANT: Iske baad Supabase pg_cron (process_due_tambola_rooms)
+        // >>> jab is WIN-room ko RUNNING me resume karega, wo next_tick_at ko
+        // >>> AGE NAHI BADHAYEGA (Option-A decision) — kyunki yahi extend-karna
+        // >>> hi poora buffer de chuka hai. Isliye ye dono-changes (yahan + SQL)
+        // >>> ek-saath hi deploy/consistent hone chahiye.
         OptimisticRetry.attempt(() -> {
             TambolaGameState freshState = roomRepository.findById(request.getRoomId());
+
+            Map<String, Object> changes = new HashMap<>();
+            changes.put("game_status", newStatus.name());
+
+            if (newStatus == GameStatusEnum.WIN
+                    && freshState.getNextTickAt() != null
+                    && freshState.getTimerIntervalSeconds() != null) {
+                Instant extendedTick = freshState.getNextTickAt()
+                        .plusSeconds(freshState.getTimerIntervalSeconds());
+                changes.put("next_tick_at", extendedTick.toString());
+            }
+
             return roomRepository.updateIfVersionMatches(
                     request.getRoomId(),
-                    Map.of("game_status", newStatus.name()),
+                    changes,
                     freshState.getVersion());
         });
 
@@ -149,10 +181,14 @@ public class ClaimServiceImpl implements ClaimService {
         );
     }
 
-    private Claim recordClaim(ClaimRequestDTO request, ClaimStatusEnum status) {
+    // >>> CHANGED: roomCode-parameter add kiya, aur Claim-constructor-call
+    // >>> me bhi naya-field-order match karaya (Claim.java me roomId ke
+    // >>> turant-baad roomCode field hai ab).
+    private Claim recordClaim(ClaimRequestDTO request, String roomCode, ClaimStatusEnum status) {
         Claim claim = new Claim(
                 generateClaimId(),
                 request.getRoomId(),
+                roomCode,
                 request.getPlayerId(),
                 request.getTicketId(),
                 request.getRuleType(),

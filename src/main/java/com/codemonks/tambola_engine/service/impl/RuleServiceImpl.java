@@ -20,9 +20,12 @@ public class RuleServiceImpl implements RuleService {
     private final TambolaRuleRepository ruleRepository;
 
     @Override
-    public void replaceRules(Long roomId, List<RuleConfigRequestDTO> ruleConfigs) {
-        log.info("[RULES_PUT_REQUEST] Room:{} RuleCount:{}", roomId,
-                ruleConfigs != null ? ruleConfigs.size() : 0);
+    public void replaceRules(
+            Long roomId,
+            String roomCode,
+            List<RuleConfigRequestDTO> ruleConfigs) {
+        log.info("[RULES_PUT_REQUEST] Room:{} RoomCode:{} RuleCount:{}", roomId,
+                roomCode, ruleConfigs != null ? ruleConfigs.size() : 0);
 
         ruleRepository.deleteByRoom(roomId);
 
@@ -32,19 +35,23 @@ public class RuleServiceImpl implements RuleService {
             return;
         }
 
-        List<GameRule> rules = buildActiveRules(roomId, ruleConfigs);
+        List<GameRule> rules = buildActiveRules(roomId, roomCode, ruleConfigs);
         ruleRepository.insertAll(rules);
 
         log.info("[RULES_PUT_REPLACED] Room:{} Deleted:{} Inserted:{}",
                 roomId, true, rules.size());
     }
 
-    private List<GameRule> buildActiveRules(Long roomId, List<RuleConfigRequestDTO> ruleConfigs) {
+    private List<GameRule> buildActiveRules(
+            Long roomId,
+            String roomCode,
+            List<RuleConfigRequestDTO> ruleConfigs) {
         List<GameRule> rules = new ArrayList<>();
 
         for (RuleConfigRequestDTO config : ruleConfigs) {
             GameRule rule = new GameRule();
             rule.setRoomId(roomId);
+            rule.setRoomCode(roomCode);
             rule.setRuleType(config.getRuleType());
             rule.setOrder(config.getOrder());
             rule.setMaxWinners(

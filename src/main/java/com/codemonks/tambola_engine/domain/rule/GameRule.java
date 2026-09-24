@@ -16,6 +16,13 @@ public class GameRule {
 
     @JsonProperty("room_id")
     private Long roomId;
+
+    // >>> CHANGED: naya field add kiya — realtime_tambola_rules table
+    // >>> me ab room_code column hai (NOT NULL), isliye insert karte
+    // >>> waqt ye value hamesha set honi chahiye.
+    @JsonProperty("room_code")
+    private String roomCode;
+
     @JsonProperty("rule_type")
     private RuleTypeEnum ruleType;
     @JsonProperty("rule_order")

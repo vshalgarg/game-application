@@ -49,7 +49,10 @@ public class GameSetupServiceImpl implements GameSetupService {
             log.info("[TAMBOLA_SETUP_SKIP_RULES] Room:{} already has {} rule(s) configured - skipping insert",
                     request.getRoomId(), existingRules.size());
         } else {
-            List<GameRule> activeRules = buildActiveRules(request.getRoomId(), request.getRules());
+            List<GameRule> activeRules = buildActiveRules(
+                    request.getRoomId(),
+                    request.getRoomCode(),
+                    request.getRules());
             ruleRepository.insertAll(activeRules);
             log.info("[TAMBOLA_SETUP_RULES_INSERTED] Room:{} RuleCount:{}",
                     request.getRoomId(), activeRules.size());
@@ -79,7 +82,7 @@ public class GameSetupServiceImpl implements GameSetupService {
                     ticket.setRoomId(request.getRoomId());
                     newTickets.add(ticket);
                 }
-                ticketRepository.insertAll(newTickets);
+                ticketRepository.insertAll(request.getRoomCode(), newTickets);
                 log.info("[TAMBOLA_SETUP_TICKETS_INSERTED] Room:{} Player:{} TicketCount:{}",
                         request.getRoomId(), playerId, newTickets.size());
                 ticketCountForPlayer = newTickets.size();
@@ -135,7 +138,10 @@ public class GameSetupServiceImpl implements GameSetupService {
                 .build();
     }
 
-    private List<GameRule> buildActiveRules(Long roomId, List<RuleConfigRequestDTO> ruleConfigs) {
+    private List<GameRule> buildActiveRules(
+            Long roomId,
+            String roomCode,
+            List<RuleConfigRequestDTO> ruleConfigs) {
         List<GameRule> rules = new ArrayList<>();
 
         if (ruleConfigs == null || ruleConfigs.isEmpty()) {
@@ -145,6 +151,7 @@ public class GameSetupServiceImpl implements GameSetupService {
         for (RuleConfigRequestDTO config : ruleConfigs) {
             GameRule rule = new GameRule();
             rule.setRoomId(roomId);
+            rule.setRoomCode(roomCode);
             rule.setRuleType(config.getRuleType());
             rule.setOrder(config.getOrder());
             rule.setMaxWinners(
