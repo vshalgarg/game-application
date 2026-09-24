@@ -14,7 +14,7 @@ import GameZoneLogo from "../../components/brand/GameZoneLogo";
 import Button from "../../components/ui/Button";
 import ExitGamePopup from "../../components/ui/ExitGamePopup";
 import { getAvailableTambolaRules, saveTambolaRules } from "../../services/tambolaService";
-
+import useTambolaRulesRealtime from "../../hooks/useTambolaRulesRealtime";
 
 const TambolaWaiting = () => {
   const navigate = useNavigate();
@@ -24,13 +24,24 @@ const TambolaWaiting = () => {
 
   const [copied, setCopied] = useState(false);
   const [showExitPopup, setShowExitPopup] = useState(false);
-
-  // UI-only rule selection for now
   const [selectedRules, setSelectedRules] = useState([]);
   const [rules, setRules] = useState([]);
   const [rulesLoading, setRulesLoading] = useState(false);
 
   const currentUserId = auth?.userId;
+
+  // rules realtime listerner
+  const {
+    rules: realtimeRules,
+    loading: rulesRealtimeLoading,
+  } = useTambolaRulesRealtime(roomCode);
+
+  console.log("rules", realtimeRules);
+  console.log("loading", rulesRealtimeLoading);
+
+  // Rules selected by host and received through realtime
+  const realtimeRuleTypes = realtimeRules.map((rule) => rule.rule_type);
+  console.log("Realtime rule types:", realtimeRuleTypes);
 
   const closeExitPopup = useCallback(() => {
     setShowExitPopup(false);
@@ -64,10 +75,11 @@ const TambolaWaiting = () => {
   fetchTambolaRules();
 }, [roomCode]);
 
-  // realtime listerner
+  // lobby realtime listner
   const { players } = useWaitingRoomRealtime(roomCode);
   console.info("Players in waiting room", players);
 
+  // start button listner
   useRoomRealtime({
     roomCode,
     onStartGame: () => {
@@ -104,7 +116,6 @@ const TambolaWaiting = () => {
       showSnackbar(result.message, "success");
     } catch (error) {
       console.error("Failed to start game:", error);
-
       showSnackbar(error.message || "Failed to start game.","error");
     }
   };
@@ -376,19 +387,14 @@ const TambolaWaiting = () => {
           )}
         </div>
 
-        {/* ========================= */}
         {/* GAME RULES CARD */}
-        {/* ========================= */}
-        {isHost && (
         <div className="gz-select-card w-full max-w-md">
-          {/* <div className="gz-select-card w-full"> */}
 
           {/* Rules Header */}
           <div className="mb-5 flex flex-col items-center">
-            {/* <GameZoneLogo className="mb-3 h-10 w-10" /> */}
 
             <h2 className="text-xl font-bold text-gz-text sm:text-2xl">
-              Select Game Rules
+              {isHost ? "Select Game Rules" : "Game Rules"}
             </h2>
 
             <div className="gz-divider mt-3 w-full max-w-[200px] justify-center">
@@ -397,29 +403,50 @@ const TambolaWaiting = () => {
                 size={12}
               />
             </div>
-           
+
+            {!isHost && (
+              <p className="mt-2 text-xs text-gz-text-secondary">
+                Rules selected by the host
+              </p>
+            )}
           </div>
 
           {/* Rules */}
           <div className="flex flex-col gap-2.5">
-            {rules.map((rule) => {
-              const isSelected = selectedRules.includes(rule.ruleType);
+
+            {/*HOST: Show all available rules, PLAYER:Show only rules received through realtime*/}
+            {(isHost
+              ? rules
+              : rules.filter((rule) =>
+                  realtimeRuleTypes.includes(rule.ruleType)
+                )
+            ).map((rule) => {
+
+              /*Host: selectedRules controls the checkbox, Player: realtimeRuleTypes controls the selected state.*/
+              const isSelected = isHost
+                ? selectedRules.includes(rule.ruleType)
+                : realtimeRuleTypes.includes(rule.ruleType);
 
               return (
                 <label
                   key={rule.ruleType}
-                  className={`relative flex cursor-pointer items-start gap-3 overflow-hidden rounded-xl border px-3 py-3 transition-all duration-200 ${
+                  className={`relative flex items-start gap-3 overflow-hidden rounded-xl border px-3 py-3 transition-all duration-200 ${
                     isSelected
                       ? "border-gz-primary-cyan/70 bg-gz-primary-cyan/10 shadow-[0_0_14px_rgba(34,211,238,0.12)]"
-                      : "border-gz-input-border/60 bg-gz-popup/60 hover:border-gz-primary-cyan/30"
+                      : "border-gz-input-border/60 bg-gz-popup/60"
+                  } ${
+                    isHost
+                      ? "cursor-pointer hover:border-gz-primary-cyan/30"
+                      : "cursor-default"
                   }`}
                 >
+
                   {/* Highlight Layer */}
                   {isSelected && (
                     <span className="pointer-events-none absolute inset-0 bg-gz-primary-cyan/[0.04]" />
                   )}
 
-                  {/* Checkbox */}
+                  {/* Checkbox / Selected Indicator */}
                   <span
                     className={`relative mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all ${
                       isSelected
@@ -430,12 +457,15 @@ const TambolaWaiting = () => {
                     {isSelected && <FaCheck size={10} />}
                   </span>
 
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => handleRuleChange(rule.ruleType)}
-                    className="sr-only"
-                  />
+                  {/* Checkbox is only needed by host */}
+                  {isHost && (
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => handleRuleChange(rule.ruleType)}
+                      className="sr-only"
+                    />
+                  )}
 
                   {/* Rule Content */}
                   <div className="relative flex-1">
@@ -448,30 +478,39 @@ const TambolaWaiting = () => {
                     >
                       {rule.description}
                     </h3>
-
                   </div>
+
                 </label>
               );
             })}
+
+            {/* No rules selected yet for player */}
+            {!isHost && realtimeRuleTypes.length === 0 && (
+              <div className="rounded-xl border border-dashed border-gz-input-border/40 py-4 text-center text-sm text-gz-text-secondary">
+                Waiting for the host to select rules...
+              </div>
+            )}
+
+            {/* Save button only for host */}
             {isHost && (
-            <Button onClick={handleSaveRules}>
-              <span className="flex items-center justify-center gap-2">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 16 16"
-                  fill="currentColor"
-                >
-                  <path d="M3 2l10 6-10 6V2z" />
-                </svg>
-                Save Rules
-              </span>
-            </Button>
-          )}
+              <Button onClick={handleSaveRules}>
+                <span className="flex items-center justify-center gap-2">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                  >
+                    <path d="M3 2l10 6-10 6V2z" />
+                  </svg>
+
+                  Save Rules
+                </span>
+              </Button>
+            )}
+
           </div>
-          
         </div>
-        )}; 
       </div>
     </PageShell>
   );
