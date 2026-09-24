@@ -63,9 +63,17 @@ public class TambolaTicketRepositoryImpl implements TambolaTicketRepository {
             throw new SupabaseStateException("Failed to fetch tickets for roomId=" + roomId, e);
         }
     }
+
+    // >>> CHANGED: void -> List<Long>. Pehle "Prefer: return=minimal" tha,
+    // isliye generated ticket_id (IDENTITY column) kabhi wapas nahi aata
+    // tha — GameSetupServiceImpl me playerDTO.setTicketIds() ke liye
+    // hamesha-null-hi-milta-tha. Ab "return=representation" use karke
+    // insert-hue rows wapas mangate hain, aur unke ticket_id nikaal ke
+    // return karte hain, INSERTION-ORDER me (jo caller ke newTickets-list
+    // ke order se match karta hai).
     @Override
-    public void insertAll(String roomCode, List<TambolaTicket> tickets) {
-        if (tickets.isEmpty()) return;
+    public List<Long> insertAll(String roomCode, List<TambolaTicket> tickets) {
+        if (tickets.isEmpty()) return List.of();
         String table = properties.getTables().getTambolaTickets();
         try {
 
@@ -73,16 +81,31 @@ public class TambolaTicketRepositoryImpl implements TambolaTicketRepository {
                     .map(t -> new InsertRow(t.getRoomId(), roomCode, t.getPlayerId(), t.getRows()))
                     .toList();
 
-            tambolaSupabaseRestClient.post()
+            List<InsertedRowResult> inserted = tambolaSupabaseRestClient.post()
                     .uri("/rest/v1/" + table)
-                    .header("Prefer", "return=minimal")
+                    .header("Prefer", "return=representation")   // >>> CHANGED
                     .body(body)
                     .retrieve()
-                    .toBodilessEntity();
+                    .body(new ParameterizedTypeReference<List<InsertedRowResult>>() {});   // >>> CHANGED
+
+            if (inserted == null) {
+                log.warn("[TAMBOLA_TICKETS_INSERT_EMPTY_RESPONSE] roomCode={} count={}", roomCode, tickets.size());
+                return List.of();
+            }
+
+            return inserted.stream()
+                    .map(InsertedRowResult::ticket_id)
+                    .toList();
+
         } catch (Exception e) {
             log.error("Failed to insert tickets", e);
             throw new SupabaseStateException("Failed to insert tickets", e);
         }
     }
+
     private record InsertRow(Long room_id, String room_code, Long player_id, List<TicketRow> ticket_rows) {}
+
+    // >>> NAYA: PostgREST "return=representation" response ko map karne
+    // ke liye — sirf ticket_id nikaalna hai, baaki fields ignore.
+    private record InsertedRowResult(Long ticket_id) {}
 }

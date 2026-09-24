@@ -10,6 +10,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -18,6 +19,27 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * TimerServiceImpl — LEGACY tick-poller.
+ * <p>
+ * >>> CHANGED (Option-C migration): Number-calling aur WIN-resume ab
+ * >>> Supabase-side {@code pg_cron} job (process_due_tambola_rooms())
+ * >>> handle karta hai — real-time production-path me ye poller
+ * >>> BILKUL nahi chalta (default disabled).
+ * <p>
+ * Ye class sirf ek EMERGENCY ROLLBACK-FALLBACK ke roop me rakhi gayi
+ * hai — agar Supabase pg_cron kisi wajah se fail/disable ho jaye,
+ * to sirf application.yml me
+ * {@code tambola.legacy-poller.enabled: true} set karke, redeploy
+ * karke, isko turant activate kiya ja sakta hai — bina koi naya
+ * code likhe.
+ * <p>
+ * NOTE: Agar kabhi ye poller activate karna pade, to Supabase-side
+ * pg_cron job ko simultaneously disable/pause karna zaroori hai
+ * (dono ek saath mat chalao — duplicate-processing hogi, harmless
+ * hai version-check ki wajah se, lekin wasteful aur confusing-logs
+ * denge).
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -25,12 +47,31 @@ public class TimerServiceImpl {
 
     private static final long POLL_INTERVAL_MS = 1000;
 
+    // >>> CHANGED: guard-flag — default false. application.yml me
+    // >>> is property ko chhod bhi sakte ho (default hi false rahega),
+    // >>> ya explicitly likh sakte ho:
+    // >>>   tambola:
+    // >>>     legacy-poller:
+    // >>>       enabled: false
+    @Value("${tambola.legacy-poller.enabled:false}")
+    private boolean legacyPollerEnabled;
+
     private final TambolaGameStateRepository roomRepository;
     private final NumberGeneratorService numberGeneratorService;
 
     private ScheduledExecutorService executor;
+
     @PostConstruct
     public void start() {
+
+        if (!legacyPollerEnabled) {
+            // >>> CHANGED: normal production-path — pg_cron already
+            // >>> ye kaam kar raha hai, isliye ye poller start hi
+            // >>> nahi hota.
+            log.info("[TAMBOLA_POLLER_DISABLED] pg_cron (Supabase-side) handles ticks now — legacy Java-poller not started");
+            return;
+        }
+
         executor = Executors.newSingleThreadScheduledExecutor(
                 r -> {
                     Thread t = new Thread(r, "tambola-poller");
@@ -41,7 +82,9 @@ public class TimerServiceImpl {
         executor.scheduleWithFixedDelay(
                 this::safeProcessDueRooms, 0, POLL_INTERVAL_MS, TimeUnit.MILLISECONDS);
 
-        log.info("[TAMBOLA_POLLER_STARTED] interval={}ms", POLL_INTERVAL_MS);
+        log.warn("[TAMBOLA_POLLER_STARTED] LEGACY POLLER ACTIVE (interval={}ms) — " +
+                "this should only run as a pg_cron fallback! Confirm Supabase pg_cron " +
+                "is disabled to avoid duplicate-processing.", POLL_INTERVAL_MS);
     }
 
     @PreDestroy
@@ -50,6 +93,7 @@ public class TimerServiceImpl {
             executor.shutdown();
         }
     }
+
     private void safeProcessDueRooms() {
         try {
             processDueRooms();

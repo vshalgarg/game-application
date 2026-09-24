@@ -74,6 +74,16 @@ public class GameSetupServiceImpl implements GameSetupService {
                 log.info("[TAMBOLA_SETUP_SKIP_TICKETS] Room:{} Player:{} already has {} ticket(s) - skipping generation",
                         request.getRoomId(), playerId, existingTickets.size());
                 ticketCountForPlayer = existingTickets.size();
+
+                // >>> CHANGED: skip-path me bhi ticketIds populate karo
+                // (pehle sirf naye-tickets ke case me set ho raha tha,
+                // skip-case me bilkul missing tha — existing-tickets se
+                // hi le lo).
+                List<Long> existingTicketIds = existingTickets.stream()
+                        .map(TambolaTicket::getTicketId)
+                        .toList();
+                playerDTO.setTicketIds(existingTicketIds);
+
             } else {
                 int requestedTicketCount = resolveTicketCount(playerDTO);
                 List<TambolaTicket> newTickets = new ArrayList<>();
@@ -82,10 +92,18 @@ public class GameSetupServiceImpl implements GameSetupService {
                     ticket.setRoomId(request.getRoomId());
                     newTickets.add(ticket);
                 }
-                ticketRepository.insertAll(request.getRoomCode(), newTickets);
+
+                // >>> CHANGED: insertAll() ab insert-ke-baad generated
+                // ticket_ids wapas karta hai (see TambolaTicketRepositoryImpl
+                // diff) — unhe seedha newTickets me set kar rahe hain.
+                List<Long> insertedTicketIds =
+                        ticketRepository.insertAll(request.getRoomCode(), newTickets);
+
                 log.info("[TAMBOLA_SETUP_TICKETS_INSERTED] Room:{} Player:{} TicketCount:{}",
                         request.getRoomId(), playerId, newTickets.size());
+
                 ticketCountForPlayer = newTickets.size();
+                playerDTO.setTicketIds(insertedTicketIds);
             }
 
             totalTickets += ticketCountForPlayer;
@@ -135,6 +153,7 @@ public class GameSetupServiceImpl implements GameSetupService {
                 .roomId(request.getRoomId())
                 .status(finalStatus.name())
                 .totalTicketsGenerated(totalTickets)
+                .players(players)   // >>> CHANGED: players (with ticketIds) ab response me bhi jaate hain
                 .build();
     }
 
