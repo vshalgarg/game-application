@@ -471,6 +471,7 @@ public class RoomServiceImpl implements RoomService {
         // ke bina bhi har client ko host ke latest selection mile.
         gameEngineFactory.getStrategy(room.getGameType()).replaceRules(
                 room.getId(),
+                room.getRoomCode(),
                 resolvedRules.stream()
                         .map(r -> new com.codemonks.gameservice.engineModule.dto.request.TambolaRuleConfigRequestDTO(
                                 r.getRuleType(), r.getOrder(), r.getMaxWinners(), r.getThreshold()))

@@ -154,15 +154,15 @@ public class TambolaEngineImpl implements GameEngine {
     }
 
     @Override
-    public void replaceRules(Long roomId, List<TambolaRuleConfigRequestDTO> rules) {
+    public void replaceRules(Long roomId, String roomCode, List<TambolaRuleConfigRequestDTO> rules) {
 
-        log.info("[TAMBOLA_ENGINE_RULES_PUT] Room:{} RuleCount:{}",
-                roomId, rules != null ? rules.size() : 0);
+        log.info("[TAMBOLA_ENGINE_RULES_PUT] Room:{} RoomCode:{} RuleCount:{}",
+                roomId, roomCode, rules != null ? rules.size() : 0);
 
         feignClient.replaceRules(
-                new TambolaReplaceRulesRequestDTO(roomId, rules));
+                new TambolaReplaceRulesRequestDTO(roomId, roomCode, rules));
 
-        log.info("[TAMBOLA_ENGINE_RULES_SYNCED] Room:{} RuleCount:{}",
-                roomId, rules != null ? rules.size() : 0);
+        log.info("[TAMBOLA_ENGINE_RULES_SYNCED] Room:{} RoomCode:{} RuleCount:{}",
+                roomId, roomCode, rules != null ? rules.size() : 0);
     }
 }
