@@ -28,7 +28,7 @@ public interface GameEngine {
                 supports().name() + " does not support board layout");
     }
 
-    default void replaceRules(Long roomId, List<TambolaRuleConfigRequestDTO> rules) {
+    default void replaceRules(Long roomId, String roomCode, List<TambolaRuleConfigRequestDTO> rules) {
         // Non-Tambola games ke liye no-op — sirf Tambola ke paas
         // Supabase realtime_tambola_rules sync hota hai.
     }

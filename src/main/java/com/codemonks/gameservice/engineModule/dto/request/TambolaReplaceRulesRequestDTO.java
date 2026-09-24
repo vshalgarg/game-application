@@ -13,5 +13,6 @@ import java.util.List;
 @AllArgsConstructor
 public class TambolaReplaceRulesRequestDTO {
     private Long roomId;
+    private String roomCode;
     private List<TambolaRuleConfigRequestDTO> rules;
 }
