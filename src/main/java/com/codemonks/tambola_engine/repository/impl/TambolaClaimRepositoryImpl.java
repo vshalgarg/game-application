@@ -6,6 +6,7 @@ import com.codemonks.tambola_engine.exception.SupabaseStateException;
 import com.codemonks.tambola_engine.repository.TambolaClaimRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestClient;
 
@@ -19,33 +20,46 @@ public class TambolaClaimRepositoryImpl implements TambolaClaimRepository {
     private final RestClient tambolaSupabaseRestClient;
     private final SupabaseProperties properties;
 
+    // >>> CHANGED: void -> Long. Pehle "Prefer: return=minimal" tha, isliye
+    // >>> DB-generated claim_id (IDENTITY column) kabhi wapas nahi aata tha —
+    // >>> caller (ClaimServiceImpl) fake epoch-millis ID use kar raha tha jo
+    // >>> asli DB-row se match hi nahi karta tha. Ab "return=representation"
+    // >>> se asli generated claim_id le rahe hain aur wapas kar rahe hain.
     @Override
-    public void insert(Claim claim) {
+    public Long insert(Claim claim) {
         String table = properties.getTables().getTambolaClaims();
         try {
 
             InsertClaim body = new InsertClaim(
                     claim.getRoomId(),
-                    claim.getRoomCode(),   // >>> CHANGED: room_code ab body me pass ho raha hai
+                    claim.getRoomCode(),
                     claim.getPlayerId(),
                     claim.getTicketId(),
                     claim.getRuleType().name(),
                     claim.getStatus().name()
             );
 
-            tambolaSupabaseRestClient.post()
+            List<InsertedClaimResult> inserted = tambolaSupabaseRestClient.post()
                     .uri("/rest/v1/" + table)
-                    .header("Prefer", "return=minimal")
+                    .header("Prefer", "return=representation")   // >>> CHANGED
                     .body(List.of(body))
                     .retrieve()
-                    .toBodilessEntity();
+                    .body(new ParameterizedTypeReference<List<InsertedClaimResult>>() {});   // >>> CHANGED
+
+            if (inserted == null || inserted.isEmpty()) {
+                log.warn("[TAMBOLA_CLAIM_INSERT_EMPTY_RESPONSE] roomId={} playerId={}",
+                        claim.getRoomId(), claim.getPlayerId());
+                return null;
+            }
+
+            return inserted.get(0).claim_id();
+
         } catch (Exception e) {
-            log.error("Failed to insert claim. claimId={}", claim.getClaimId(), e);
-            throw new SupabaseStateException("Failed to insert claim " + claim.getClaimId(), e);
+            log.error("Failed to insert claim. roomId={} playerId={}", claim.getRoomId(), claim.getPlayerId(), e);
+            throw new SupabaseStateException("Failed to insert claim for roomId=" + claim.getRoomId(), e);
         }
     }
 
-    // >>> CHANGED: room_code field add kiya (NOT NULL column hai ab table me)
     private record InsertClaim(
             Long room_id,
             String room_code,
@@ -54,4 +68,8 @@ public class TambolaClaimRepositoryImpl implements TambolaClaimRepository {
             String rule_type,
             String status
     ) {}
+
+    // >>> NAYA: PostgREST "return=representation" response se sirf
+    // claim_id nikaalne ke liye.
+    private record InsertedClaimResult(Long claim_id) {}
 }

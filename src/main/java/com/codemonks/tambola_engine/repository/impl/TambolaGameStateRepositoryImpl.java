@@ -21,47 +21,59 @@ import java.util.Map;
 @Slf4j
 @Repository("tambolaRoomRepositoryImpl")
 @RequiredArgsConstructor
-public class TambolaGameStateRepositoryImpl implements TambolaGameStateRepository {
+public class TambolaGameStateRepositoryImpl
+        implements TambolaGameStateRepository {
 
     private final RestClient tambolaSupabaseRestClient;
     private final SupabaseProperties properties;
 
     @Override
     public TambolaGameState findById(Long roomId) {
-        String table = properties.getTables().getRealtimeTambolaGameState();
+
+        String table =
+                properties.getTables().getRealtimeTambolaGameState();
 
         try {
 
-            List<GameStateRow> result = tambolaSupabaseRestClient.get()
-                            .uri(uriBuilder -> uriBuilder
-                                    .path("/rest/v1/" + table)
-                                    .queryParam(
-                                            "room_id",
-                                            "eq." + roomId
-                                    )
-                                    .queryParam("select", "*")
-                                    .build())
+            List<GameStateRow> result =
+                    tambolaSupabaseRestClient.get()
+                            .uri(uriBuilder ->
+                                    uriBuilder
+                                            .path("/rest/v1/" + table)
+                                            .queryParam(
+                                                    "room_id",
+                                                    "eq." + roomId
+                                            )
+                                            .queryParam(
+                                                    "select",
+                                                    "*"
+                                            )
+                                            .build()
+                            )
                             .retrieve()
                             .body(
-                                    new ParameterizedTypeReference<
-                                            List<GameStateRow>>() {
+                                    new ParameterizedTypeReference<List<GameStateRow>>() {
                                     }
                             );
 
             if (result == null || result.isEmpty()) {
                 throw new RoomNotFoundException(roomId);
             }
+
             return result.get(0).toDomain();
 
         } catch (RoomNotFoundException e) {
+
             throw e;
 
         } catch (Exception e) {
+
             log.error(
                     "Failed to fetch game-state. roomId={}",
                     roomId,
                     e
             );
+
             throw new SupabaseStateException(
                     "Failed to fetch game-state for roomId=" + roomId,
                     e
@@ -82,7 +94,10 @@ public class TambolaGameStateRepositoryImpl implements TambolaGameStateRepositor
 
             tambolaSupabaseRestClient.post()
                     .uri("/rest/v1/" + table)
-                    .header("Prefer", "return=minimal")
+                    .header(
+                            "Prefer",
+                            "return=minimal"
+                    )
                     .body(row)
                     .retrieve()
                     .toBodilessEntity();
@@ -110,27 +125,39 @@ public class TambolaGameStateRepositoryImpl implements TambolaGameStateRepositor
             Long expectedVersion
     ) {
 
-        String table = properties.getTables().getRealtimeTambolaGameState();
+        String table =
+                properties.getTables().getRealtimeTambolaGameState();
 
-        Map<String, Object> body = new HashMap<>(changes);
-        body.put("version", expectedVersion + 1);
-        body.put("updated_at", Instant.now().toString());
+        Map<String, Object> body =
+                new HashMap<>(changes);
+
+        body.put(
+                "version",
+                expectedVersion + 1
+        );
+
+        body.put(
+                "updated_at",
+                Instant.now().toString()
+        );
 
         try {
 
             List<Object> updatedRows =
                     tambolaSupabaseRestClient.patch()
-                            .uri(uriBuilder -> uriBuilder
-                                    .path("/rest/v1/" + table)
-                                    .queryParam(
-                                            "room_id",
-                                            "eq." + roomId
-                                    )
-                                    .queryParam(
-                                            "version",
-                                            "eq." + expectedVersion
-                                    )
-                                    .build())
+                            .uri(uriBuilder ->
+                                    uriBuilder
+                                            .path("/rest/v1/" + table)
+                                            .queryParam(
+                                                    "room_id",
+                                                    "eq." + roomId
+                                            )
+                                            .queryParam(
+                                                    "version",
+                                                    "eq." + expectedVersion
+                                            )
+                                            .build()
+                            )
                             .header(
                                     "Prefer",
                                     "return=representation"
@@ -138,19 +165,29 @@ public class TambolaGameStateRepositoryImpl implements TambolaGameStateRepositor
                             .body(body)
                             .retrieve()
                             .body(
-                                    new ParameterizedTypeReference<
-                                            List<Object>>() {
+                                    new ParameterizedTypeReference<List<Object>>() {
                                     }
                             );
 
             if (updatedRows != null && !updatedRows.isEmpty()) {
-                log.info("[TAMBOLA_STATE_UPDATED] roomId={} version={}->{} keys={}",
-                        roomId, expectedVersion, expectedVersion + 1, body.keySet());
+
+                log.info(
+                        "[TAMBOLA_STATE_UPDATED] roomId={} version={}->{} keys={}",
+                        roomId,
+                        expectedVersion,
+                        expectedVersion + 1,
+                        body.keySet()
+                );
+
                 return true;
             }
 
-            log.warn("[TAMBOLA_STATE_STALE] roomId={} expectedVersion={} - update skipped (concurrent write or already advanced)",
-                    roomId, expectedVersion);
+            log.warn(
+                    "[TAMBOLA_STATE_STALE] roomId={} expectedVersion={} - update skipped (concurrent write or already advanced)",
+                    roomId,
+                    expectedVersion
+            );
+
             return false;
 
         } catch (Exception e) {
@@ -181,30 +218,30 @@ public class TambolaGameStateRepositoryImpl implements TambolaGameStateRepositor
 
             List<GameStateRow> result =
                     tambolaSupabaseRestClient.get()
-                            .uri(uriBuilder -> uriBuilder
-                                    .path("/rest/v1/" + table)
-                                    .queryParam(
-                                            "game_status",
-                                            "in.("
-                                                    + GameStatusEnum
-                                                    .RUNNING
-                                                    .name()
-                                                    + ","
-                                                    + GameStatusEnum
-                                                    .WIN
-                                                    .name()
-                                                    + ")"
-                                    )
-                                    .queryParam(
-                                            "next_tick_at",
-                                            "lte." + now.toString()
-                                    )
-                                    .queryParam("select", "*")
-                                    .build())
+                            .uri(uriBuilder ->
+                                    uriBuilder
+                                            .path("/rest/v1/" + table)
+                                            .queryParam(
+                                                    "game_status",
+                                                    "in.("
+                                                            + GameStatusEnum.RUNNING.name()
+                                                            + ","
+                                                            + GameStatusEnum.WIN.name()
+                                                            + ")"
+                                            )
+                                            .queryParam(
+                                                    "next_tick_at",
+                                                    "lte." + now
+                                            )
+                                            .queryParam(
+                                                    "select",
+                                                    "*"
+                                            )
+                                            .build()
+                            )
                             .retrieve()
                             .body(
-                                    new ParameterizedTypeReference<
-                                            List<GameStateRow>>() {
+                                    new ParameterizedTypeReference<List<GameStateRow>>() {
                                     }
                             );
 
@@ -214,10 +251,10 @@ public class TambolaGameStateRepositoryImpl implements TambolaGameStateRepositor
 
             return result.stream()
                     .map(GameStateRow::toDomain)
-                    .filter(state ->
-                            state.getNextTickAt() != null
-                                    && !state.getNextTickAt()
-                                    .isAfter(now)
+                    .filter(
+                            state ->
+                                    state.getNextTickAt() != null
+                                            && !state.getNextTickAt().isAfter(now)
                     )
                     .toList();
 
@@ -247,6 +284,7 @@ public class TambolaGameStateRepositoryImpl implements TambolaGameStateRepositor
     ) {
 
         TambolaGameState toDomain() {
+
             List<PlayerDTO> statePlayers =
                     players != null
                             ? players
