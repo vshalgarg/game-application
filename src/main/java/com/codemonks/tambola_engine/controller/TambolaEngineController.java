@@ -14,11 +14,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static com.codemonks.tambola_engine.constant.ApiConstants.BASE_API;
 import static com.codemonks.tambola_engine.constant.ApiConstants.LOBBY;
@@ -41,64 +37,191 @@ public class TambolaEngineController {
     public ResponseEntity<GameSetupResult> startGame(
             @Valid @RequestBody EngineStartGameRequestDTO request) {
 
+        long startTime = System.currentTimeMillis();
+
         log.info(
-                "[START_GAME_REQUEST] Room:{} PlayerCount:{}",
+                "[TAMBOLA][START_GAME][REQUEST] roomId={} playerCount={}",
                 request.getRoomId(),
-                request.getPlayers().size()
+                request.getPlayers() != null ? request.getPlayers().size() : 0
         );
 
-        GameSetupResult result = gameSetupService.initializeGame(request);
+        try {
 
-        log.info("[START_GAME_RESPONSE] Room:{} Status:{} TotalTickets:{}",
-                request.getRoomId(), result.getStatus(), result.getTotalTicketsGenerated());
-        return ResponseEntity.ok(result);
+            GameSetupResult result = gameSetupService.initializeGame(request);
+
+            long duration = System.currentTimeMillis() - startTime;
+
+            log.info(
+                    "[TAMBOLA][START_GAME][SUCCESS] roomId={} status={} totalTickets={} durationMs={}",
+                    request.getRoomId(),
+                    result.getStatus(),
+                    result.getTotalTicketsGenerated(),
+                    duration
+            );
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception ex) {
+
+            long duration = System.currentTimeMillis() - startTime;
+
+            log.error(
+                    "[TAMBOLA][START_GAME][FAILED] roomId={} durationMs={} error={}",
+                    request.getRoomId(),
+                    duration,
+                    ex.getMessage(),
+                    ex
+            );
+
+            throw ex;
+        }
     }
 
     @PostMapping(SUBMIT_CLAIM)
     public ResponseEntity<ClaimResponseDTO> submitClaim(
             @Valid @RequestBody ClaimRequestDTO request) {
 
+        long startTime = System.currentTimeMillis();
+
         log.info(
-                "[CLAIM_REQUEST] Room:{} Player:{} Rule:{}",
+                "[TAMBOLA][CLAIM][REQUEST] roomId={} playerId={} ruleType={}",
                 request.getRoomId(),
                 request.getPlayerId(),
                 request.getRuleType()
         );
 
-        ClaimResponseDTO result = claimService.submitClaim(request);
+        try {
 
-        log.info("[CLAIM_RESPONSE] Room:{} Player:{} Rule:{} ClaimId:{} Status:{}",
-                request.getRoomId(), request.getPlayerId(), request.getRuleType(),
-                result.getClaimId(), result.getStatus());
-        return ResponseEntity.ok(result);
+            ClaimResponseDTO result = claimService.submitClaim(request);
+
+            long duration = System.currentTimeMillis() - startTime;
+
+            log.info(
+                    "[TAMBOLA][CLAIM][SUCCESS] roomId={} playerId={} ruleType={} claimId={} status={} durationMs={}",
+                    request.getRoomId(),
+                    request.getPlayerId(),
+                    request.getRuleType(),
+                    result.getClaimId(),
+                    result.getStatus(),
+                    duration
+            );
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception ex) {
+
+            long duration = System.currentTimeMillis() - startTime;
+
+            log.error(
+                    "[TAMBOLA][CLAIM][FAILED] roomId={} playerId={} ruleType={} durationMs={} error={}",
+                    request.getRoomId(),
+                    request.getPlayerId(),
+                    request.getRuleType(),
+                    duration,
+                    ex.getMessage(),
+                    ex
+            );
+
+            throw ex;
+        }
     }
 
     @PostMapping(LOBBY)
     public ResponseEntity<Void> publishLobby(
-            @RequestBody RealtimeLobbyDTO request) {
+            @Valid @RequestBody RealtimeLobbyDTO request) {
+
+        long startTime = System.currentTimeMillis();
+
         log.info(
-                "[LOBBY_REQUEST] Room:{} RoomCode:{}",
+                "[TAMBOLA][LOBBY][REQUEST] roomId={} roomCode={}",
                 request.getRoomId(),
                 request.getRoomCode()
         );
-        supabaseRealtimeService.publishLobbyState(request);
-        return ResponseEntity.ok().build();
+
+        try {
+
+            supabaseRealtimeService.publishLobbyState(request);
+
+            long duration = System.currentTimeMillis() - startTime;
+
+            log.info(
+                    "[TAMBOLA][LOBBY][SUCCESS] roomId={} roomCode={} durationMs={}",
+                    request.getRoomId(),
+                    request.getRoomCode(),
+                    duration
+            );
+
+            return ResponseEntity.ok().build();
+
+        } catch (Exception ex) {
+
+            long duration = System.currentTimeMillis() - startTime;
+
+            log.error(
+                    "[TAMBOLA][LOBBY][FAILED] roomId={} roomCode={} durationMs={} error={}",
+                    request.getRoomId(),
+                    request.getRoomCode(),
+                    duration,
+                    ex.getMessage(),
+                    ex
+            );
+
+            throw ex;
+        }
     }
 
     @PutMapping(RULES)
     public ResponseEntity<Void> replaceRules(
             @Valid @RequestBody ReplaceRulesRequestDTO request) {
+
+        long startTime = System.currentTimeMillis();
+
+        int ruleCount = request.getRules() != null
+                ? request.getRules().size()
+                : 0;
+
         log.info(
-                "[RULES_PUT_REQUEST] Room:{} RuleCount:{}",
+                "[TAMBOLA][RULES][REQUEST] roomId={} roomCode={} ruleCount={}",
                 request.getRoomId(),
-                request.getRules() != null ? request.getRules().size() : 0
+                request.getRoomCode(),
+                ruleCount
         );
-        ruleService.replaceRules(request.getRoomId(), request.getRules());
-        log.info(
-                "[RULES_PUT_RESPONSE] Room:{} Rules:{}",
-                request.getRoomId(),
-                request.getRules() != null ? request.getRules().size() : 0
-        );
-        return ResponseEntity.ok().build();
+
+        try {
+
+            ruleService.replaceRules(
+                    request.getRoomId(),
+                    request.getRoomCode(),
+                    request.getRules()
+            );
+
+            long duration = System.currentTimeMillis() - startTime;
+
+            log.info(
+                    "[TAMBOLA][RULES][SUCCESS] roomId={} roomCode={} ruleCount={} durationMs={}",
+                    request.getRoomId(),
+                    request.getRoomCode(),
+                    ruleCount,
+                    duration
+            );
+
+            return ResponseEntity.ok().build();
+
+        } catch (Exception ex) {
+
+            long duration = System.currentTimeMillis() - startTime;
+
+            log.error(
+                    "[TAMBOLA][RULES][FAILED] roomId={} roomCode={} ruleCount={} durationMs={} error={}",
+                    request.getRoomId(),
+                    request.getRoomCode(),
+                    ruleCount,
+                    duration,
+                    ex.getMessage(),
+                    ex
+            );
+
+            throw ex;
+        }
     }
 }

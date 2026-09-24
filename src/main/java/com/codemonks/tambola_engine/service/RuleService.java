@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface RuleService {
 
-    void replaceRules(Long roomId, List<RuleConfigRequestDTO> ruleConfigs);
+    void replaceRules(Long roomId, String roomCode, List<RuleConfigRequestDTO> ruleConfigs);
 }

@@ -17,5 +17,8 @@ public class ReplaceRulesRequestDTO {
     @NotNull(message = "Room ID is required")
     private Long roomId;
 
+    @NotNull(message = "Room code is required")
+    private String roomCode;
+
     private List<RuleConfigRequestDTO> rules;
 }
