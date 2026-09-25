@@ -7,7 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import { startRoom } from "../../services/roomService";
 import { addBot, removePlayer } from "../../services/ludoService";
 import useWaitingRoomRealtime from "../../hooks/useWaitingRoomRealtime";
-import useRoomRealtime from "../../hooks/useRoomRealtime";
+import useTambolaStartRoomRealtime from "../../hooks/useTambolaStartRoomRealtime";
 import useBackExitGuard from "../../hooks/useBackExitGuard";
 import PageShell from "../../components/layout/PageShell";
 import GameZoneLogo from "../../components/brand/GameZoneLogo";
@@ -80,7 +80,7 @@ const TambolaWaiting = () => {
   console.info("Players in waiting room", players);
 
   // start button listner
-  useRoomRealtime({
+  useTambolaStartRoomRealtime({
     roomCode,
     onStartGame: () => {
       navigate(`/tambola-gameroom/${roomCode}`, { replace: true });
