@@ -16,6 +16,7 @@ const About = lazy(() => import("../pages/About"));
 const Contact = lazy(() => import("../pages/Contact"));
 const Profile = lazy(() => import("../pages/Profile"));
 const CompleteProfile = lazy(() => import("../pages/CompleteProfile"));
+const ChiefDropFrame = lazy(() => import("../pages/ChiefDropFrame"));
 
 const AppRoutes = () => {
   return (
@@ -52,6 +53,7 @@ const AppRoutes = () => {
                     <Route path="/ludogame-room/:roomCode" element={<LudoGameRoom />} />
                   </Route>
                   {/* Navbar */}
+                  <Route path="/chief-drop" element={<ChiefDropFrame />} />
                   <Route path="/about" element={<About />} /> {/*about page for of navigation bar */}
                   <Route path="/contact" element={<Contact />} />{" "}
                   {/*contact page of navigation bar */}
