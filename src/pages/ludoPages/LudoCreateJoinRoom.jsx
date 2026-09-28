@@ -9,7 +9,6 @@ import GameZoneLogo from "../../components/brand/GameZoneLogo";
 import ModeOption from "../../components/ui/ModeOption";
 import TextField from "../../components/ui/TextField";
 import { playSound } from "../../services/soundManager";
-import useGameBackgroundMusic from "../../hooks/useGameBackgroundMusic";
 
 const LudoCreateJoinRoom = () => {
   const navigate = useNavigate();
@@ -19,8 +18,6 @@ const LudoCreateJoinRoom = () => {
   const [loading, setLoading] = useState(false);
   const [roomCode, setRoomCode] = useState("");
   const [joining, setJoining] = useState(false);
-
-  useGameBackgroundMusic("LUDO");
 
   const handleCreateRoom = async () => {
     playSound("LUDO", "BUTTON_CLICK");

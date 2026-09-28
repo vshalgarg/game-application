@@ -35,7 +35,6 @@ const Navbar = () => {
 
   const handleHome = () => {
     setMenuOpen(false);
-    stopBackgroundMusic();
     navigate("/");
   };
 
@@ -80,7 +79,7 @@ const Navbar = () => {
                 to={path}
                 end={path === "/"}
                 onClick={() => {
-                  stopBackgroundMusic();
+                  setMenuOpen(false);
                 }}
 
                 className={({ isActive }) =>
@@ -116,7 +115,6 @@ const Navbar = () => {
                 end={path === "/"}
                 onClick={() => {
                   setMenuOpen(false);
-                  stopBackgroundMusic();
                 }}
                 className={({ isActive }) =>
                   `gz-navbar__link py-1 ${isActive ? "gz-navbar__link--active" : ""}`

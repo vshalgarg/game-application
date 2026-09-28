@@ -1,4 +1,4 @@
-import { useState,  useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaBorderAll, FaGamepad, FaPlusCircle, FaSignInAlt } from "react-icons/fa";
 import { createRoom, joinRoom } from "../services/roomService";
@@ -9,7 +9,6 @@ import GameZoneLogo from "../components/brand/GameZoneLogo";
 import ModeOption from "../components/ui/ModeOption";
 import TextField from "../components/ui/TextField";
 import { playSound } from "../services/soundManager";
-import useGameBackgroundMusic from "../hooks/useGameBackgroundMusic";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -18,9 +17,6 @@ const Home = () => {
   const [loading, setLoading] = useState(false);
   const [roomCode, setRoomCode] = useState("");
   const [joining, setJoining] = useState(false);
-
-  // for loading sounds on refresh
-  useGameBackgroundMusic("TIC_TAC_TOE");
 
   const handleCreateRoom = async () => {
     playSound("TIC_TAC_TOE", "BUTTON CLICK");
