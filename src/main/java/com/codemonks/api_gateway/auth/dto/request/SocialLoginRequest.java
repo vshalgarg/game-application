@@ -8,4 +8,6 @@ public class SocialLoginRequest {
         private String provider;
 
         private String credential;
+
+        private String clientType;
 }
