@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FaUsers, FaTicketAlt, FaTh, FaPlus, FaBookOpen, FaArrowRight } from "react-icons/fa";
+import { FaUsers, FaTicketAlt, FaTh, FaPlus, FaBookOpen, FaArrowRight, FaTrophy, FaThLarge, FaMinus, FaDice, FaCrown } from "react-icons/fa";
 import { LuX } from "react-icons/lu";
 import PageShell from "../../components/layout/PageShell";
 import ExitGamePopup from "../../components/ui/ExitGamePopup";
@@ -8,13 +8,19 @@ import useBackExitGuard from "../../hooks/useBackExitGuard";
 import useTambolaGameStateRealtime from "../../hooks/useTambolaGameStateRealtime";
 import useTambolaTicketRealtime from "../../hooks/useTambolaTicketRealtime";
 import { useAuth } from "../../context/AuthContext";
+import useTambolaClaimsRealtime from "../../hooks/useTambolaClaimsRealtime";
+import useTambolaRulesRealtime from "../../hooks/useTambolaRulesRealtime";
+import { claimTambolaRule } from "../../services/tambolaService";
+import { useSnackbar } from "../../context/SnackbarContext";
 
 const TambolaGameRoom = () => {
 
   const { roomCode } = useParams();
   const { auth } = useAuth();
+  const { showSnackbar } = useSnackbar();
   const [showExitPopup, setShowExitPopup] = useState(false);
   const [markedNumbers, setMarkedNumbers] = useState([]);
+  const [claimingRule, setClaimingRule] = useState(null);
 
   const closeExitPopup = () => setShowExitPopup(false);
   const openExitPopup = () => setShowExitPopup(true);
@@ -23,13 +29,46 @@ const TambolaGameRoom = () => {
 
   const currentUserId = auth?.userId;
 
+  const claimRuleConfig = {
+  EARLY_FIVE: {
+    title: "Early Five",
+    description: "First player to mark any five numbers",
+  },
+
+  TOP_LINE: {
+    title: "Top Line",
+    description: "First player to complete the top row",
+  },
+
+  MIDDLE_LINE: {
+    title: "Middle Line",
+    description: "First player to complete the middle row",
+  },
+
+  BOTTOM_LINE: {
+    title: "Bottom Line",
+    description: "First player to complete the bottom row",
+  },
+
+  FULL_HOUSE: {
+    title: "Full House",
+    description: "First player to mark all numbers",
+  },
+};
+
+  // rules realtime listner for claims
+  const {
+    rules: realtimeRules,
+    loading: rulesLoading,
+  } = useTambolaRulesRealtime(roomCode);
+  console.info("Tambola selected rules:", realtimeRules);
+
   // game room realtime listner
   const {
     gameState: realtimeGameState,
     loading: gameStateLoading,
   } = useTambolaGameStateRealtime(roomCode);
-  console.log("Tambola realtime game state:", realtimeGameState);
-  console.log("Game state loading:", gameStateLoading);
+  console.info("Tambola realtime game state:", realtimeGameState);
 
   // ticket generator realtime listner
   const {
@@ -37,9 +76,18 @@ const TambolaGameRoom = () => {
     loading: ticketLoading,
     error: ticketError
   } = useTambolaTicketRealtime(roomCode, currentUserId);
-  console.log("ticket", ticket);
-  console.log("ticket loading", ticketLoading);
+  console.info("ticket", ticket);
 
+  // claims realtime listner
+  const {
+    claims,
+    myClaims,
+    loading: claimsLoading,
+    error: claimsError,
+  } = useTambolaClaimsRealtime(roomCode, currentUserId);
+  console.info("ticket claims",claims);
+  console.info("ticket myclaims",myClaims);
+    
   const calledNumbers = realtimeGameState?.called_numbers || [];
   const lastCalled = calledNumbers.length > 0 ? calledNumbers[calledNumbers.length - 1] : null;
   const players = realtimeGameState?.players || [];
@@ -47,6 +95,56 @@ const TambolaGameRoom = () => {
   const gameStatus = realtimeGameState?.game_status;
 
   const numbers = useMemo(() => Array.from({ length: 90 }, (_, index) => index + 1),[]);
+  const selectedClaimRules = [...(realtimeRules || [])]
+  .filter((rule) => claimRuleConfig[rule.rule_type])
+  .sort((a, b) => a.rule_order - b.rule_order);
+
+  // claim button handler
+  const handleClaim = async (ruleType) => {
+  try {
+    if (!auth?.userId) {
+      showSnackbar("User ID not found.", "error");
+      return;
+    }
+
+    if (!ticket?.ticket_id) {
+      showSnackbar("Ticket not found.", "error");
+      return;
+    }
+
+    setClaimingRule(ruleType);
+
+    console.log("Submitting Tambola claim:", {
+      roomCode,
+      userId: auth.userId,
+      ticketId: ticket.ticket_id,
+      ruleType,
+    });
+
+    const result = await claimTambolaRule({
+      roomCode,
+      userId: auth.userId,
+      ticketId: ticket.ticket_id,
+      ruleType,
+    });
+
+    console.log("Tambola claim response:", result);
+
+    showSnackbar(
+      result?.message || "Claim submitted successfully.",
+      "success"
+    );
+  } catch (error) {
+    console.error("Tambola claim failed:", error);
+
+    showSnackbar(
+      error.message || "Failed to submit claim.",
+      "error"
+    );
+  } finally {
+    setClaimingRule(null);
+  }
+};
 
   const handleTicketNumberClick = (number) => {
     if (!calledNumbers.includes(number)) return;
@@ -107,9 +205,7 @@ const TambolaGameRoom = () => {
                     : "border-slate-400/50 bg-slate-400/15 text-slate-300"
                 }`}
               >
-                {gameStatus === "RUNNING"
-                  ? "LIVE"
-                  : gameStatus || "WAITING"}
+                {gameStatus === "RUNNING" ? "LIVE" : gameStatus || "WAITING"}
               </span>
             </div>
           </div>
@@ -318,17 +414,78 @@ const TambolaGameRoom = () => {
 
 
           {/* ADD TICKET */}
-          <button
+          {/* <button
             type="button"
             className="mt-2 flex w-full items-center justify-end gap-1 text-xs font-medium text-gz-primary-cyan"
           >
             <FaPlus size={9} />
             Add Another Ticket
-          </button>
+          </button> */}
         </div>
 
         {/* GAME RULES */}
-        <button
+        {/* CLAIMS */}
+        <div className="rounded-2xl border border-gz-primary-cyan/50 bg-gz-popup/80 p-4 shadow-[0_0_20px_rgba(34,211,238,0.07)] backdrop-blur-xl">
+
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FaTrophy className="text-yellow-400" size={17} />
+
+              <h2 className="text-base font-bold text-gz-text">
+                Claims and Rules
+              </h2>
+            </div>
+
+            {selectedClaimRules.length > 0 && (
+              <span className="rounded-full border border-fuchsia-500/30 bg-fuchsia-500/15 px-3 py-1 text-[10px] font-semibold text-fuchsia-400">
+                {selectedClaimRules.length} Rules
+              </span>
+            )}
+          </div>
+
+          {rulesLoading ? (
+            <div className="flex min-h-[100px] items-center justify-center text-sm text-slate-400">
+              Loading claims...
+            </div>
+          ) : selectedClaimRules.length === 0 ? (
+            <div className="flex min-h-[100px] items-center justify-center text-sm text-slate-400">
+              No claim rules selected
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {selectedClaimRules.map((rule) => {
+                const config = claimRuleConfig[rule.rule_type];
+
+                return (
+                  <div
+                    key={rule.rule_type}
+                    className="flex items-center justify-between rounded-xl border border-white/10 bg-slate-900/40 px-3 py-2.5"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-gz-text">
+                        {config.title}
+                      </p>
+
+                      <p className="text-[10px] text-slate-400">
+                        {config.description}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleClaim(rule.rule_type)}
+                      disabled={claimingRule === rule.rule_type}
+                      className="ml-3 shrink-0 rounded-lg bg-gradient-to-r from-cyan-400 to-blue-500 px-5 py-2 text-xs font-bold text-white transition hover:scale-[1.03] active:scale-95"
+                    >
+                      {claimingRule === rule.rule_type ? "Claiming..." : "Claim"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        {/* <button
           type="button"
           className="flex flex-1 items-center gap-3 rounded-2xl border border-gz-purple-accent/40 bg-gz-popup/80 p-4 text-left shadow-[0_0_20px_rgba(168,85,247,0.06)] backdrop-blur-xl transition hover:border-gz-primary-cyan/50"
         >
@@ -350,7 +507,7 @@ const TambolaGameRoom = () => {
             View Rules
             <FaArrowRight size={10} />
           </div>
-        </button>
+        </button> */}
       </div>
     </div>
   </div>

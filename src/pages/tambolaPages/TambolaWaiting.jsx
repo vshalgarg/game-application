@@ -37,11 +37,9 @@ const TambolaWaiting = () => {
   } = useTambolaRulesRealtime(roomCode);
 
   console.log("rules", realtimeRules);
-  console.log("loading", rulesRealtimeLoading);
 
   // Rules selected by host and received through realtime
-  const realtimeRuleTypes = realtimeRules.map((rule) => rule.rule_type);
-  console.log("Realtime rule types:", realtimeRuleTypes);
+  const realtimeRuleTypes =  (realtimeRules || []).map((rule) => rule.rule_type);
 
   const closeExitPopup = useCallback(() => {
     setShowExitPopup(false);

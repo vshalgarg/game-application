@@ -12,9 +12,33 @@ const useTambolaRulesRealtime = (roomCode) => {
       return;
     }
 
-    setLoading(true);
+    let channel;
+    let isMounted = true;
 
-    const channel = supabase
+    const fetchRules = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("realtime_tambola_rules")
+          .select("*")
+          .eq("room_code", roomCode)
+          .order("rule_order", { ascending: true });
+
+        if (error) {
+          console.error("[Tambola Rules] Fetch failed:", error);
+          return;
+        }
+
+        console.log("ALL RULES FROM SUPABASE:", data);
+
+        if (isMounted) {
+          setRules(data || []);
+        }
+      } catch (error) {
+        console.error("[Tambola Rules] Unexpected fetch error:", error);
+      }
+    };
+
+    channel = supabase
       .channel(`tambola-rules-${roomCode}`)
       .on(
         "postgres_changes",
@@ -24,46 +48,30 @@ const useTambolaRulesRealtime = (roomCode) => {
           table: "realtime_tambola_rules",
           filter: `room_code=eq.${roomCode}`,
         },
-        (payload) => {
-          console.log("Tambola Rules Realtime Event:", payload);
+        async (payload) => {
+          console.log("[Tambola Rules] Realtime event:", payload);
 
-          if (payload.eventType === "INSERT") {
-            setRules((prev) => [...prev, payload.new]);
-          }
-
-          if (payload.eventType === "UPDATE") {
-            setRules((prev) =>
-              prev.map((rule) =>
-                rule.id === payload.new.id ? payload.new : rule
-              )
-            );
-          }
-
-          if (payload.eventType === "DELETE") {
-            setRules((prev) =>
-              prev.filter((rule) => rule.id !== payload.old.id)
-            );
-          }
+          await fetchRules();
         }
       )
-      .subscribe((status) => {
-        console.log(
-          `Tambola rules realtime status for room ${roomCode}:`,
-          status
-        );
+      .subscribe(async (status) => {
+        console.log(`[Tambola Rules] Subscription status for ${roomCode}:`, status);
 
         if (status === "SUBSCRIBED") {
-            console.log(
-      `[Tambola Rules] Successfully subscribed for room: ${roomCode}`
-    );
-          setLoading(false);
+          await fetchRules();
+
+          if (isMounted) {
+            setLoading(false);
+          }
         }
       });
 
     return () => {
-      console.log(`Removing Tambola rules listener for room ${roomCode}`);
+      isMounted = false;
 
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [roomCode]);
 

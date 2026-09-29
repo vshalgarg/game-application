@@ -25,3 +25,19 @@ export const saveTambolaRules = async (roomCode, payload) => {
     throw new Error(handleApiError(error));
   }
 };
+
+export const claimTambolaRule = async ({ roomCode, userId, ticketId, ruleType }) => {
+  try {
+    const response = await api.post(`/game/${roomCode}/move`, {
+      userId,
+      moveData: {
+        ticketId,
+        ruleType,
+      },
+    });
+
+    return checkLogicalError(response.data); 
+  } catch (error) {
+    throw new Error(handleApiError(error));
+  }
+};
