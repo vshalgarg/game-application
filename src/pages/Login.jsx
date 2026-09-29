@@ -97,6 +97,7 @@ const Login = () => {
       const payload = {
         provider,
         credential,
+        clientType : "web",
       };
 
       const response = await socialLogin(payload);
