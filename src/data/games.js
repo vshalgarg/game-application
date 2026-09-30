@@ -1,4 +1,4 @@
-import { FaDice, FaFlagCheckered, FaPlane, FaTimes } from "react-icons/fa";
+import { FaPlane, FaTicketAlt, FaDice, FaTimes } from "react-icons/fa";
 
 export const popularGames = [
   {
@@ -26,11 +26,11 @@ export const popularGames = [
     accent: "cyan",
   },
   {
-    id: "racing",
-    title: "Speed Legends",
-    genre: "Racing",
-    path: null,
-    icon: FaFlagCheckered,
+    id: "tambola",
+    title: "Tambola",
+    genre: "Numbers",
+    path: "/tambola-mode",
+    icon: FaTicketAlt,
     accent: "purple",
   },
 ];

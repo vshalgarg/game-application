@@ -16,6 +16,10 @@ const About = lazy(() => import("../pages/About"));
 const Contact = lazy(() => import("../pages/Contact"));
 const Profile = lazy(() => import("../pages/Profile"));
 const CompleteProfile = lazy(() => import("../pages/CompleteProfile"));
+const TambolaCreateJoin = lazy(() => import("../pages/tambolaPages/TambolaCreateJoin"));
+const TambolaMode = lazy(() => import("../pages/tambolaPages/TambolaMode"));
+const TambolaWaiting = lazy(() => import("../pages/tambolaPages/TambolaWaiting"));
+const TambolaGameRoom = lazy(() => import("../pages/tambolaPages/TambolaGameRoom"));
 const ChiefDropFrame = lazy(() => import("../pages/ChiefDropFrame"));
 
 const AppRoutes = () => {
@@ -52,11 +56,18 @@ const AppRoutes = () => {
                     <Route path="/ludowaiting-room/:roomCode" element={<LudoWaitingRoom />} />
                     <Route path="/ludogame-room/:roomCode" element={<LudoGameRoom />} />
                   </Route>
+
+                  <Route element={<GameLayout gameType="TAMBOLA" />}>
+                    <Route path="/tcreate-join" element={<TambolaCreateJoin />} />
+                    <Route path="/tambola-mode" element={<TambolaMode />} />
+                    <Route path="/tambola-waiting/:roomCode" element={<TambolaWaiting />} />
+                    <Route path="/tambola-gameroom/:roomCode" element={<TambolaGameRoom />} />
+                  </Route>
+                  
                   {/* Navbar */}
                   <Route path="/chief-drop" element={<ChiefDropFrame />} />
                   <Route path="/about" element={<About />} /> {/*about page for of navigation bar */}
-                  <Route path="/contact" element={<Contact />} />{" "}
-                  {/*contact page of navigation bar */}
+                  <Route path="/contact" element={<Contact />} />{" "}    {/*contact page of navigation bar */}
                   <Route path="/profile" element={<Profile />} /> {/*profile page of navigation bar*/}
                 </Routes>
               </MainLayout>
