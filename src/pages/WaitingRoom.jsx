@@ -14,7 +14,6 @@ import GameZoneLogo from "../components/brand/GameZoneLogo";
 import Button from "../components/ui/Button";
 import ExitGamePopup from "../components/ui/ExitGamePopup";
 import { playSound } from "../services/soundManager";
-import useGameBackgroundMusic from "../hooks/useGameBackgroundMusic";
 
 const BOT_DIFFICULTIES = [
   {
@@ -51,9 +50,6 @@ const WaitingRoom = () => {
   const openExitPopup = useCallback(() => setShowExitPopup(true), []);
 
   useBackExitGuard(openExitPopup);
-
-  // for loading sounds on refresh
-  useGameBackgroundMusic("TIC_TAC_TOE");
 
   const { players } = useWaitingRoomRealtime(roomCode);
 

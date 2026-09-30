@@ -132,8 +132,8 @@
   }
 
   .gz-btn-secondary {
-    @apply w-full cursor-pointer rounded-gz-control border border-gz-primary-cyan bg-transparent
-      py-2.5 text-center text-sm font-semibold text-gz-primary-cyan
+    @apply w-full cursor-pointer rounded-full border border-gz-primary-cyan bg-transparent
+      px-5 py-2 text-center text-sm font-semibold text-gz-primary-cyan
       transition hover:bg-gz-primary-cyan/10 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60;
   }
 

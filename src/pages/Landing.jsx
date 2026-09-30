@@ -5,46 +5,42 @@ import PageShell from "../components/layout/PageShell";
 import CircuitMark from "../components/brand/CircuitMark";
 import GameCarousel from "../components/games/GameCarousel";
 import FeatureStrip from "../components/games/FeatureStrip";
-import { getGameSounds } from "../services/soundService";
-import { loadGameSounds, playBackgroundMusic } from "../services/soundManager";
+import {
+  initializeGameSounds,
+  playBackgroundMusic,
+  stopBackgroundMusic,
+} from "../services/soundManager";
 
 const Landing = () => {
   const navigate = useNavigate();
 
   const handleSelect = async (game) => {
+    try {
+      let gameType;
 
-  try {
-    let gameType;
+      if (game.id === "ludo") {
+        gameType = "LUDO";
+      } else if (game.id === "tic-tac-toe") {
+        gameType = "TIC_TAC_TOE";
+      }
 
-    if (game.id === "ludo") {
-      gameType = "LUDO";
-    } else if (game.id === "tic-tac-toe") {
-      gameType = "TIC_TAC_TOE";
+      if (gameType) {
+        stopBackgroundMusic();
+        await initializeGameSounds(gameType);
+        await playBackgroundMusic(gameType);
+      }
+
+      if (game.path) {
+        navigate(game.path);
+      }
+    } catch (error) {
+      console.error("Failed to load game sounds:", error);
+
+      if (game.path) {
+        navigate(game.path);
+      }
     }
-
-    if (gameType) {
-
-      // sound response api 
-      const soundResponse = await getGameSounds(gameType);
-      await loadGameSounds(gameType, soundResponse);
-
-      // playing bg music
-      
-        playBackgroundMusic(gameType);
-      
-    }
-
-    if (game.path) {
-      navigate(game.path);
-    }
-  } catch (error) {
-    console.error("Failed to load game sounds:", error);
-
-    if (game.path) {
-      navigate(game.path);
-    }
-  }
-};
+  };
 
   return (
     <PageShell className="gz-page-shell--dashboard">

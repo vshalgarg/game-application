@@ -1,9 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { LuX } from "react-icons/lu";
 import { AVATARS } from "../../data/avatars";
 import Button from "../ui/Button";
 
 const AvatarPicker = ({ open, selectedId, onSelect, onClose }) => {
+  const [pendingId, setPendingId] = useState(selectedId);
+
+  useEffect(() => {
+    if (open) setPendingId(selectedId);
+  }, [open, selectedId]);
+
   useEffect(() => {
     if (!open) return undefined;
 
@@ -26,18 +32,29 @@ const AvatarPicker = ({ open, selectedId, onSelect, onClose }) => {
         aria-labelledby="avatar-picker-title"
         onClick={(event) => event.stopPropagation()}
       >
-        <button type="button" className="gz-exit-modal__close" onClick={onClose} aria-label="Close avatar picker">
+        <button
+          type="button"
+          className="gz-exit-modal__close"
+          onClick={onClose}
+          aria-label="Close avatar picker"
+        >
           <LuX />
         </button>
 
         <h2 id="avatar-picker-title" className="text-xl font-bold text-gz-text sm:text-2xl">
           Choose Avatar
         </h2>
-        <p className="mt-1 text-sm text-gz-text-secondary">Pick a player portrait for your GameZone profile.</p>
+        <p className="mt-1 text-sm text-gz-text-secondary">
+          Pick a player portrait for your GameZone profile.
+        </p>
 
-        <div className="my-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4" role="listbox" aria-label="Avatar options">
+        <div
+          className="my-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4"
+          role="listbox"
+          aria-label="Avatar options"
+        >
           {AVATARS.map(({ id, name, Art }) => {
-            const selected = id === selectedId;
+            const selected = id === pendingId;
             return (
               <button
                 key={id}
@@ -49,10 +66,7 @@ const AvatarPicker = ({ open, selectedId, onSelect, onClose }) => {
                     ? "border-gz-primary-cyan text-gz-primary-cyan shadow-[0_0_16px_rgb(0_217_232/0.28)]"
                     : "border-white/10 text-gz-text-secondary"
                 }`}
-                onClick={() => {
-                  onSelect(id);
-                  onClose();
-                }}
+                onClick={() => setPendingId(id)}
               >
                 <span className="h-16 w-16 overflow-hidden rounded-full sm:h-[4.5rem] sm:w-[4.5rem] [&_svg]:h-full [&_svg]:w-full">
                   <Art />
@@ -63,7 +77,14 @@ const AvatarPicker = ({ open, selectedId, onSelect, onClose }) => {
           })}
         </div>
 
-        <Button type="button" onClick={onClose} disabled={!selectedId}>
+        <Button
+          type="button"
+          onClick={() => {
+            onSelect(pendingId);
+            onClose();
+          }}
+          disabled={!pendingId}
+        >
           Use this avatar
         </Button>
       </div>

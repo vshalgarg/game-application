@@ -97,6 +97,7 @@ const Login = () => {
       const payload = {
         provider,
         credential,
+        clientType : "web",
       };
 
       const response = await socialLogin(payload);
@@ -244,6 +245,28 @@ const Login = () => {
           disabled={loading}
           onSelect={handleSocialSelect}
         />
+
+        <p className="mt-4 mx-auto max-w-[300px] text-center text-sm leading-6 text-gz-text-secondary">
+          By continuing, you agree to our {" "}
+          <a
+            href="/data-deletion"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="gz-link"
+          >
+            data-deletion
+          </a>{" "}
+          and{" "}
+          <a
+            href="/privacy-policy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="gz-link"
+          >
+            Privacy Policy
+          </a>
+          .
+        </p>
       </AuthCard>
 
       <ForgotPasswordModal open={forgotPasswordOpen} onClose={() => setForgotPasswordOpen(false)} />

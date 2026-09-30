@@ -21,8 +21,9 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    setMenuOpen(false);
     logout();
+    setMenuOpen(false);
+    stopBackgroundMusic();
     showSnackbar("Logged out successfully", "success");
     navigate("/login", { replace: true });
   };
@@ -33,17 +34,24 @@ const Navbar = () => {
   };
 
   const handleHome = () => {
-  setMenuOpen(false);
-  stopBackgroundMusic("TIC_TAC_TOE");
-  navigate("/");
-};
+    setMenuOpen(false);
+    navigate("/");
+  };
 
   const authButton = auth ? (
-    <Button variant="nav" className="px-4 py-1.5 text-xs sm:px-5 sm:py-2 sm:text-sm" onClick={handleLogout}>
+    <Button
+      variant="nav"
+      className="px-4 py-1.5 text-xs sm:px-5 sm:py-2 sm:text-sm"
+      onClick={handleLogout}
+    >
       Logout
     </Button>
   ) : (
-    <Button variant="nav" className="px-4 py-1.5 text-xs sm:px-5 sm:py-2 sm:text-sm" onClick={handleLogin}>
+    <Button
+      variant="nav"
+      className="px-4 py-1.5 text-xs sm:px-5 sm:py-2 sm:text-sm"
+      onClick={handleLogin}
+    >
       Login
     </Button>
   );
@@ -71,9 +79,7 @@ const Navbar = () => {
                 to={path}
                 end={path === "/"}
                 onClick={() => {
-                  if (path === "/") {
-                    stopBackgroundMusic("TIC_TAC_TOE");
-                  }
+                  setMenuOpen(false);
                 }}
 
                 className={({ isActive }) =>
@@ -109,9 +115,6 @@ const Navbar = () => {
                 end={path === "/"}
                 onClick={() => {
                   setMenuOpen(false);
-                  if (path === "/") {
-                    stopBackgroundMusic("TIC_TAC_TOE");
-                  }
                 }}
                 className={({ isActive }) =>
                   `gz-navbar__link py-1 ${isActive ? "gz-navbar__link--active" : ""}`
