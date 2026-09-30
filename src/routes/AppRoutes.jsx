@@ -15,7 +15,7 @@ const About = lazy(() => import("../pages/About"));
 const Contact = lazy(() => import("../pages/Contact"));
 const Profile = lazy(() => import("../pages/Profile"));
 const CompleteProfile = lazy(() => import("../pages/CompleteProfile"));
-const TambolaCreateJoin = lazy(() => import("../pages/tambolaPages/tambolaCreateJoin"));
+const TambolaCreateJoin = lazy(() => import("../pages/tambolaPages/TambolaCreateJoin"));
 const TambolaMode = lazy(() => import("../pages/tambolaPages/TambolaMode"));
 const TambolaWaiting = lazy(() => import("../pages/tambolaPages/TambolaWaiting"));
 const TambolaGameRoom = lazy(() => import("../pages/tambolaPages/TambolaGameRoom"));
