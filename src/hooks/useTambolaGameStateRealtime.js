@@ -12,7 +12,47 @@ const useTambolaGameStateRealtime = (roomCode) => {
       return;
     }
 
-    setLoading(true);
+    let isMounted = true;
+
+    const fetchInitialGameState = async () => {
+      try {
+        setLoading(true);
+
+        const { data, error } = await supabase
+          .from("realtime_tambola_game_state")
+          .select("*")
+          .eq("room_code", roomCode)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error fetching initial Tambola game state:", error);
+
+          if (isMounted) {
+            setGameState(null);
+          }
+
+          return;
+        }
+
+        console.log("Initial Tambola Game State:", data);
+
+        if (isMounted) {
+          setGameState(data);
+        }
+      } catch (error) {
+        console.error("Unexpected error fetching Tambola game state:", error);
+
+        if (isMounted) {
+          setGameState(null);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchInitialGameState();
 
     const channel = supabase
       .channel(`tambola-game-state-${roomCode}`)
@@ -25,10 +65,9 @@ const useTambolaGameStateRealtime = (roomCode) => {
           filter: `room_code=eq.${roomCode}`,
         },
         (payload) => {
-          console.log(
-            "Tambola Game State Realtime Event:",
-            payload
-          );
+          console.log("Tambola Game State Realtime Event:", payload);
+
+          if (!isMounted) return;
 
           if (payload.eventType === "INSERT") {
             setGameState(payload.new);
@@ -44,20 +83,13 @@ const useTambolaGameStateRealtime = (roomCode) => {
         }
       )
       .subscribe((status) => {
-        console.log(
-          `Tambola game state realtime status for room ${roomCode}:`,
-          status
-        );
-
-        if (status === "SUBSCRIBED") {
-          setLoading(false);
-        }
+        console.log(`Tambola game state realtime status for room ${roomCode}:`, status);
       });
 
     return () => {
-      console.log(
-        `Removing Tambola game state listener for room ${roomCode}`
-      );
+      isMounted = false;
+
+      console.log(`Removing Tambola game state listener for room ${roomCode}`);
 
       supabase.removeChannel(channel);
     };

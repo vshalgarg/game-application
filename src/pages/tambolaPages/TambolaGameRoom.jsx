@@ -148,12 +148,8 @@ const TambolaGameRoom = () => {
 
   const handleTicketNumberClick = (number) => {
     if (!calledNumbers.includes(number)) return;
-
-    setMarkedNumbers((prev) =>
-      prev.includes(number)
-        ? prev.filter((item) => item !== number)
-        : [...prev, number]
-    );
+    if (markedNumbers.includes(number)) return;
+    setMarkedNumbers((prev) => [...prev, number]);
   };
 
   return (
